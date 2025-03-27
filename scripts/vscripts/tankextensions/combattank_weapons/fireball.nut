@@ -4,7 +4,6 @@ local COMBATTANK_VALUES_TABLE = {
 	COMBATTANK_FIREBALL_CONE_RADIUS        = 15
 	COMBATTANK_FIREBALL_DAMAGE             = Convars.GetFloat("tf_fireball_damage") // 25
 	COMBATTANK_FIREBALL_MODEL              = "models/bots/boss_bot/combat_tank/combat_tank_fireball.mdl"
-	COMBATTANK_FIREBALL_RECHARGE_HIT_BOOST = Convars.GetFloat("tf_fireball_hit_recharge_boost") // 1.5
 	COMBATTANK_FIREBALL_RECHARGE_TIME      = 0.8
 	COMBATTANK_FIREBALL_SND_FIRE           = "Weapon_DragonsFury.Single"
 }
@@ -100,8 +99,6 @@ TankExt.CombatTankWeapons["fireball"] <- {
 	}
 	function OnSpawn()
 	{
-		flUpperRechargeBoost <- 1.0
-		flLowerRechargeBoost <- 1.0
 		local flUpperRechargeTime = 0.0
 		local flLowerRechargeTime = 0.0
 		local bUseUpper           = GetPropInt(self, "m_iParentAttachment") == hTank.LookupAttachment("weapon_r")
@@ -128,8 +125,6 @@ TankExt.CombatTankWeapons["fireball"] <- {
 			local GetEffectBarProgress = function(bUpper)
 			{
 				local flRechargeTime = bUpper ? flUpperRechargeTime : flLowerRechargeTime
-				local flBoost = bUpper ? flUpperRechargeBoost : flLowerRechargeBoost
-				flRechargeTime -= COMBATTANK_FIREBALL_RECHARGE_TIME - COMBATTANK_FIREBALL_RECHARGE_TIME / flBoost
 				if(flTime < flRechargeTime)
 					return (COMBATTANK_FIREBALL_RECHARGE_TIME - flRechargeTime + flTime) / COMBATTANK_FIREBALL_RECHARGE_TIME
 				return 1.0
@@ -191,7 +186,6 @@ TankExt.CombatTankWeapons["fireball"] <- {
 			{
 				local flDelta = flTime + COMBATTANK_FIREBALL_RECHARGE_TIME
 				bUseUpper ? flUpperRechargeTime = flDelta : flLowerRechargeTime = flDelta
-				bUseUpper ? flUpperRechargeBoost = 1.0 : flLowerRechargeBoost = 1.0
 				ShootAtTarget(self.GetAttachmentOrigin(bUseUpper ? iAttachmentUpper : iAttachmentLower))
 				bUseUpper = bUseUpper ? false : true
 				hTank_scope.AddToSoundQueue({

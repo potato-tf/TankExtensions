@@ -383,6 +383,15 @@ local UNOFFICIAL_CONSTANTS = {
 	SHAKE_START_RUMBLEONLY = 4
 	SHAKE_START_NORUMBLE   = 5
 
+	MVM_CLASS_FLAG_NONE            = 0
+	MVM_CLASS_FLAG_NORMAL          = 1
+	MVM_CLASS_FLAG_SUPPORT         = 2
+	MVM_CLASS_FLAG_MISSION         = 4
+	MVM_CLASS_FLAG_MINIBOSS        = 8
+	MVM_CLASS_FLAG_ALWAYSCRIT      = 16
+	MVM_CLASS_FLAG_SUPPORT_LIMITED = 32
+	MVM_CLASS_TYPES_PER_WAVE_MAX   = 24
+
 	// damagefilter redefinitions
 	DMG_USE_HITLOCATIONS                    = DMG_AIRBOAT
 	DMG_HALF_FALLOFF                        = DMG_RADIATION
@@ -403,6 +412,7 @@ foreach(k,v in UNOFFICIAL_CONSTANTS)
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
+local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 ::TankExt <- {
 	function OnGameEvent_recalculate_holidays(_) { if(GetRoundState() == 3) { delete ::TankExt } }
 	function OnGameEvent_mvm_begin_wave(_)
@@ -410,6 +420,51 @@ foreach(k,v in UNOFFICIAL_CONSTANTS)
 		for(local hPath; hPath = FindByClassname(hPath, "path_track");)
 			if(!TankExt.HasTankPathOutput(hPath))
 				AddOutput(hPath, "OnPass", "!activator", "RunScriptCode", "TankExt.ApplyTankType(self)", -1, -1)
+
+		foreach(array in QueuedTankIcons)
+			AddTankIcon(array[0], array[1], null, array[3])
+		QueuedTankIcons.clear()
+
+		IterateIcons(function(iIcon, sNames, sCounts, sFlags)
+		{
+			local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIcon)
+			if(sIconName == "tank")
+				CurrentTankIconCount = GetPropIntArray(hObjectiveResource, sCounts, iIcon)
+		})
+	}
+	function OnGameEvent_mvm_wave_complete(params)
+	{
+		QueuedTankIcons.clear()
+		CustomTankIcons.clear()
+		CustomTankIconsWild.clear()
+	}
+	function OnGameEvent_mvm_tank_destroyed_by_players(_)
+	{
+		for(local hTank; hTank = FindByClassname(hTank, "tank_boss");)
+			if(!(hTank.GetEFlags() & EFL_KILLME) && hTank.GetHealth() <= 0)
+			{
+				local sTankName = hTank.GetName().tolower()
+
+				local TankIcon
+				if(sTankName in CustomTankIcons) TankIcon = CustomTankIcons[sTankName]
+				else foreach(sTankIcon, Array in CustomTankIconsWild) if(startswith(sTankName, sTankIcon)) TankIcon = Array
+
+				if(TankIcon && TankIcon[0] > 0)
+				{
+					TankIcon[0]--
+
+					local sTankIcon = TankIcon[1]
+					IterateIcons(function(iIcon, sNames, sCounts, sFlags)
+					{
+						local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIcon)
+						if(sIconName == "tank")
+							EntFire("bignet", "RunScriptCode", format("SetPropIntArray(FindByClassname(null, `tf_objective_resource`), `%s`, TankExt.CurrentTankIconCount, %i)", sCounts, iIcon), -1)
+						else if(sIconName == sTankIcon)
+							SetPropIntArray(hObjectiveResource, sCounts, GetPropIntArray(hObjectiveResource, sCounts, iIcon) - 1, iIcon)
+					})
+				}
+				else CurrentTankIconCount--
+			}
 	}
 
 	ValueOverrides  = {}
@@ -504,8 +559,7 @@ foreach(k,v in UNOFFICIAL_CONSTANTS)
 	function NewTankType(sName, Table)
 	{
 		sName = sName.tolower()
-		local bWild = sName[sName.len() - 1] == '*'
-		if(bWild)
+		if(sName[sName.len() - 1] == '*')
 		{
 			sName = sName.slice(0, sName.len() - 1)
 			TankExt.TankScriptsWild[sName] <- Table
@@ -576,7 +630,6 @@ foreach(k,v in UNOFFICIAL_CONSTANTS)
 		{
 			foreach(sTankName in split(sTankName, "^"))
 				ApplyTankTableByName(hTank, hPath, sTankName)
-			hTank.KeyValueFromString("targetname", "combinedtank")
 		}
 		else
 			ApplyTankTableByName(hTank, hPath, sTankName)
@@ -769,7 +822,16 @@ foreach(k,v in UNOFFICIAL_CONSTANTS)
 			hTank_scope.MultiOnDeath.append(function()
 			{
 				local hDestruction = FindByClassnameNearest("tank_destruction", self.GetOrigin(), 16)
-				if(hDestruction) hDestruction.Kill()
+				if(hDestruction)
+				{
+					local hParticle = SpawnEntityFromTable("info_particle_system", {
+						origin       = hDestruction.GetOrigin() + Vector(0, 0, 100)
+						effect_name  = "mvm_tank_destroy"
+						start_active = 1
+					})
+					EntFireByHandle(hParticle, "Kill", null, 0.5, null, null)
+					hDestruction.Kill()
+				}
 			})
 		}
 
@@ -822,8 +884,6 @@ foreach(k,v in UNOFFICIAL_CONSTANTS)
 					{
 						TankTable  = Table
 						sTableName = sName
-						local iNameEnd = sTankName.find("|")
-						hTank.KeyValueFromString("targetname", iNameEnd ? sTankName.slice(0, iNameEnd) : sTankName)
 						break
 					}
 
@@ -881,19 +941,117 @@ foreach(k,v in UNOFFICIAL_CONSTANTS)
 		}
 	}
 
+	CurrentTankIconCount = 0
+	QueuedTankIcons      = []
+	CustomTankIcons      = {}
+	CustomTankIconsWild  = {}
+	function AddTankIcon(iCount, sIcon, sTankName, iPlacement = null)
+	{
+		local PreviousIcon
+		local iCurrentPlacement = 0
+		IterateIcons(function(iIndex, sNames, sCounts, sFlags)
+		{
+			local Set = function(sIcon, iCount, iFlags)
+			{
+				SetPropStringArray(hObjectiveResource, sNames, sIcon, iIndex)
+				SetPropIntArray(hObjectiveResource, sCounts, iCount, iIndex)
+				SetPropIntArray(hObjectiveResource, sFlags, iFlags, iIndex)
+			}
+			if(PreviousIcon)
+			{
+				local PreviousIconTemp = [
+					GetPropStringArray(hObjectiveResource, sNames, iIndex),
+					GetPropIntArray(hObjectiveResource, sCounts, iIndex),
+					GetPropIntArray(hObjectiveResource, sFlags, iIndex)
+				]
+				Set(PreviousIcon[0], PreviousIcon[1], PreviousIcon[2])
+				PreviousIcon = PreviousIconTemp
+			}
+			local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIndex)
+			if(sIconName == "tank")
+				SetPropIntArray(hObjectiveResource, sCounts, GetPropIntArray(hObjectiveResource, sCounts, iIndex) - iCount, iIndex)
+			else if(iPlacement != null && iPlacement == iCurrentPlacement)
+			{
+				PreviousIcon = [
+					GetPropStringArray(hObjectiveResource, sNames, iIndex),
+					GetPropIntArray(hObjectiveResource, sCounts, iIndex),
+					GetPropIntArray(hObjectiveResource, sFlags, iIndex)
+				]
+				Set(sIcon, iCount, MVM_CLASS_FLAG_NORMAL | MVM_CLASS_FLAG_MINIBOSS)
+			}
+			else if(iPlacement == null && (sIconName == "" || sIconName == sIcon))
+			{
+				Set(sIcon, iCount, MVM_CLASS_FLAG_NORMAL | MVM_CLASS_FLAG_MINIBOSS)
+				return true
+			}
+			iCurrentPlacement++
+		})
+		if(sTankName)
+		{
+			sTankName = sTankName.tolower()
+			if(sTankName[sTankName.len() - 1] == '*')
+			{
+				sTankName = sTankName.slice(0, sTankName.len() - 1)
+					CustomTankIconsWild[sTankName] <- [iCount, sIcon]
+			}
+			else
+				CustomTankIcons[sTankName] <- [iCount, sIcon]
+
+			QueuedTankIcons.append([iCount, sIcon, null, iPlacement])
+		}
+	}
+
 	//////////////////////// Utilities ////////////////////////
 
+	function IterateIcons(func)
+	{
+		for(local i = 0; i < MVM_CLASS_TYPES_PER_WAVE_MAX; i++)
+		{
+			local iIndex = i
+
+			local bTwo = iIndex > 11
+			if(bTwo) iIndex -= 12
+			local sTwo = bTwo ? "2." : "."
+
+			local sNames  = format("m_iszMannVsMachineWaveClassNames%s", sTwo)
+			local sCounts = format("m_nMannVsMachineWaveClassCounts%s", sTwo)
+			local sFlags  = format("m_nMannVsMachineWaveClassFlags%s", sTwo)
+
+			if(func(iIndex, sNames, sCounts, sFlags)) break
+		}
+	}
 	function SetTankModel(hTank, Model)
 	{
 		local ApplyModel = function(hEntity, sModel)
 		{
+			local bSmokeStack = hEntity == hTank && sModel != hTank.GetModelName()
 			local iModelIndex = PrecacheModel(sModel)
-			local sSequence = hEntity.GetSequenceName(hEntity.GetSequence())
+			local sSequence   = hEntity.GetSequenceName(hEntity.GetSequence())
 			hEntity.SetModel(sModel)
 			SetPropInt(hEntity, "m_nModelIndex", iModelIndex)
 			SetPropIntArray(hEntity, "m_nModelIndexOverrides", iModelIndex, 0)
 			SetPropIntArray(hEntity, "m_nModelIndexOverrides", iModelIndex, 3)
 			hEntity.SetSequence(hEntity.LookupSequence(sSequence))
+			if(bSmokeStack && GetPropInt(hTank, "touchStamp") >= 2)
+			{
+				local iAttachment = hTank.LookupAttachment("smoke_attachment")
+				if(iAttachment != 0)
+				{
+					local vecSmoke = hTank.GetAttachmentOrigin(iAttachment)
+					local Trace = {
+						start  = vecSmoke
+						end    = vecSmoke + Vector(0, 0, 300)
+						mask   = MASK_SOLID_BRUSHONLY
+						ignore = hTank
+					}
+					TraceLineEx(Trace)
+					if(!Trace.hit)
+					{
+						DispatchParticleEffectOn(hTank, null)
+						DispatchParticleEffectOn(hTank, "smoke_train", "smoke_attachment")
+					}
+				}
+			}
 		}
 		if(typeof Model == "string")
 			{ ApplyModel(hTank, Model); return }

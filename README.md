@@ -31,15 +31,14 @@ Note that using TankExtensions's CreatePaths function will merge the last node t
 ## ![Tank Combiner](images/tankcombiner.png)
 Any tank made via TankExtensions can be combined into one; providing all the functionality of the chosen tanks at once.<br>
 Usage is by adding multiple tank names separated by `^` into the tank's Name keyvalue. (i.e. `Name "painttank|255 127 0^stickytank^paratank^fireringtank"`)<br>
-Any combined tanks will use the targetname of `combinedtank`.<br>
 Also note that custom keyvalues defined in NewTankType, besides OnSpawn and OnDeath, will only apply once when iterating through the tanks. For example, `"redtank^painttank|255 0 0"` will apply the Red Tank model but not the Paint Tank model, vice versa if the names are swapped around.
 
 ## ![Tank Types](images/tanktypes.png)
 This list provides details on what can go into a tank's Name keyvalue.<br>
-**Suffixes** is text that can be appended to the tank's name for different effects, these will be kept in the tank's targetname when spawning. <code>tankName</code> + <code>_suffix1</code> + <code>_suffix2</code> == <code>tankName_suffix1_suffix2</code><br>
-**Parameters** are separated by `|` and can modify certain aspects of the tank type, these will be removed from the tank's targetname when spawning. <code>tankName</code> with 2 parameters is <code>tankName|parameter1|parameter2</code><br>
+**Suffixes** is text that can be appended to the tank's name for different effects. <code>tankName</code> + <code>_suffix1</code> + <code>_suffix2</code> == <code>tankName_suffix1_suffix2</code><br>
+**Parameters** are separated by `|` and can modify certain aspects of the tank type. <code>tankName</code> with 2 parameters is <code>tankName|parameter1|parameter2</code><br>
 **Quick Keyvalues** allow for making slight modifications to the tank, the same keyvalues as the NewTankType function. The beginning of the keyvalues is denoted with `$`, the values of the keys separated with `|`, and the keyvalues themselves separated with `^`. `tankName$color|0 0 0^teamnum|2^scale|0.5` would result in a black tank on red team at half scale.<br>
-Here's a tank name with everything combined, including when using Tank Combiner, `Name "paratank^combattank_nolaser|minigun|rocketpod$teamnum|2^noscreenshake|1"`<br>
+Here is a tank name with everything combined, including when using Tank Combiner, `Name "paratank^combattank_nolaser|minigun|rocketpod$teamnum|2^noscreenshake|1"` (The tank's final targetname will be `paratank^combattank_nolaser|minigun|rocketpod`)<br>
 **ScriptFunctions** can be ran by firing a CallScriptFunction input on the tank with the param being the script function name.
 <table>
 	<tr>
@@ -122,6 +121,10 @@ Here's a tank name with everything combined, including when using Tank Combiner,
 				<tr>
 					<th>Script File</th>
 					<th>Weapon Names</th>
+				</tr>
+				<tr>
+					<td>fireball.nut</td>
+					<td>fireball</td>
 				</tr>
 				<tr>
 					<td>minigun.nut</td>
@@ -369,6 +372,13 @@ Always prepend <code>TankExt.</code> to any of these functions when using them. 
 		<th>Description</th>
 	</tr>
 	<tr>
+		<td><code>AddTankIcon</code></td>
+		<td><code>void AddTankIcon(integer <i>tankCount</i>, string <i>tankIcon</i>, string <i>tankName</i>, integer <i>index</i> = null)</code></td>
+		<td>
+			Adds a custom tank icon to the wavebar. The tank name parameter accepts wildcards.
+		</td>
+	</tr>
+	<tr>
 		<td><code>AddThinkToEnt</code></td>
 		<td><code>void AddThinkToEnt(handle <i>entity</i>, string <i>FuncName</i>)</code></td>
 		<td>
@@ -458,6 +468,13 @@ Always prepend <code>TankExt.</code> to any of these functions when using them. 
 		<td><code>bool IntersectionBoxBox(Vector <i>origin1</i>, Vector <i>mins1</i>, Vector <i>maxs1</i>, Vector <i>origin2</i>, Vector <i>mins2</i>, Vector <i>maxs2</i>)</code></td>
 		<td>
 			Returns true if the first bounding box intersects with the second bounding box.
+		</td>
+	</tr>
+	<tr>
+		<td><code>IterateIcons</code></td>
+		<td><code>void IterateIcons(handle <i>callback</i>)</code></td>
+		<td>
+			Allows for easier reading and writing of the wavebar icon netprops. The inputted function needs 4 parameters (iIndex, sNames, sCounts, sFlags). Returning <code>true</code> will break the loop.
 		</td>
 	</tr>
 	<tr>

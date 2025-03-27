@@ -38,16 +38,24 @@ IncludeScript(`tankextensions/combattank`, getroottable())
 IncludeScript(`tankextensions/combattank_weapons/minigun`, getroottable())
 IncludeScript(`tankextensions/combattank_weapons/rocketpod`, getroottable())
 
+// Adds a tank icon to the wavebar, (TankCount, IconName, TankName)
+TankExt.AddTankIcon(1, `tank_combat_minigun_rocket`, `combattank|minigun|rocketpod`)
+TankExt.AddTankIcon(1, `tank_banner_trio`, `bannertank*`)
+TankExt.AddTankIcon(1, `tank_sticky_hellmet`, `paratank^ubertank|0|16^stickytank`)
+TankExt.AddTankIcon(1, `tank_red`, `tankbossred`)
+
 // Note that creating tank paths is NOT required to use the any of the custom tanks
 // Use Path Maker for easier tank path creation
 TankExt.CreateLoopPaths({
 	tank_loop = [
-		Vector(-1536, 512, -64)  // tank_loop_1
-		Vector(-1536, -256, -64)  // start loop
-		Vector(-1024, -256, -64)
-		Vector(-1024, 256, -64)
-		Vector(-1536, 256, -64)   // end loop
-		Vector(-1536, -256, -64)  // same as start loop
+		Vector(1024, 0, -64)     // tank_loop_1
+		Vector(-896, 0, -64)
+		Vector(-1024, -128, -64)
+		Vector(-1024, -256, -64) // start loop
+		Vector(-1536, -256, -64)
+		Vector(-1536, 256, -64)
+		Vector(-1024, 256, -64)  // end loop
+		Vector(-1024, -256, -64) // same as start loop
 	]
 })
 TankExt.CreatePaths({
@@ -69,17 +77,29 @@ TankExt.CreatePaths({
 			Action trigger
 		}
 
+		WaveSpawn // To precache and download icons on potato.tf servers
+		{
+			Support 1
+			Squad
+			{
+				TFBot { ClassIcon tank_combat_minigun_rocket }
+				TFBot { ClassIcon tank_banner_trio }
+				TFBot { ClassIcon tank_sticky_hellmet }
+				TFBot { ClassIcon tank_red }
+			}
+		}
+
 		WaveSpawn
 		{
 			TotalCount 1
 			TotalCurrency 0
 			Tank
 			{
-				Health 1000
+				Health 500
 				Speed 75
 				// A tank type with parameters
 				Name "combattank|minigun|rocketpod"
-				StartingPathTrackNode "tank_path_1"
+				StartingPathTrackNode "tank_loop_1"
 			}
 		}
 		WaveSpawn
@@ -89,11 +109,11 @@ TankExt.CreatePaths({
 			TotalCurrency 0
 			Tank
 			{
-				Health 1000
+				Health 500
 				Speed 75
 				// A tank type with suffixes
 				Name "bannertank_buff_conch_backup"
-				StartingPathTrackNode "tank_path_1"
+				StartingPathTrackNode "tank_middle_1"
 			}
 		}
 		WaveSpawn
@@ -103,7 +123,7 @@ TankExt.CreatePaths({
 			TotalCurrency 0
 			Tank
 			{
-				Health 1000
+				Health 500
 				Speed 75
 				// Tank Combiner allows for combining multiple tank types
 				Name "paratank^ubertank|0|16^stickytank"
@@ -117,11 +137,11 @@ TankExt.CreatePaths({
 			TotalCurrency 0
 			Tank
 			{
-				Health 1000
+				Health 500
 				Speed 75
 				// Quick Keyvalues allows for making slight modifications
-				Name "tankboss$teamnum|2^model|models/bots/boss_bot/boss_tankred.mdl"
-				StartingPathTrackNode "tank_para_1"
+				Name "tankbossred$teamnum|2^model|models/bots/boss_bot/boss_tankred.mdl"
+				StartingPathTrackNode "tank_path_1"
 			}
 		}
 	}
