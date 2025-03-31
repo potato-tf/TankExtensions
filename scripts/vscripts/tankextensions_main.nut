@@ -904,15 +904,16 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					local iHealth     = self.GetHealth()
 					local iMaxHealth  = self.GetMaxHealth()
 					foreach(sName, Table in MultiScope)
-					{
-						Table.flTime      <- flTime
-						Table.vecOrigin   <- vecOrigin
-						Table.angRotation <- angRotation
-						Table.iTeamNum    <- iTeamNum
-						Table.iHealth     <- iHealth
-						Table.iMaxHealth  <- iMaxHealth
-						if("Think" in Table) Table.Think()
-					}
+						if("Think" in Table)
+						{
+							Table.flTime      <- flTime
+							Table.vecOrigin   <- vecOrigin
+							Table.angRotation <- angRotation
+							Table.iTeamNum    <- iTeamNum
+							Table.iHealth     <- iHealth
+							Table.iMaxHealth  <- iMaxHealth
+							Table.Think()
+						}
 				}
 				TankExt.AddThinkToEnt(hTank, "MultiScopeThink")
 			}

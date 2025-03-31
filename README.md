@@ -111,7 +111,7 @@ Here is a tank name with everything combined, including when using Tank Combiner
 		<td>
 			<code>_nolaser</code>
 		</td>
-		<td class="paramvalue">2</td>
+		<td>2</td>
 		<td>
 			ToggleUber
 		</td>
@@ -193,7 +193,7 @@ Here is a tank name with everything combined, including when using Tank Combiner
 		<td>
 			<code>_crit</code>
 		</td>
-		<td class="paramvalue">2</td>
+		<td>2</td>
 		<td></td>
 		<td>
 			Small mobile turret that shoots a chosen projectile at 5 angles. Allows 2 parameters of: <code>rocket</code>, <code>grenade</code>, <code>jarate</code>, <code>milk</code>, <code>gas</code>. First parameter is the normal projectile type and the second parameter is the close range projectile type. The second parameter can be left blank to not switch to close ranged projectiles. The <code>_crit</code> suffix makes all projectiles crit.
@@ -215,13 +215,28 @@ Here is a tank name with everything combined, including when using Tank Combiner
 		</td>
 	</tr>
 	<tr>
+		<td>jumptank.nut</td>
+		<td><img src="images/tanks/jumptank.gif"></img></td>
+		<td>
+			<code>jumptank</code>
+		</td>
+		<td></td>
+		<td>0</td>
+		<td>
+			Jump
+		</td>
+		<td>
+			Causes the tank to jump high in the air periodically. When the tank is falling it will crush enemies beneath it, instantly killing them. When landing it will push enemies away. Set <code>JUMPTANK_JUMP_COOLDOWN</code> to a value below 0 to disable automatic jumping for all jumptanks.
+		</td>
+	</tr>
+	<tr>
 		<td>painttank.nut</td>
 		<td><img src="images/tanks/painttank.webp"></img></td>
 		<td>
 			<code>painttank</code>
 		</td>
 		<td></td>
-		<td class="paramvalue">1</td>
+		<td>1</td>
 		<td></td>
 		<td>
 			A tank model that allows for more colors much like adding paints for hats. First parameter is the color. (i.e. <code>"painttank|255 127 0"</code> results in an orange tank)
@@ -256,6 +271,19 @@ Here is a tank name with everything combined, including when using Tank Combiner
 		</td>
 	</tr>
 	<tr>
+		<td>scaletank.nut</td>
+		<td><img src="images/tanks/scaletank.gif"></img></td>
+		<td>
+			<code>scaletank</code>
+		</td>
+		<td></td>
+		<td>1</td>
+		<td></td>
+		<td>
+			Tank will resize itself as its health gets lower. First parameter is the resulting scale when at low health.
+		</td>
+	</tr>
+	<tr>
 		<td>sentrytank.nut</td>
 		<td><img src="images/tanks/sentrytank.webp"></img></td>
 		<td>
@@ -266,6 +294,19 @@ Here is a tank name with everything combined, including when using Tank Combiner
 		<td></td>
 		<td>
 			Adds 2 invincible level 3 sentries ontop of the tank. The sentries cannot attack enemies that are directly beside the tank. Sappers destroy themselves after 8 seconds if placed on either of the sentries, Red-Tape Recorder does not degrade their levels.
+		</td>
+	</tr>
+	<tr>
+		<td>speedtank.nut</td>
+		<td><img src="images/tanks/speedtank.gif"></img></td>
+		<td>
+			<code>speedtank</code>
+		</td>
+		<td></td>
+		<td>1</td>
+		<td></td>
+		<td>
+			Tank will alter its speed as its health gets lower. First parameter is the resulting speed when at low health.
 		</td>
 	</tr>
 	<tr>
@@ -334,7 +375,7 @@ Here is a tank name with everything combined, including when using Tank Combiner
 			<code>ubertank</code>
 		</td>
 		<td></td>
-		<td class="paramvalue">2</td>
+		<td>2</td>
 		<td>
 			ToggleUber
 		</td>

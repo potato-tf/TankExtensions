@@ -54,16 +54,19 @@ TankExt.NewTankType("hammertank", {
 			if(!self.IsValid()) return
 			EmitSoundEx({
 				sound_name  = ")ambient/explosions/explode_1.wav"
+				sound_level = 100
+				entity      = self
 				filter_type = RECIPIENT_FILTER_GLOBAL
 			})
 			EmitSoundEx({
 				sound_name  = ")misc/halloween/strongman_fast_impact_01.wav"
+				sound_level = 100
+				entity      = self
 				filter_type = RECIPIENT_FILTER_GLOBAL
 			})
 			DispatchParticleEffect("hammer_impact_button", vecSmash, Vector(1, 0, 0))
 			ScreenShake(vecSmash, 9, 2.5, 3, 1500, 0, true)
 
-			local iTeamNum = self.GetTeam()
 			for(local hPlayer; hPlayer = FindByClassnameWithin(hPlayer, "player", vecSmash, 384);)
 				if(hPlayer.IsAlive() && (HAMMERTANK_FRIENDLY_FIRE || hPlayer.GetTeam() != iTeamNum))
 				{
@@ -91,12 +94,14 @@ TankExt.NewTankType("hammertank", {
 						hHammer.AcceptInput("SetAnimation", "smash", null, null)
 						EmitSoundEx({
 							sound_name = ")misc/halloween/strongman_fast_swing_01.wav"
+							sound_level = 100
+							entity      = self
 							filter_type = RECIPIENT_FILTER_GLOBAL
 						})
-						TankExt.DelayFunction(self, this, 0.5, function() { EmitSoundEx({ sound_name = ")misc/halloween/strongman_fast_swing_01.wav", pitch = 70, filter_type = RECIPIENT_FILTER_GLOBAL }) })
-						TankExt.DelayFunction(self, this, 1.0, function() { EmitSoundEx({ sound_name = ")misc/halloween/strongman_fast_whoosh_01.wav", filter_type = RECIPIENT_FILTER_GLOBAL, }) })
+						TankExt.DelayFunction(self, this, 0.5, function() { EmitSoundEx({ sound_name = ")misc/halloween/strongman_fast_swing_01.wav", pitch = 70, sound_level = 100, entity = self, filter_type = RECIPIENT_FILTER_GLOBAL }) })
+						TankExt.DelayFunction(self, this, 1.0, function() { EmitSoundEx({ sound_name = ")misc/halloween/strongman_fast_whoosh_01.wav", sound_level = 100, entity = self, filter_type = RECIPIENT_FILTER_GLOBAL, }) })
 						TankExt.DelayFunction(self, this, 1.3, SmashImpact)
-						TankExt.DelayFunction(self, this, 3.4, function() { EmitSoundEx({ sound_name = ")doors/vent_open2.wav", pitch = 70, filter_type = RECIPIENT_FILTER_GLOBAL }) })
+						TankExt.DelayFunction(self, this, 3.4, function() { EmitSoundEx({ sound_name = ")doors/vent_open2.wav", pitch = 70, sound_level = 100, entity = self, filter_type = RECIPIENT_FILTER_GLOBAL }) })
 						TankExt.DelayFunction(self, this, 3.4 + HAMMERTANK_COOLDOWN, function() { bSmashing = false })
 						break
 					}
