@@ -15,10 +15,10 @@ TankExt.PrecacheSound(BLIMP_SOUND_ENGINE)
 TankExt.NewTankType("blimp", {
 	Model =
 	{
-	Default = VACBLIMP_MODEL_DEFAULT
-	Damage1 = VACBLIMP_MODEL_DAMAGE1
-	Damage2 = VACBLIMP_MODEL_DAMAGE2
-	Damage3 = VACBLIMP_MODEL_DAMAGE3
+	Default = BLIMP_MODEL
+	Damage1 = BLIMP_MODEL_DAMAGE1
+	Damage2 = BLIMP_MODEL_DAMAGE2
+	Damage3 = BLIMP_MODEL_DAMAGE3
 	}
 	DisableChildModels = 1
 	NoScreenShake      = 1
