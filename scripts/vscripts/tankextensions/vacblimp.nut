@@ -5,9 +5,6 @@ local VACBLIMP_VALUES_TABLE = {
 	VACBLIMP_RESIST_MULT       = 0
 	VACBLIMP_COLOR_CYCLE_SPEED = 5
 	VACBLIMP_MODEL_DEFAULT = "models/bots/boss_bot/boss_blimp_pure.mdl"
-	VACBLIMP_MODEL_DAMAGE1 = "models/bots/boss_bot/boss_blimp_main_damage1.mdl"
-	VACBLIMP_MODEL_DAMAGE2 = "models/bots/boss_bot/boss_blimp_main_damage2.mdl"
-	VACBLIMP_MODEL_DAMAGE3 = "models/bots/boss_bot/boss_blimp_main_damage3.mdl"
 	VACBLIMP_SOUND_ENGINE = ")ambient/turbine3.wav"
 	VACBLIMP_SKIN_RED = 0
 	VACBLIMP_SKIN_BLUE = 1
@@ -18,9 +15,6 @@ foreach(k,v in VACBLIMP_VALUES_TABLE)
 
 PrecacheModel(VACBLIMP_SHIELD_MODEL)
 PrecacheModel(VACBLIMP_MODEL_DEFAULT)
-PrecacheModel(VACBLIMP_MODEL_DAMAGE1)
-PrecacheModel(VACBLIMP_MODEL_DAMAGE2)
-PrecacheModel(VACBLIMP_MODEL_DAMAGE3)
 TankExt.PrecacheSound(VACBLIMP_SND_DEPLOY)
 TankExt.PrecacheSound(VACBLIMP_SOUND_ENGINE)
 
@@ -50,13 +44,7 @@ TankExt.PrecacheSound(VACBLIMP_SOUND_ENGINE)
 __CollectGameEventCallbacks(VacBlimpEvents)
 
 TankExt.NewTankType("vacblimp*", {
-	Model =
-	{
-	Default = VACBLIMP_MODEL_DEFAULT
-	Damage1 = VACBLIMP_MODEL_DAMAGE1
-	Damage2 = VACBLIMP_MODEL_DAMAGE2
-	Damage3 = VACBLIMP_MODEL_DAMAGE3
-	}
+	Model = VACBLIMP_MODEL_DEFAULT
 	DisableChildModels = 1
 	NoScreenShake      = 1
 	EngineLoopSound    = VACBLIMP_SOUND_ENGINE

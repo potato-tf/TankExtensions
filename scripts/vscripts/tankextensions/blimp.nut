@@ -1,8 +1,5 @@
 local BLIMP_VALUES_TABLE = {
 	BLIMP_MODEL        = "models/bots/boss_bot/boss_blimp_pure.mdl"
-	BLIMP_MODEL_DAMAGE1 = "models/bots/boss_bot/boss_blimp_main_damage1.mdl"
-	BLIMP_MODEL_DAMAGE2 = "models/bots/boss_bot/boss_blimp_main_damage2.mdl"
-	BLIMP_MODEL_DAMAGE3 = "models/bots/boss_bot/boss_blimp_main_damage3.mdl"
 	BLIMP_SOUND_ENGINE = ")ambient/turbine3.wav"
 }
 foreach(k,v in BLIMP_VALUES_TABLE)
@@ -13,13 +10,7 @@ PrecacheModel(BLIMP_MODEL)
 TankExt.PrecacheSound(BLIMP_SOUND_ENGINE)
 
 TankExt.NewTankType("blimp", {
-	Model =
-	{
-	Default = BLIMP_MODEL
-	Damage1 = BLIMP_MODEL_DAMAGE1
-	Damage2 = BLIMP_MODEL_DAMAGE2
-	Damage3 = BLIMP_MODEL_DAMAGE3
-	}
+	Model = BLIMP_MODEL
 	DisableChildModels = 1
 	NoScreenShake      = 1
 	EngineLoopSound    = BLIMP_SOUND_ENGINE
