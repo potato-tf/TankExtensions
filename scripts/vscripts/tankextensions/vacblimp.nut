@@ -1,5 +1,5 @@
 local VACBLIMP_VALUES_TABLE = {
-	VACBLIMP_SHIELD_MODEL             = "models/props_mvm/blimp_shield.mdl"
+	VACBLIMP_SHIELD_MODEL      = "models/props_mvm/blimp_shield.mdl"
 	VACBLIMP_SND_DEPLOY        = "player/invuln_on_vaccinator.wav"
 	VACBLIMP_SND_RESIST        = ")player/resistance_medium1.wav"
 	VACBLIMP_RESIST_MULT       = 0
@@ -8,6 +8,7 @@ local VACBLIMP_VALUES_TABLE = {
 	VACBLIMP_MODEL_DAMAGE1 = "models/bots/boss_bot/boss_blimp_main_damage1.mdl"
 	VACBLIMP_MODEL_DAMAGE2 = "models/bots/boss_bot/boss_blimp_main_damage2.mdl"
 	VACBLIMP_MODEL_DAMAGE3 = "models/bots/boss_bot/boss_blimp_main_damage3.mdl"
+	VACBLIMP_SOUND_ENGINE = ")ambient/turbine3.wav"
 	VACBLIMP_SKIN_RED = 0
 	VACBLIMP_SKIN_BLUE = 1
 }
@@ -20,23 +21,26 @@ PrecacheModel(VACBLIMP_MODEL_DEFAULT)
 PrecacheModel(VACBLIMP_MODEL_DAMAGE1)
 PrecacheModel(VACBLIMP_MODEL_DAMAGE2)
 PrecacheModel(VACBLIMP_MODEL_DAMAGE3)
-PrecacheSound(VACBLIMP_SND_DEPLOY)
+TankExt.PrecacheSound(VACBLIMP_SND_DEPLOY)
+TankExt.PrecacheSound(VACBLIMP_SOUND_ENGINE)
 
 ::VacBlimpEvents <- {
 	OnGameEvent_recalculate_holidays = function(_) { if(GetRoundState() == 3) delete ::VacBlimpEvents }
 	OnScriptHook_OnTakeDamage = function(params)
 	{
-		if(params.const_entity && params.attacker && params.const_entity.GetClassname() == "tank_boss" && params.attacker.GetTeam() != params.const_entity.GetTeam())
+		local hVictim = params.const_entity
+		local hAttacker = params.attacker
+		if(hVictim && hAttacker && hVictim.GetClassname() == "tank_boss" && hAttacker.GetTeam() != hVictim.GetTeam())
 		{
-			local hTank_scope = params.const_entity.GetScriptScope()
-			if(hTank_scope && "iDamageFilter" in hTank_scope && params.damage_type & hTank_scope.iDamageFilter)
+			local VacScope = TankExt.GetMultiScopeTable(hVictim.GetScriptScope(), "vacblimp")
+			if(VacScope && params.damage_type & VacScope.iDamageFilter)
 			{
 				params.damage *= VACBLIMP_RESIST_MULT
-				hTank_scope.Resist()
+				VacScope.Resist()
 				EmitSoundEx({
-					sound_name = VACBLIMP_SND_RESIST
+					sound_name  = VACBLIMP_SND_RESIST
 					sound_level = 90
-					entity = params.const_entity
+					entity      = hVictim
 					filter_type = RECIPIENT_FILTER_GLOBAL
 				})
 			}
@@ -45,7 +49,7 @@ PrecacheSound(VACBLIMP_SND_DEPLOY)
 }
 __CollectGameEventCallbacks(VacBlimpEvents)
 
-TankExt.NewTankScript("vacblimp_*", {
+TankExt.NewTankType("vacblimp*", {
 	Model =
 	{
 	Default = VACBLIMP_MODEL_DEFAULT
@@ -54,91 +58,59 @@ TankExt.NewTankScript("vacblimp_*", {
 	Damage3 = VACBLIMP_MODEL_DAMAGE3
 	}
 	DisableChildModels = 1
-	OnSpawn = function(hTank, sName, hPath)
+	NoScreenShake      = 1
+	EngineLoopSound    = VACBLIMP_SOUND_ENGINE
+	NoDestructionModel = 1
+	NoGravity          = 1
+	function OnSpawn()
 	{
 		EmitSoundEx({
-			sound_name = VACBLIMP_SND_DEPLOY
-			pitch = 90
+			sound_name  = VACBLIMP_SND_DEPLOY
+			pitch       = 90
 			filter_type = RECIPIENT_FILTER_GLOBAL
 		})
-		
-		hTank.SetAbsAngles(QAngle(0, hTank.GetAbsAngles().y, 0))
-		hTank.SetSkin(hTank.GetTeam() == 3 ? VACBLIMP_SKIN_BLUE : VACBLIMP_SKIN_RED)
-		for(local hChild = hTank.FirstMoveChild(); hChild != null; hChild = hChild.NextMovePeer())
-			hChild.DisableDraw()
 
-		local hTank_scope = hTank.GetScriptScope()
-		local flSpeed = GetPropFloat(hTank, "m_speed")
-		hTank_scope.hTrackTrain <- SpawnEntityFromTable("func_tracktrain", {
-			origin = hTank.GetOrigin()
-			speed = flSpeed
-			startspeed = flSpeed
-			target = hPath.GetName()
-		})
-		hTank_scope.flLastSpeed <- flSpeed
-		hTank_scope.Think <- function()
-		{
-			if(self.GetModelName() != VACBLIMP_MODEL_DEFAULT)
-				TankExt.SetTankModel(self, VACBLIMP_MODEL_DEFAULT)
-
-			local vecTrackTrain = hTrackTrain.GetOrigin()
-			self.SetAbsOrigin(vecTrackTrain)
-			self.GetLocomotionInterface().Reset()
-
-			local flSpeed = GetPropFloat(self, "m_speed")
-			if(flSpeed == 0) flSpeed = 0.001
-			if(flSpeed != flLastSpeed)
-			{
-				flLastSpeed = flSpeed
-				SetPropFloat(hTrackTrain, "m_flSpeed", flSpeed)
-			}
-			return -1
-		}
-		TankExt.AddThinkToEnt(hTank, "Think")
-		local iDamageFilter = 0
+		iDamageFilter <- 0
 		local hShields = []
-		
-		if(sName.find("_bullet"))
+
+		if(sTankName.find("_bullet"))
 		{
-			local hShield = SpawnEntityFromTable("prop_dynamic", { model = VACBLIMP_SHIELD_MODEL, skin = 2, disableshadows = 1, rendermode = 1 })
+			local hShield = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = VACBLIMP_SHIELD_MODEL, skin = 2, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
-			TankExt.SetParentArray([hShield], hTank)
+			TankExt.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BULLET | DMG_BUCKSHOT
 		}
-		if(sName.find("_blast"))
+		if(sTankName.find("_blast"))
 		{
-			local hShield = SpawnEntityFromTable("prop_dynamic", { model = VACBLIMP_SHIELD_MODEL, skin = 3, disableshadows = 1, rendermode = 1 })
+			local hShield = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = VACBLIMP_SHIELD_MODEL, skin = 3, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
-			TankExt.SetParentArray([hShield], hTank)
+			TankExt.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BLAST
 		}
-		if(sName.find("_fire"))
+		if(sTankName.find("_fire"))
 		{
-			local hShield = SpawnEntityFromTable("prop_dynamic", { model = VACBLIMP_SHIELD_MODEL, skin = 4, disableshadows = 1, rendermode = 1 })
+			local hShield = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = VACBLIMP_SHIELD_MODEL, skin = 4, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
-			TankExt.SetParentArray([hShield], hTank)
+			TankExt.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BURN | DMG_IGNITE
 		}
 
 		local iShieldsLength = hShields.len()
-		local iCenterOffset = 16 * (iShieldsLength - 1)
-		local iOffset = 0
-		local iTeamNum = hTank.GetTeam()
+		local iCenterOffset  = 16 * (iShieldsLength - 1)
+		local iOffset        = 0
+		local iTeamNum       = self.GetTeam()
 		foreach(hShield in hShields)
 		{
 			local hParticle = SpawnEntityFromTable("info_particle_system", {
-				origin = Vector(0, iOffset - iCenterOffset, 200)
-				effect_name = format("vaccinator_%s_buff%i", iTeamNum == 3 ? "blue" : "red", hShield.GetSkin() - 1)
+				origin       = Vector(0, iOffset - iCenterOffset, 200)
+				effect_name  = format("vaccinator_%s_buff%i", iTeamNum == TF_TEAM_BLUE ? "blue" : "red", hShield.GetSkin() - 1)
 				start_active = 1
 			})
-			TankExt.SetParentArray([hParticle], hTank)
+			TankExt.SetParentArray([hParticle], self)
 			iOffset += 32
 		}
-		
-		local hTank_scope = hTank.GetScriptScope()
-		hTank_scope.iDamageFilter <- iDamageFilter
-		hTank_scope.hShields <- hShields
-		hTank_scope.Resist <- function()
+
+		function Resist()
 		{
 			local DeleteArray = []
 			for(local hChild = self.FirstMoveChild(); hChild != null; hChild = hChild.NextMovePeer())
@@ -149,7 +121,7 @@ TankExt.NewTankScript("vacblimp_*", {
 
 			foreach(hShield in hShields)
 			{
-				local hShieldFade = SpawnEntityFromTable("prop_dynamic", { model = VACBLIMP_SHIELD_MODEL, skin = hShield.GetSkin(), disableshadows = 1, renderfx = kRenderFxFadeFast })
+				local hShieldFade = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = VACBLIMP_SHIELD_MODEL, skin = hShield.GetSkin(), disableshadows = 1, renderfx = kRenderFxFadeFast })
 				SetPropBool(hShieldFade, "m_bForcePurgeFixedupStrings", true)
 				SetPropInt(hShieldFade, "m_clrRender", GetPropInt(hShield, "m_clrRender"))
 				TankExt.SetParentArray([hShieldFade], self)
@@ -161,27 +133,19 @@ TankExt.NewTankScript("vacblimp_*", {
 			local iAlphas = []
 			foreach(k, v in hShields)
 				iAlphas.append(k == 0 ? 255 : 0)
-			hTank_scope.iAlphas <- iAlphas
-			hTank_scope.iColorIndex <- 0
-			hTank_scope.VacThink <- function()
+			local iColorIndex = 0
+			function Think()
 			{
 				local iNextColorIndex = iColorIndex == iAlphas.len() - 1 ? 0 : iColorIndex + 1
 				iAlphas[iColorIndex] -= VACBLIMP_COLOR_CYCLE_SPEED
 				iAlphas[iNextColorIndex] += VACBLIMP_COLOR_CYCLE_SPEED
 				if(iAlphas[iColorIndex] <= 0)
 					iColorIndex = iNextColorIndex
-				
+
 				foreach(k, hShield in hShields)
 					TankExt.SetEntityColor(hShield, 255, 255, 255, iAlphas[k])
-				return -1
 			}
-			TankExt.AddThinkToEnt(hTank, "VacThink")
 		}
-	}
-	OnDeath = function()
-	{
-		if(hTrackTrain && hTrackTrain.IsValid()) hTrackTrain.Destroy()
-		local hDestruction = FindByClassnameNearest("tank_destruction", self.GetOrigin(), 16)
-		if(hDestruction && hDestruction.IsValid()) hDestruction.Destroy()
+		self.SetSkin(self.GetTeam() == TF_TEAM_BLUE ? 1 : 0)
 	}
 })
