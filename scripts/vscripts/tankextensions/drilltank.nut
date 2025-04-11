@@ -59,7 +59,7 @@ TankExt.NewTankType("drilltank", {
 
 		local bFinalSkin = self.GetSkin() == 1
 		local bBlueTeam  = self.GetTeam() == TF_TEAM_BLUE
-		local iSkin      = bBlueTeam ? bFinalSkin ? 2 : 0 : bFinalSkin ? 4 : 6
+		local iSkin      = bBlueTeam ? bFinalSkin ? 2 : 0 : bFinalSkin ? 6 : 4
 		local hModel     = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = DRILLTANK_MODEL_DRILL, skin = iSkin })
 		hModel.AcceptInput("SetAnimation", "drill_spin", null, null)
 		local hDrillHurt = SpawnEntityFromTable("trigger_multiple", {
