@@ -47,7 +47,7 @@ local BANNER_BACKUP = 1 << 3
 				if(hEnt.GetClassname() == "tank_boss" && hAttacker.GetTeam() != hVictim.GetTeam())
 				{
 					local BannerScope = TankExt.GetMultiScopeTable(hEnt.GetScriptScope(), "bannertank")
-					if(BannerScope && BannerScope.iActiveBanners & iBannerType)
+					if(BannerScope && !BannerScope.bNoSelfEffect && BannerScope.iActiveBanners & iBannerType)
 						return true
 					else
 						return false
@@ -79,15 +79,17 @@ __CollectGameEventCallbacks(BannerTankEvents)
 TankExt.NewTankType("bannertank*", {
 	function OnSpawn()
 	{
-		local vecOffset = Vector(-13, 9, 32)
 		local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
 
 		local hPackBuff = TankExt.SpawnEntityFromTableFast("prop_dynamic", {
-			origin     = "-48 -19 40"
-			angles     = "0 90 0"
-			model      = "models/weapons/c_models/c_buffpack/c_buffpack.mdl"
-			modelscale = 1.5
-			skin       = bBlueTeam ? 1 : 0
+			origin        = "-48 -19 40"
+			angles        = "0 90 0"
+			model         = "models/weapons/c_models/c_buffpack/c_buffpack.mdl"
+			modelscale    = 1.5
+			skin          = bBlueTeam ? 1 : 0
+			startdisabled = 1
+			rendermode    = 1
+			renderamt     = 0
 		})
 		local hBannerBuff = TankExt.SpawnEntityFromTableFast("prop_dynamic", {
 			origin        = "-57 -33 78"
@@ -98,11 +100,14 @@ TankExt.NewTankType("bannertank*", {
 		})
 
 		local hPackConch = TankExt.SpawnEntityFromTableFast("prop_dynamic", {
-			origin     = "-60 -18 40"
-			angles     = "0 0 0"
-			model      = "models/weapons/c_models/c_shogun_warpack/c_shogun_warpack.mdl"
-			modelscale = 1.5
-			skin       = bBlueTeam ? 1 : 0
+			origin        = "-60 -18 40"
+			angles        = "0 0 0"
+			model         = "models/weapons/c_models/c_shogun_warpack/c_shogun_warpack.mdl"
+			modelscale    = 1.5
+			skin          = bBlueTeam ? 1 : 0
+			startdisabled = 1
+			rendermode    = 1
+			renderamt     = 0
 		})
 		local hBannerConch = TankExt.SpawnEntityFromTableFast("prop_dynamic", {
 			origin        = "-74 -10 78"
@@ -113,11 +118,14 @@ TankExt.NewTankType("bannertank*", {
 		})
 
 		local hPackBackup = TankExt.SpawnEntityFromTableFast("prop_dynamic", {
-			origin     = "-48 19 40"
-			angles     = "0 270 0"
-			model      = "models/workshop/weapons/c_models/c_battalion_buffpack/c_battalion_buffpack.mdl"
-			modelscale = 1.5
-			skin       = bBlueTeam ? 1 : 0
+			origin        = "-48 19 40"
+			angles        = "0 270 0"
+			model         = "models/workshop/weapons/c_models/c_battalion_buffpack/c_battalion_buffpack.mdl"
+			modelscale    = 1.5
+			skin          = bBlueTeam ? 1 : 0
+			startdisabled = 1
+			rendermode    = 1
+			renderamt     = 0
 		})
 		local hBannerBackup = TankExt.SpawnEntityFromTableFast("prop_dynamic", {
 			origin        = "-37 33 78"
@@ -129,7 +137,7 @@ TankExt.NewTankType("bannertank*", {
 
 		TankExt.SetParentArray([hPackBuff, hBannerBuff, hPackConch, hBannerConch, hPackBackup, hBannerBackup], self)
 
-		local bNoSelfEffect = sTankName.find("_noselfeffect") ? true : false
+		bNoSelfEffect  <- sTankName.find("_noselfeffect") ? true : false
 		iActiveBanners <- 0
 
 		function SetBanner(iAdd, iRemove)
@@ -150,9 +158,25 @@ TankExt.NewTankType("bannertank*", {
 					TankExt.DelayFunction(self, this, 0.22, @() Sound(bBlueTeam ? sSoundBlue : sSoundRed) )
 					TankExt.DelayFunction(self, this, BANNERTANK_ACTIVATE_DELAY, @() hBanner.AcceptInput("Enable", null, null, null) )
 				}
-				if(!(iActiveBanners & BANNER_BUFF) && iAdd & BANNER_BUFF) StartBanner(BANNERTANK_BUFF_SOUND_RED, BANNERTANK_BUFF_SOUND_BLUE, hBannerBuff)
-				if(!(iActiveBanners & BANNER_CONCH) && iAdd & BANNER_CONCH) StartBanner(BANNERTANK_CONCH_SOUND_RED, BANNERTANK_CONCH_SOUND_BLUE, hBannerConch), TankExt.DelayFunction(self, this, BANNERTANK_ACTIVATE_DELAY, function() { if(!bNoSelfEffect) SetPropFloat(self, "m_speed", GetPropFloat(self, "m_speed") * BANNERTANK_CONCH_SELF_SPEED_MULT) })
-				if(!(iActiveBanners & BANNER_BACKUP) && iAdd & BANNER_BACKUP) StartBanner(BANNERTANK_BACKUP_SOUND_RED, BANNERTANK_BACKUP_SOUND_BLUE, hBannerBackup)
+				if(!(iActiveBanners & BANNER_BUFF) && iAdd & BANNER_BUFF)
+				{
+					StartBanner(BANNERTANK_BUFF_SOUND_RED, BANNERTANK_BUFF_SOUND_BLUE, hBannerBuff)
+					hPackBuff.AcceptInput("Enable", null, null, null)
+					SetPropInt(hPackBuff, "m_nRenderFX", kRenderFxSolidFast)
+				}
+				if(!(iActiveBanners & BANNER_CONCH) && iAdd & BANNER_CONCH)
+				{
+					StartBanner(BANNERTANK_CONCH_SOUND_RED, BANNERTANK_CONCH_SOUND_BLUE, hBannerConch)
+					hPackConch.AcceptInput("Enable", null, null, null)
+					SetPropInt(hPackConch, "m_nRenderFX", kRenderFxSolidFast)
+					TankExt.DelayFunction(self, this, BANNERTANK_ACTIVATE_DELAY, function() { if(!bNoSelfEffect) SetPropFloat(self, "m_speed", GetPropFloat(self, "m_speed") * BANNERTANK_CONCH_SELF_SPEED_MULT) })
+				}
+				if(!(iActiveBanners & BANNER_BACKUP) && iAdd & BANNER_BACKUP)
+				{
+					StartBanner(BANNERTANK_BACKUP_SOUND_RED, BANNERTANK_BACKUP_SOUND_BLUE, hBannerBackup)
+					hPackBackup.AcceptInput("Enable", null, null, null)
+					SetPropInt(hPackBackup, "m_nRenderFX", kRenderFxSolidFast)
+				}
 				if(bAddedBanner) TankExt.DelayFunction(self, this, BANNERTANK_ACTIVATE_DELAY, function()
 				{
 					Sound(BANNERTANK_SOUND_FLAG)
@@ -161,9 +185,26 @@ TankExt.NewTankType("bannertank*", {
 			}
 			if(iRemove)
 			{
-				if(iActiveBanners & BANNER_BUFF && iRemove & BANNER_BUFF) hBannerBuff.AcceptInput("Disable", null, null, null)
-				if(iActiveBanners & BANNER_CONCH && iRemove & BANNER_CONCH) hBannerConch.AcceptInput("Disable", null, null, null), (!bNoSelfEffect ? SetPropFloat(self, "m_speed", GetPropFloat(self, "m_speed") / BANNERTANK_CONCH_SELF_SPEED_MULT) : null)
-				if(iActiveBanners & BANNER_BACKUP && iRemove & BANNER_BACKUP) hBannerBackup.AcceptInput("Disable", null, null, null)
+				if(iActiveBanners & BANNER_BUFF && iRemove & BANNER_BUFF)
+				{
+					printl((GetPropInt(hPackBuff, "m_clrRender") >> 24) & 0xFF)
+					hBannerBuff.AcceptInput("Disable", null, null, null)
+					SetPropInt(hPackBuff, "m_nRenderFX", kRenderFxFadeFast)
+					TankExt.DelayFunction(self, this, 0.15, function() { hPackBuff.AcceptInput("Disable", null, null, null) })
+				}
+				if(iActiveBanners & BANNER_CONCH && iRemove & BANNER_CONCH)
+				{
+					hBannerConch.AcceptInput("Disable", null, null, null)
+					SetPropInt(hPackConch, "m_nRenderFX", kRenderFxFadeFast)
+					TankExt.DelayFunction(self, this, 0.15, function() { hPackConch.AcceptInput("Disable", null, null, null) })
+					if(!bNoSelfEffect) SetPropFloat(self, "m_speed", GetPropFloat(self, "m_speed") / BANNERTANK_CONCH_SELF_SPEED_MULT)
+				}
+				if(iActiveBanners & BANNER_BACKUP && iRemove & BANNER_BACKUP)
+				{
+					hBannerBackup.AcceptInput("Disable", null, null, null)
+					SetPropInt(hPackBackup, "m_nRenderFX", kRenderFxFadeFast)
+					TankExt.DelayFunction(self, this, 0.15, function() { hPackBackup.AcceptInput("Disable", null, null, null) })
+				}
 				iActiveBanners = iActiveBanners & ~iRemove
 			}
 		}
