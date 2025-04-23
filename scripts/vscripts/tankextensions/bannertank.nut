@@ -133,7 +133,6 @@ TankExt.NewTankType("bannertank*", {
 		bNoSelfEffect = sTankName.find("_noselfeffect") ? true : false
 		iActiveBanners <- 0
 		hSprites <- []
-		iCurrentOffset <- 0
 
 		function AddSprite(iBuffType)
 		{
