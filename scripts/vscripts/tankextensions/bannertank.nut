@@ -47,7 +47,7 @@ local BANNER_BACKUP = 1 << 3
 				if(hEnt.GetClassname() == "tank_boss" && hAttacker.GetTeam() != hVictim.GetTeam())
 				{
 					local BannerScope = TankExt.GetMultiScopeTable(hEnt.GetScriptScope(), "bannertank")
-					if(BannerScope && BannerScope.iActiveBanners & iBannerType)
+					if(BannerScope && !BannerScope.bNoSelfEffect && (BannerScope.iActiveBanners & iBannerType))
 						return true
 					else
 						return false
@@ -129,8 +129,112 @@ TankExt.NewTankType("bannertank*", {
 
 		TankExt.SetParentArray([hPackBuff, hBannerBuff, hPackConch, hBannerConch, hPackBackup, hBannerBackup], self)
 
-		local bNoSelfEffect = sTankName.find("_noselfeffect") ? true : false
+		bNoSelfEffect <- false
+		bNoSelfEffect = sTankName.find("_noselfeffect") ? true : false
 		iActiveBanners <- 0
+		hSprites <- []
+		iCurrentOffset <- 0
+
+		function AddSprite(iBuffType)
+		{
+			local hName = ""
+			switch (iBuffType)
+			{
+				case BANNER_BUFF:
+				{
+					hName = "effects/soldier_buff_offense_blue.vmt"
+					break;
+				}
+
+				case BANNER_BACKUP:
+				{
+					hName = "effects/soldier_buff_defense_blue.vmt"
+					break;
+				}
+
+				case BANNER_CONCH:
+				{
+					hName = "effects/soldier_buff_healonhit_blue.vmt"
+					break;
+				}
+			}
+
+			local hSprite = SpawnEntityFromTable("env_sprite", {
+				origin = Vector(0, 0, 200)
+				model = hName
+				scale = 0.35
+				rendermode = 9
+			})
+			hSprites.append(hSprite)
+			TankExt.SetParentArray([hSprite], self)
+			UpdateSprites()
+		}
+
+		function RemoveSprite(iBuffType)
+		{
+			foreach (hSprite in hSprites)
+			{
+				local sModel = hSprite.GetModelName()
+				local bFound = false
+				switch (iBuffType)
+				{
+					case BANNER_BUFF:
+					{
+						if (sModel == "effects/soldier_buff_offense_blue.vmt")
+						{
+							bFound = true
+						}
+						break;
+					}
+
+					case BANNER_BACKUP:
+					{
+						if (sModel == "effects/soldier_buff_defense_blue.vmt")
+						{
+							bFound = true
+						}
+						break;
+					}
+
+					case BANNER_CONCH:
+					{
+						if (sModel == "effects/soldier_buff_healonhit_blue.vmt")
+						{
+							bFound = true
+						}
+						break;
+					}
+				}
+
+				if (bFound)
+				{
+					local iIndex = hSprites.find(hSprite)
+					hSprites.remove(iIndex)
+					hSprite.Kill()
+					UpdateSprites()
+				}
+			}
+		}
+
+		function UpdateSprites()
+		{
+			if (hSprites.len() == 0)
+			{
+				return
+			}
+
+			local vecOverheadPosition = self.GetOrigin() + Vector(0, 0, 200)
+			local flGap = 40.0
+			local flFirstOffset = -flGap * 0.5 * (hSprites.len() - 1)
+			local iValidSpriteIndex = 0
+			foreach (hSprite in hSprites)
+			{
+				local flCurrentOffset = flFirstOffset + flGap * iValidSpriteIndex
+				local vecOffset = vecOverheadPosition + Vector(0, flCurrentOffset, 0)
+				hSprite.SetAbsOrigin(vecOffset)
+				iValidSpriteIndex++
+			}
+		}
 
 		function SetBanner(iAdd, iRemove)
 		{
@@ -144,15 +248,30 @@ TankExt.NewTankType("bannertank*", {
 			if(iAdd)
 			{
 				local bAddedBanner = false
-				local StartBanner = function(sSoundRed, sSoundBlue, hBanner)
+
+				local StartBanner = function(sSoundRed, sSoundBlue, hBanner, hBannerType)
 				{
 					bAddedBanner = true
 					TankExt.DelayFunction(self, this, 0.22, @() Sound(bBlueTeam ? sSoundBlue : sSoundRed) )
-					TankExt.DelayFunction(self, this, BANNERTANK_ACTIVATE_DELAY, @() hBanner.AcceptInput("Enable", null, null, null) )
+					TankExt.DelayFunction(self, this, BANNERTANK_ACTIVATE_DELAY, function()
+					{
+						hBanner.AcceptInput("Enable", null, null, null)
+						AddSprite(hBannerType)
+					})
 				}
-				if(!(iActiveBanners & BANNER_BUFF) && iAdd & BANNER_BUFF) StartBanner(BANNERTANK_BUFF_SOUND_RED, BANNERTANK_BUFF_SOUND_BLUE, hBannerBuff)
-				if(!(iActiveBanners & BANNER_CONCH) && iAdd & BANNER_CONCH) StartBanner(BANNERTANK_CONCH_SOUND_RED, BANNERTANK_CONCH_SOUND_BLUE, hBannerConch), TankExt.DelayFunction(self, this, BANNERTANK_ACTIVATE_DELAY, function() { if(!bNoSelfEffect) SetPropFloat(self, "m_speed", GetPropFloat(self, "m_speed") * BANNERTANK_CONCH_SELF_SPEED_MULT) })
-				if(!(iActiveBanners & BANNER_BACKUP) && iAdd & BANNER_BACKUP) StartBanner(BANNERTANK_BACKUP_SOUND_RED, BANNERTANK_BACKUP_SOUND_BLUE, hBannerBackup)
+
+				if(!(iActiveBanners & BANNER_BUFF) && iAdd & BANNER_BUFF)
+				{
+					StartBanner(BANNERTANK_BUFF_SOUND_RED, BANNERTANK_BUFF_SOUND_BLUE, hBannerBuff, BANNER_BUFF)
+				}
+				if(!(iActiveBanners & BANNER_CONCH) && iAdd & BANNER_CONCH)
+				{
+					StartBanner(BANNERTANK_CONCH_SOUND_RED, BANNERTANK_CONCH_SOUND_BLUE, hBannerConch, BANNER_CONCH), TankExt.DelayFunction(self, this, BANNERTANK_ACTIVATE_DELAY, function() { if(!bNoSelfEffect) SetPropFloat(self, "m_speed", GetPropFloat(self, "m_speed") * BANNERTANK_CONCH_SELF_SPEED_MULT) })
+				}
+				if(!(iActiveBanners & BANNER_BACKUP) && iAdd & BANNER_BACKUP)
+				{
+					StartBanner(BANNERTANK_BACKUP_SOUND_RED, BANNERTANK_BACKUP_SOUND_BLUE, hBannerBackup, BANNER_BACKUP)
+				}
 				if(bAddedBanner) TankExt.DelayFunction(self, this, BANNERTANK_ACTIVATE_DELAY, function()
 				{
 					Sound(BANNERTANK_SOUND_FLAG)
@@ -161,9 +280,21 @@ TankExt.NewTankType("bannertank*", {
 			}
 			if(iRemove)
 			{
-				if(iActiveBanners & BANNER_BUFF && iRemove & BANNER_BUFF) hBannerBuff.AcceptInput("Disable", null, null, null)
-				if(iActiveBanners & BANNER_CONCH && iRemove & BANNER_CONCH) hBannerConch.AcceptInput("Disable", null, null, null), (!bNoSelfEffect ? SetPropFloat(self, "m_speed", GetPropFloat(self, "m_speed") / BANNERTANK_CONCH_SELF_SPEED_MULT) : null)
-				if(iActiveBanners & BANNER_BACKUP && iRemove & BANNER_BACKUP) hBannerBackup.AcceptInput("Disable", null, null, null)
+				if(iActiveBanners & BANNER_BUFF && iRemove & BANNER_BUFF)
+				{
+					hBannerBuff.AcceptInput("Disable", null, null, null)
+					RemoveSprite(BANNER_BUFF)
+				}
+				if(iActiveBanners & BANNER_CONCH && iRemove & BANNER_CONCH)
+				{
+					hBannerConch.AcceptInput("Disable", null, null, null), (!bNoSelfEffect ? SetPropFloat(self, "m_speed", GetPropFloat(self, "m_speed") / BANNERTANK_CONCH_SELF_SPEED_MULT) : null)
+					RemoveSprite(BANNER_CONCH)
+				}
+				if(iActiveBanners & BANNER_BACKUP && iRemove & BANNER_BACKUP)
+				{
+					hBannerBackup.AcceptInput("Disable", null, null, null)
+					RemoveSprite(BANNER_BACKUP)
+				}
 				iActiveBanners = iActiveBanners & ~iRemove
 			}
 		}
