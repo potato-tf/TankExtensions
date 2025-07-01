@@ -74,6 +74,6 @@ jobs:
               rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/ubertank/materials/ ${a[1]}:/var/tf2testingserver/tf/download/materials/
 
               rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/vactank/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
-          } &
+          }
           done
           wait
