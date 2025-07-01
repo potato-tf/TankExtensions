@@ -3,7 +3,7 @@ local COMBATTANK_VALUES_TABLE = {
 	COMBATTANK_FIREBALL_BURN_DURATION      = Convars.GetFloat("tf_fireball_burn_duration") // 2
 	COMBATTANK_FIREBALL_CONE_RADIUS        = 15
 	COMBATTANK_FIREBALL_DAMAGE             = Convars.GetFloat("tf_fireball_damage") // 25
-	COMBATTANK_FIREBALL_MODEL              = "models/bots/boss_bot/combat_tank/combat_tank_fireball.mdl"
+	COMBATTANK_FIREBALL_MODEL              = "models/bots/boss_bot/combat_tank_mk2/mk2_fireball.mdl"
 	COMBATTANK_FIREBALL_RECHARGE_TIME      = 0.8
 	COMBATTANK_FIREBALL_SND_FIRE           = "Weapon_DragonsFury.Single"
 }
@@ -95,6 +95,7 @@ TankExt.CombatTankWeapons["fireball"] <- {
 		hFireball.SetPlaybackRate(1.0)
 		hFireball.DispatchSpawn()
 		hFireball.SetSequence(hFireball.LookupSequence("idle"))
+		hFireball.SetAbsAngles(QAngle(0, 90, 0))
 		return hFireball
 	}
 	function OnSpawn()

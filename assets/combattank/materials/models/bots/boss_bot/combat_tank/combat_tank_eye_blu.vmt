@@ -1,8 +1,0 @@
-"VertexLitGeneric"
-{
-	"$baseTexture" "models/bots/boss_bot/combat_tank/combat_tank_eye_blu"
-	$selfillum 1
-	$selfillummask "models/bots/boss_bot/combat_tank/combat_tank_eye_illum"
-}
-
-

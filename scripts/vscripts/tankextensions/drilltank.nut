@@ -52,11 +52,6 @@ TankExt.NewTankType("drilltank", {
 			filter_type = RECIPIENT_FILTER_GLOBAL
 		})
 
-		local hBomb
-		for(local hChild = self.FirstMoveChild(); hChild; hChild = hChild.NextMovePeer())
-			if(hChild.GetModelName().tolower().find("bomb_mechanism"))
-				hBomb = hChild
-
 		local bFinalSkin = self.GetSkin() == 1
 		local bBlueTeam  = self.GetTeam() == TF_TEAM_BLUE
 		local iSkin      = bBlueTeam ? bFinalSkin ? 2 : 0 : bFinalSkin ? 6 : 4
@@ -95,7 +90,7 @@ TankExt.NewTankType("drilltank", {
 			if(iHealth / iMaxHealth.tofloat() <= 0.5) { if(iDrillSkin != iSkin + 1) hModel.SetSkin(iSkin + 1) }
 			else if(iDrillSkin != iSkin) hModel.SetSkin(iSkin)
 
-			if(!bDeploying && hBomb && hBomb.GetSequenceName(hBomb.GetSequence()) == "deploy")
+			if(!bDeploying && self.GetSequenceName(self.GetSequence()) == "deploy")
 			{
 				bDeploying = true
 				hModel.AcceptInput("SetAnimation", "drill_deploy", null, null)

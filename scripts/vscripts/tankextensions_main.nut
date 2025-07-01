@@ -1,5 +1,5 @@
-::ROOT <- getroottable()
-::CONST <- getconsttable()
+::ROOT        <- getroottable()
+::CONST       <- getconsttable()
 ::MAX_CLIENTS <- MaxClients().tointeger()
 
 if(!("ConstantNamingConvention" in ROOT))
@@ -7,7 +7,7 @@ if(!("ConstantNamingConvention" in ROOT))
 		foreach(k, v in b)
 		{
 			CONST[k] <- v != null ? v : 0
-			ROOT[k] <- v != null ? v : 0
+			ROOT[k]  <- v != null ? v : 0
 		}
 
 foreach(k, v in ::NetProps.getclass())
@@ -424,13 +424,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		foreach(array in QueuedTankIcons)
 			AddTankIcon(array[0], array[1], null, array[3])
 		QueuedTankIcons.clear()
-
-		IterateIcons(function(iIcon, sNames, sCounts, sFlags)
-		{
-			local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIcon)
-			if(sIconName == "tank")
-				CurrentTankIconCount = GetPropIntArray(hObjectiveResource, sCounts, iIcon)
-		})
 	}
 	function OnGameEvent_mvm_wave_complete(params)
 	{
@@ -438,33 +431,30 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		CustomTankIcons.clear()
 		CustomTankIconsWild.clear()
 	}
-	function OnGameEvent_mvm_tank_destroyed_by_players(_)
+	function OnGameEvent_npc_hurt(params)
 	{
-		for(local hTank; hTank = FindByClassname(hTank, "tank_boss");)
-			if(!(hTank.GetEFlags() & EFL_KILLME) && hTank.GetHealth() <= 0)
+		local hEnt = EntIndexToHScript(params.entindex)
+		if(params.damageamount < params.health || hEnt.GetClassname() != "tank_boss") return
+
+		local sTankName = hEnt.GetName().tolower()
+
+		local TankIcon
+		if(sTankName in CustomTankIcons) TankIcon = CustomTankIcons[sTankName]
+		else foreach(sTankIcon, Array in CustomTankIconsWild) if(startswith(sTankName, sTankIcon)) TankIcon = Array
+
+		if(TankIcon && TankIcon[0] > 0)
+		{
+			TankIcon[0]--
+			local sTankIcon = TankIcon[1]
+			IterateIcons(function(iIcon, sNames, sCounts, sFlags)
 			{
-				local sTankName = hTank.GetName().tolower()
-
-				local TankIcon
-				if(sTankName in CustomTankIcons) TankIcon = CustomTankIcons[sTankName]
-				else foreach(sTankIcon, Array in CustomTankIconsWild) if(startswith(sTankName, sTankIcon)) TankIcon = Array
-
-				if(TankIcon && TankIcon[0] > 0)
-				{
-					TankIcon[0]--
-
-					local sTankIcon = TankIcon[1]
-					IterateIcons(function(iIcon, sNames, sCounts, sFlags)
-					{
-						local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIcon)
-						if(sIconName == "tank")
-							EntFire("bignet", "RunScriptCode", format("SetPropIntArray(FindByClassname(null, `tf_objective_resource`), `%s`, TankExt.CurrentTankIconCount, %i)", sCounts, iIcon), -1)
-						else if(sIconName == sTankIcon)
-							SetPropIntArray(hObjectiveResource, sCounts, GetPropIntArray(hObjectiveResource, sCounts, iIcon) - 1, iIcon)
-					})
-				}
-				else CurrentTankIconCount--
-			}
+				local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIcon)
+				if(sIconName == "tank")
+					SetPropIntArray(hObjectiveResource, sCounts, GetPropIntArray(hObjectiveResource, sCounts, iIcon) + 1, iIcon)
+				else if(sIconName == sTankIcon)
+					SetPropIntArray(hObjectiveResource, sCounts, GetPropIntArray(hObjectiveResource, sCounts, iIcon) - 1, iIcon)
+			})
+		}
 	}
 
 	ValueOverrides  = {}
@@ -839,33 +829,67 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		{
 			Add("NoGravity")
 			hTank.SetAbsAngles(QAngle(0, hTank.GetAbsAngles().y, 0))
-			local flSpeed = GetPropFloat(hTank, "m_speed")
-			local hTrackTrain = SpawnEntityFromTable("func_tracktrain", {
-				origin     = hTank.GetOrigin()
-				speed      = flSpeed
-				startspeed = flSpeed
-				target     = hPath.GetName()
-			})
-			local flLastSpeed = flSpeed
+			local vecFakeOrigin = hTank.GetOrigin()
+			local hGoal         = GetPropEntity(hPath, "m_pnext")
+			local Players       = []
+
+			for(local i = 1; i <= MAX_CLIENTS; i++)
+			{
+				local hPlayer = PlayerInstanceFromIndex(i)
+				if(hPlayer) Players.append(hPlayer)
+			}
+
+			hTank_scope.bNoGravity <- true
 			hTank_scope.NoGravityThink <- function()
 			{
-				local vecTrackTrain = hTrackTrain.GetOrigin()
-				self.SetAbsOrigin(vecTrackTrain)
-				self.GetLocomotionInterface().Reset()
-
-				local flSpeed = GetPropFloat(self, "m_speed")
-				if(flSpeed <= 0) flSpeed = 0.0001
-				if(flSpeed != flLastSpeed)
+				if(bNoGravity)
 				{
-					flLastSpeed = flSpeed
-					SetPropFloat(hTrackTrain, "m_flSpeed", flSpeed)
+					if(hGoal && hGoal.IsValid())
+					{
+						local vecGoal      = hGoal.GetOrigin()
+						local flDistSqr    = (vecFakeOrigin - vecGoal).LengthSqr()
+						local flSpeedDelta = GetPropFloat(self, "m_speed") * FrameTime()
+						if(flSpeedDelta < 0) flSpeedDelta = 0
+						local vecDifference = vecFakeOrigin
+						if(flDistSqr < flSpeedDelta * flSpeedDelta)
+						{
+							vecFakeOrigin = vecGoal
+							hGoal         = GetPropEntity(hGoal, "m_pnext")
+						}
+						else
+						{
+							local vecDirection = vecGoal - vecFakeOrigin
+							vecDirection.Norm()
+							vecDirection *= flSpeedDelta
+							vecFakeOrigin += vecDirection
+						}
+
+						vecDifference -= vecFakeOrigin
+						vecDifference *= -1
+						if(vecDifference.z >= 0)
+						{
+							local vecMins = self.GetBoundingMins()
+							local vecMaxs = self.GetBoundingMaxs()
+							foreach(hPlayer in Players)
+								if(hPlayer.IsValid() && hPlayer.IsAlive())
+								{
+									local vecPlayer = hPlayer.GetOrigin()
+									if(TankExt.IntersectionBoxBox(vecFakeOrigin, vecMins, vecMaxs, vecPlayer, hPlayer.GetPlayerMins(), hPlayer.GetPlayerMaxs()))
+										hPlayer.SetAbsOrigin(vecPlayer + Vector(0, 0, vecDifference.z))
+								}
+						}
+					}
+					self.SetAbsOrigin(vecFakeOrigin)
+					self.GetLocomotionInterface().Reset()
+				}
+				else
+				{
+					vecFakeOrigin = self.GetOrigin()
+					if((vecFakeOrigin - hGoal.GetOrigin()).Length2D() < 20.0)
+						hGoal = GetPropEntity(hGoal, "m_pnext")
 				}
 			}
 			TankExt.AddThinkToEnt(hTank, "NoGravityThink")
-			hTank_scope.MultiOnDeath.append(function()
-			{
-				if(hTrackTrain && hTrackTrain.IsValid()) hTrackTrain.Kill()
-			})
 		}
 	}
 	function ApplyTankTableByName(hTank, hPath, sTankName)
@@ -942,7 +966,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		}
 	}
 
-	CurrentTankIconCount = 0
 	QueuedTankIcons      = []
 	CustomTankIcons      = {}
 	CustomTankIconsWild  = {}
@@ -1635,8 +1658,8 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				hTank_scope.ThinkTable <- {}
 				hTank_scope.MultiThink <- function()
 				{
-					foreach(sName, sFunction in ThinkTable)
-						sFunction.call(this)
+					foreach(sName, func in ThinkTable)
+						func()
 					return -1
 				}
 				AddThink(hTank, "MultiThink")
@@ -1651,7 +1674,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			else if(sFunction in ROOT)
 				Function = ROOT[sFunction]
 
-			hTank_scope.ThinkTable[sFunction] <- Function
+			hTank_scope.ThinkTable[sFunction] <- Function.bindenv(hTank_scope)
 		}
 		else
 			AddThink(hEntity, sFunction)

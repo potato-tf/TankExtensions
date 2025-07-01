@@ -13,16 +13,9 @@ TankExt.PrecacheSound(PARATANK_SND_PARACHUTE_OPEN)
 TankExt.PrecacheSound(PARATANK_SND_PARACHUTE_CLOSE)
 
 TankExt.NewTankType("paratank", {
+	NoGravity = 1
 	function OnSpawn()
 	{
-		local flSpeed = GetPropFloat(self, "m_speed")
-		hTrackTrain <- SpawnEntityFromTable("func_tracktrain", {
-			origin     = self.GetOrigin()
-			speed      = flSpeed
-			startspeed = flSpeed
-			target     = hTankPath.GetName()
-		})
-
 		local hParachute = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = PARATANK_PARACHUTE_MODEL })
 		hParachute.DisableDraw()
 		TankExt.SetParentArray([hParachute], self)
@@ -32,28 +25,15 @@ TankExt.NewTankType("paratank", {
 			if(hChild.GetModelName().find("track_"))
 				hTracks.append(hChild)
 
-		local flLastSpeed      = flSpeed
 		local bParachuteActive = false
 		local hTank_scope      = self.GetScriptScope()
 		local iSeqRetract      = hParachute.LookupSequence("retract")
+		hTank_scope.bNoGravity = false
 		function Think()
 		{
-			local vecTrackTrain = hTrackTrain.GetOrigin()
-
-			if(!bParachuteActive)
-			{
-				hTrackTrain.SetAbsOrigin(vecOrigin)
-				local hNextPath = GetPropEntity(GetPropEntity(hTrackTrain, "m_ppath"), "m_pnext")
-				if(hNextPath && (vecOrigin - hNextPath.GetOrigin()).Length2DSqr() <= 256) // sqr(16)
-					SetPropEntity(hTrackTrain, "m_ppath", hNextPath)
-			}
-			else
-			{
-				self.SetAbsOrigin(vecTrackTrain)
-				self.GetLocomotionInterface().Reset()
+			if(bParachuteActive)
 				foreach(hTrack in hTracks)
 					hTrack.SetPlaybackRate(0)
-			}
 
 			local Trace = {
 				start  = vecOrigin
@@ -64,7 +44,8 @@ TankExt.NewTankType("paratank", {
 			TraceLineEx(Trace)
 			if(!Trace.hit && !bParachuteActive)
 			{
-				bParachuteActive = true
+				hTank_scope.bNoGravity = true
+				bParachuteActive       = true
 				hParachute.EnableDraw()
 				hParachute.AcceptInput("SetAnimation", "deploy", null, null)
 				self.SetAbsAngles(QAngle(0, self.GetAbsAngles().y, 0))
@@ -83,7 +64,8 @@ TankExt.NewTankType("paratank", {
 			}
 			else if(Trace.hit && bParachuteActive)
 			{
-				bParachuteActive = false
+				hTank_scope.bNoGravity = false
+				bParachuteActive       = false
 				hParachute.AcceptInput("SetAnimation", "retract", null, null)
 				EmitSoundEx({
 					sound_name  = "EngineLoopSound" in hTank_scope ? hTank_scope.EngineLoopSound : "MVM.TankEngineLoop"
@@ -99,18 +81,6 @@ TankExt.NewTankType("paratank", {
 				})
 			}
 			if(hParachute.GetSequence() == iSeqRetract && hParachute.GetCycle() == 1) hParachute.DisableDraw()
-
-			local flSpeed = GetPropFloat(self, "m_speed")
-			if(flSpeed == 0) flSpeed = 0.0001
-			if(flSpeed != flLastSpeed)
-			{
-				flLastSpeed = flSpeed
-				SetPropFloat(hTrackTrain, "m_flSpeed", flSpeed)
-			}
 		}
-	}
-	function OnDeath()
-	{
-		if(hTrackTrain && hTrackTrain.IsValid()) hTrackTrain.Destroy()
 	}
 })

@@ -54,7 +54,7 @@ local BANNER_BACKUP = 1 << 3
 				}
 			}
 			if(BannerCheck(hAttacker, BANNER_BUFF) && !(params.damage_type & DMG_CRITICAL)) params.crit_type = CRIT_MINI
-			if(BannerCheck(hAttacker, BANNER_CONCH)) // cannot get the tank entity in player_hurt
+			if(hVictim.IsPlayer() && BannerCheck(hAttacker, BANNER_CONCH)) // cannot get the tank entity in player_hurt
 			{
 				local flAmount = params.damage * BANNERTANK_CONCH_SELF_HEAL_MULT
 				if(params.damage_type & DMG_CRITICAL) flAmount * 3

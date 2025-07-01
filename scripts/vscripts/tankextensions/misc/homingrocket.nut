@@ -83,7 +83,7 @@ function HomingThink()
 		InitializeHoming()
 	}
 
-	if(!Target || !Target.IsAlive() || Target.GetTeam() == self.GetTeam() || TankExt.IsPlayerStealthedOrDisguised(Target) || (MaxAimError == -1 ? false : !IsEntityInAim(Target))) FindTarget()
+	if(!Target || !Target.IsValid() || !Target.IsAlive() || Target.GetTeam() == self.GetTeam() || TankExt.IsPlayerStealthedOrDisguised(Target) || (MaxAimError == -1 ? false : !IsEntityInAim(Target))) FindTarget()
 	else if(flTime >= AimTimeStart && (AimTime == -1 || flTime < AimTime))
 	{
 		local vecTarget = Target.GetCenter() - vecOrigin

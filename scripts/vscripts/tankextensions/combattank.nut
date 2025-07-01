@@ -17,9 +17,7 @@ local COMBATTANK_VALUES_TABLE = {
 	COMBATTANK_ROTATE_SPEED_DEFAULT = 0.8
 	COMBATTANK_POSE_YAW             = 2
 	COMBATTANK_POSE_PITCH           = 1
-	COMBATTANK_MODEL                = "models/bots/boss_bot/combat_tank/combat_tank.mdl"
-	COMBATTANK_TRACK_L_BLUE         = "models/bots/boss_bot/tank_track_l.mdl"
-	COMBATTANK_TRACK_R_BLUE         = "models/bots/boss_bot/tank_track_r.mdl"
+	COMBATTANK_MODEL                = "models/bots/boss_bot/combat_tank_mk2/mk2_combat_tank_chassis.mdl"
 	COMBATTANK_TRACK_L_RED          = "models/bots/boss_bot/tankred_track_l.mdl"
 	COMBATTANK_TRACK_R_RED          = "models/bots/boss_bot/tankred_track_r.mdl"
 	COMBATTANK_MAX_RANGE            = 1400
@@ -29,8 +27,6 @@ foreach(k,v in COMBATTANK_VALUES_TABLE)
 		ROOT[k] <- v
 
 PrecacheModel(COMBATTANK_MODEL)
-PrecacheModel(COMBATTANK_TRACK_L_BLUE)
-PrecacheModel(COMBATTANK_TRACK_R_BLUE)
 PrecacheModel(COMBATTANK_TRACK_L_RED)
 PrecacheModel(COMBATTANK_TRACK_R_RED)
 TankExt.PrecacheSound(COMBATTANK_SND_ROTATE)
@@ -100,6 +96,7 @@ TankExt.NewTankType("combattank*", {
 		if(iParamsLength < 3) sParams.append(sParams[1])
 
 		if(sParams[0].find("_red")) self.SetTeam(TF_TEAM_RED) // legacy, can append $teamnum|2 to the tank name instead
+		self.SetBodygroup(self.FindBodygroupByName("bomb"), sParams[0].find("_bomb") ? 0 : 1)
 
 		hBeam    <- null
 		hBeamEnd <- null
@@ -115,6 +112,10 @@ TankExt.NewTankType("combattank*", {
 			SetPropEntityArray(hBeam, "m_hAttachEntity", hBeamEnd, 1)
 		}
 
+		if(!bBlueTeam) TankExt.SetTankModel(self, {
+			LeftTrack  = COMBATTANK_TRACK_L_RED
+			RightTrack = COMBATTANK_TRACK_R_RED
+		})
 		self.SetSkin(bBlueTeam ? bFinalSkin ? 3 : 2 : bFinalSkin ? 1 : 0)
 		for(local i = 1; i <= 2; i++)
 			if(sParams[i] in TankExt.CombatTankWeapons)
@@ -124,7 +125,7 @@ TankExt.NewTankType("combattank*", {
 
 				if("Model" in WeaponTable)
 				{
-					hWeapon = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = WeaponTable.Model, defaultanim = ("DefaultAnim" in WeaponTable) ? WeaponTable.DefaultAnim : "" })
+					hWeapon = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = WeaponTable.Model, angles = "0 90 0", defaultanim = ("DefaultAnim" in WeaponTable) ? WeaponTable.DefaultAnim : "" })
 					hWeapon.SetSkin(bBlueTeam ? 1 : 0)
 					TankExt.SetParentArray([hWeapon], self, i == 1 ? "weapon_r" : "weapon_l")
 				}
@@ -167,7 +168,7 @@ TankExt.NewTankType("combattank*", {
 					LastSkins[self] <- self.GetSkin()
 					self.SetSkin(bBlueTeam ? 5 : 4)
 					for(local hChild = self.FirstMoveChild(); hChild; hChild = hChild.NextMovePeer())
-						if(hChild.GetModelName().tolower().find("/combat_tank/"))
+						if(hChild.GetModelName().tolower().find("/combat_tank_mk2/"))
 						{
 							LastSkins[hChild] <- hChild.GetSkin()
 							hChild.SetSkin(bBlueTeam ? 3 : 2)
@@ -197,6 +198,7 @@ TankExt.NewTankType("combattank*", {
 		local CombatScope = this
 		self.GetScriptScope().ToggleUber <- @() CombatScope.ToggleUber()
 
+		bLock <- false
 		function Think()
 		{
 			foreach(sSound, Table in SoundQueue)
@@ -210,47 +212,48 @@ TankExt.NewTankType("combattank*", {
 				foreach(hEnt, iSkin in LastSkins) if(hEnt.IsValid()) hEnt.AcceptInput("Color", sColor, null, null)
 			}
 
-			vecMount  = self.GetAttachmentOrigin(self.LookupAttachment("weapon_l"))
-			vecTarget = null
-			hTarget   = null
-			flDist    = COMBATTANK_MAX_RANGE
-
-			local hForceTarget = FindByNameNearest("combattank_target", vecMount, flDist)
-			if(hForceTarget)
+			vecMount = self.GetAttachmentOrigin(self.LookupAttachment("weapon_l"))
+			if(!bLock)
 			{
-				local vecEntCenter = hForceTarget.GetCenter()
-				if(TraceLine(vecEntCenter, vecMount, self) == 1)
+				hTarget   = null
+				vecTarget = null
+				flDist    = COMBATTANK_MAX_RANGE
+
+				local hForceTarget = FindByNameNearest("combattank_target", vecMount, flDist)
+				if(hForceTarget)
 				{
+					local vecEntCenter = hForceTarget.GetCenter()
 					hTarget   = hForceTarget
 					vecTarget = vecEntCenter
 					flDist    = (vecEntCenter - vecMount).Length()
 				}
-			}
-			else foreach(sClassname in [ "player", "obj_sentrygun", "obj_dispenser", "obj_teleporter", "tank_boss", "merasmus", "headless_hatman", "eyeball_boss", "tf_zombie" ])
-			{
-				for(local hEnt; hEnt = FindByClassnameWithin(hEnt, sClassname, vecMount, flDist);)
+				else foreach(sClassname in [ "player", "obj_sentrygun", "obj_dispenser", "obj_teleporter", "tank_boss", "merasmus", "headless_hatman", "eyeball_boss", "tf_zombie" ])
 				{
-					local vecEntCenter = hEnt.GetCenter()
-					local bHasEyes     = "EyePosition" in hEnt
-					local vecEntEye    = bHasEyes ? hEnt.EyePosition() : vecEntCenter
-					local bCenterTrace = TraceLine(vecEntCenter, vecMount, self) == 1
-					local bEyeTrace    = bHasEyes ? TraceLine(vecEntEye, vecMount, self) == 1 : bCenterTrace
-					if
-					(
-						bEyeTrace &&
-						hEnt.IsAlive() &&
-						hEnt.GetTeam() != iTeamNum &&
-						!(hEnt.GetFlags() & FL_NOTARGET) &&
-						!TankExt.IsPlayerStealthedOrDisguised(hEnt)
-					)
+					for(local hEnt; hEnt = FindByClassnameWithin(hEnt, sClassname, vecMount, flDist);)
 					{
-						hTarget   = hEnt
-						vecTarget = bCenterTrace ? vecEntCenter : vecEntEye
-						flDist    = (vecEntCenter - vecMount).Length()
+						local vecEntCenter = hEnt.GetCenter()
+						local bHasEyes     = "EyePosition" in hEnt
+						local vecEntEye    = bHasEyes ? hEnt.EyePosition() : vecEntCenter
+						local bCenterTrace = TraceLine(vecEntCenter, vecMount, self) == 1
+						local bEyeTrace    = bHasEyes ? TraceLine(vecEntEye, vecMount, self) == 1 : bCenterTrace
+						if
+						(
+							bEyeTrace &&
+							hEnt.IsAlive() &&
+							hEnt.GetTeam() != iTeamNum &&
+							!(hEnt.GetFlags() & FL_NOTARGET) &&
+							!TankExt.IsPlayerStealthedOrDisguised(hEnt)
+						)
+						{
+							hTarget   = hEnt
+							vecTarget = bCenterTrace ? vecEntCenter : vecEntEye
+							flDist    = (vecEntCenter - vecMount).Length()
+						}
 					}
+					if(hTarget) break
 				}
-				if(hTarget) break
 			}
+			if(hTarget && !hTarget.IsValid()) hTarget = null
 
 			if(hTarget != hTargetLast)
 			{
@@ -274,10 +277,9 @@ TankExt.NewTankType("combattank*", {
 			}
 
 			local vecLaser = self.GetAttachmentOrigin(iLaser)
-			local angLaser = self.GetAttachmentAngles(iLaser)
 			LaserTrace = {
 				start  = vecLaser
-				end    = vecLaser + angLaser.Forward() * 8192
+				end    = vecLaser + RotatePosition(Vector(), angRotation, (angCurrent * -1).Forward()) * 8192
 				ignore = self
 				mask   = MASK_SHOT_HULL
 			}
@@ -291,7 +293,7 @@ TankExt.NewTankType("combattank*", {
 				local angToTarget = TankExt.VectorAngles(RotatePosition(Vector(), angRotation * -1, vecTarget - vecMount))
 
 				angToTarget.y = 360.0 - angToTarget.y
-				angToTarget.x = -TankExt.Clamp(angToTarget.x - (angToTarget.x > 180 ? 360 : 0), -14, 14)
+				angToTarget.x = -TankExt.Clamp(angToTarget.x - (angToTarget.x > 180 ? 360 : 0), -55, 35)
 				angGoal = angToTarget
 				if("enthit" in LaserTrace && LaserTrace.enthit == hTarget)
 				{
@@ -332,7 +334,7 @@ TankExt.NewTankType("combattank*", {
 				if(iDir == 1 ? angCurrent.x > angGoal.x : angCurrent.x < angGoal.x)
 					angCurrent.x = angGoal.x
 			}
-			self.SetPoseParameter(COMBATTANK_POSE_PITCH, angCurrent.x)
+			self.SetPoseParameter(COMBATTANK_POSE_PITCH, TankExt.Clamp(angCurrent.x, -14, 14))
 
 			if(angCurrent.y != angGoal.y)
 			{
