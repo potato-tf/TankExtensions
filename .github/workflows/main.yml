@@ -24,14 +24,14 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-      
+
       - name: Setup SSH Keys and known_hosts
         env:
             SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
             ssh-agent -a $SSH_AUTH_SOCK > /dev/null
             ssh-add - <<< "${{ secrets.DEPLOY_KEY }}"
-            
+
     # "2244 pterodactyl@eu9.potato.tf:/"
     # Runs a set of commands using the runners shell
       - name: Sync with game servers
@@ -42,9 +42,38 @@ jobs:
           for i in "${servers[@]}"; do a=( $i );
           {
               rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./scripts/vscripts/ ${a[1]}:/var/tf2testingserver/tf/download/scripts/vscripts/
-              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/*/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
-              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/*/materials/ ${a[1]}:/var/tf2testingserver/tf/download/materials/
               rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./scripts/population/mvm_slick_v4a_tankextensions.pop ${a[1]}:/var/tf2testingserver/tf/download/scripts/population/
+
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/blimp/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/blimp/materials/ ${a[1]}:/var/tf2testingserver/tf/download/materials/
+
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/combattank/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/combattank/materials/ ${a[1]}:/var/tf2testingserver/tf/download/materials/
+
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/drilltank/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/drilltank/materials/ ${a[1]}:/var/tf2testingserver/tf/download/materials/
+
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/frontlinecart/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/frontlinecart/materials/ ${a[1]}:/var/tf2testingserver/tf/download/materials/
+
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/painttank/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/painttank/materials/ ${a[1]}:/var/tf2testingserver/tf/download/materials/
+
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/paratank/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
+
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/redtank/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/redtank/materials/ ${a[1]}:/var/tf2testingserver/tf/download/materials/
+
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/stickytank/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/stickytank/materials/ ${a[1]}:/var/tf2testingserver/tf/download/materials/
+
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/tankdozer/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/tankdozer/materials/ ${a[1]}:/var/tf2testingserver/tf/download/materials/
+
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/ubertank/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/ubertank/materials/ ${a[1]}:/var/tf2testingserver/tf/download/materials/
+
+              rsync -a -e "ssh -p ${a[0]} -o StrictHostKeyChecking=no" ./assets/vactank/models/ ${a[1]}:/var/tf2testingserver/tf/download/models/
           } &
           done
           wait
