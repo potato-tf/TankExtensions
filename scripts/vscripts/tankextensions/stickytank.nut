@@ -29,8 +29,7 @@ TankExt.NewTankType("stickytank", {
 
 		local ShootStickies = function(iStickyCount = 1, bCrit = false)
 		{
-			if(!(hMimic1 && hMimic1.IsValid() && hMimic2 && hMimic2.IsValid()))
-				return
+			if(!(hMimic1.IsValid() && hMimic2.IsValid() && self.IsValid())) return
 
 			local sMultiple    = iStickyCount > 1 ? "FireMultiple" : "FireOnce"
 			local sStickyCount = iStickyCount.tostring()
@@ -44,6 +43,18 @@ TankExt.NewTankType("stickytank", {
 				filter_type = RECIPIENT_FILTER_GLOBAL
 				sound_level = 82
 			})
+
+			local iTeamNum = self.GetTeam()
+			foreach(hEnt in [hMimic1, hMimic2])
+				for(local hSticky; hSticky = FindByClassnameWithin(hSticky, "tf_projectile_pipe", hEnt.GetOrigin(), 1);)
+					if(!GetPropEntity(hSticky, "m_hThrower"))
+					{
+						SetPropEntity(hSticky, "m_hThrower", self)
+						hSticky.SetOwner(self)
+						hSticky.SetTeam(iTeamNum)
+						hSticky.SetSkin(iTeamNum == TF_TEAM_BLUE ? 1 : 0)
+						hStickies.append(hSticky)
+					}
 		}
 
 		hStickies <- []
@@ -51,25 +62,8 @@ TankExt.NewTankType("stickytank", {
 		function Think()
 		{
 			foreach(i, hSticky in hStickies)
-				if(!(hSticky && hSticky.IsValid()))
+				if(!hSticky.IsValid())
 					hStickies.remove(i)
-
-			local FindStickies = function(hMimic)
-			{
-				for(local hSticky; hSticky = FindByClassnameWithin(hSticky, "tf_projectile_pipe", hMimic.GetOrigin(), 32);)
-					if(GetPropEntity(hSticky, "m_hThrower") == null && hSticky.GetOwner() == null)
-					{
-						hSticky.SetTeam(self.GetTeam())
-						hSticky.SetOwner(self)
-						hStickies.append(hSticky)
-					}
-			}
-
-			if(hMimic1 && hMimic1.IsValid())
-				FindStickies(hMimic1)
-
-			if(hMimic2 && hMimic2.IsValid())
-				FindStickies(hMimic2)
 
 			if(flTime >= flTimeNext)
 			{
@@ -89,7 +83,7 @@ TankExt.NewTankType("stickytank", {
 				TankExt.DelayFunction(self, this, 2.0, function() { ShootStickies(2, true) })
 				TankExt.DelayFunction(self, this, 2.5, function() { ShootStickies(3, true) })
 				TankExt.DelayFunction(self, this, 3.0, function() { ShootStickies(6, true) })
-				TankExt.DelayFunction(self, this, 7.0, function() {
+				TankExt.DelayFunction(self, this, 6.5, function() {
 					hMimic1.AcceptInput("DetonateStickies", null, null, null)
 					hMimic2.AcceptInput("DetonateStickies", null, null, null)
 				})
@@ -99,7 +93,7 @@ TankExt.NewTankType("stickytank", {
 	function OnDeath()
 	{
 		foreach(hSticky in hStickies)
-			if(hSticky && hSticky.IsValid())
+			if(hSticky.IsValid())
 				hSticky.Kill()
 	}
 })
