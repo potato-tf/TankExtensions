@@ -1,60 +1,19 @@
 "VertexLitGeneric"
 {
-	"$basetexture" "models/bots/boss_bot/combat_tank_mk2/combat_tank_mk2_reactor_red"
+	"$baseTexture" "models/bots/boss_bot/combat_tank_mk2/combat_tank_mk2_reactor_red"
+	$selfillum 1
+	$selfillummask "models/bots/boss_bot/combat_tank_mk2/combat_tank_mk2_railgun_reactor_illum"
 
-	"$phong" "1"
-//	"$phongexponent" "200"
-	"$phongboost" "4"
-	"$phongfresnelranges"	"[.5 .7 1]"
-	"$halflambert" "0"
+	"$basemapalphaphongmask" 1
+	"$phong"	"1"
+	"$phongboost"	"2"
+	"$phongexponent"	"40"
+	"$phongfresnelranges"	"[.5 1 2]"
 
-	"$lightwarptexture" "models/lightwarps/robot_lightwarp"
-
-	"$basemapalphaphongmask" "1"
-
-	"$selfillum" "1"
-	"$basetexture" "models/bots/boss_bot/combat_tank_mk2/combat_tank_mk2_railgun_reactor_illum"
-
-	"$rimlight" "1"
-	"$rimlightexponent" "1"
-	"$rimlightboost" "2"
-	"$rimmask" "1"
-
-	"$detail" "effects/tiledfire/fireLayeredSlowTiled512"
-	"$detailscale" "5"
-	"$detailblendfactor" .01
-	"$detailblendmode" 6
-
-	"$yellow" "0"
-	"$one" "1"
-
-	// Cloaking
-	"$cloakPassEnabled" "1"
+	"$rimlight" 1
 
 	"Proxies"
 	{
-		"spy_invis"
-		{
-		}
-		"AnimatedTexture"
-		{
-			"animatedtexturevar" "$detail"
-			"animatedtextureframenumvar" "$detailframe"
-			"animatedtextureframerate" 30
-		}
-		"BurnLevel"
-		{
-			"resultVar" "$detailblendfactor"
-		}
-		"YellowLevel"
-		{
-			"resultVar" "$yellow"
-		}
-		"Equals"
-		{
-			"srcVar1"  "$yellow"
-			"resultVar" "$color2"
-		}
 		"TextureScroll"
 		{
 			"texturescrollvar" "$basetexturetransform"
@@ -64,4 +23,3 @@
 		}
 	}
 }
-
