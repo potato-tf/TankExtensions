@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>TankExtensions Documentation</title>
+		<link rel="icon" type="image/x-icon" href="images/tankexticon.ico">
+		<style>
+			:root {
+				--accent-1: #1a1b26;
+				--accent-2: #24283b;
+				--accent-3: #414868;
+				--accent-4: #9aa5ce;
+				--accent-5: #c0caf5;
+
+				--blue: #7aa2f7;
+				--red: #dc5760;
+
+				--radius-normal: 8px
+			}
+			* {
+				color: var(--accent-5);
+				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			}
+
+			.vsc-blue        { color: #569cd6; }
+			.vsc-deep-blue   { color: #179fff; }
+			.vsc-deep-purple { color: #da70d6; }
+			.vsc-deep-yellow { color: #ffd700; }
+			.vsc-green       { color: #6a9955; }
+			.vsc-light-green { color: #b5cea8; }
+			.vsc-lime        { color: #4ec9b0; }
+			.vsc-orange      { color: #ce915e; }
+			.vsc-purple      { color: #c586c0; }
+			.vsc-white       { color: #cccccc; }
+
+			table, td, th {
+				border-collapse: collapse;
+				border: 1px var(--accent-3) solid;
+				padding: 5px;
+				position: relative;
+			}
+			table {
+				background: var(--accent-2);
+			}
+			th {
+				background: var(--accent-3)
+			}
+			code {
+				color: var(--accent-4);
+				background: var(--accent-1);
+				border-radius: 4px;
+				padding: 1px 4px;
+				font-family: monospace,monospace;
+			}
+			code i {
+				color: var(--accent-4);
+				font-family: monospace,monospace;
+			}
+			p {
+				margin-top: 5px;
+				margin-bottom: 5px;
+			}
+			summary, summary b {
+				color: var(--blue);
+			}
+			a:link {
+				color: var(--blue);
+			}
+			a:visited {
+				color: var(--blue);
+			}
+			a:active {
+				color : var(--red);
+			}
+
+			.nav {
+				padding: 8px;
+				overflow: hidden;
+				text-align: center;
+			}
+			.nav a {
+				font-weight: bold;
+				background: var(--accent-1);
+				border-top-left-radius: var(--radius-normal);
+				border-top-right-radius: var(--radius-normal);
+				padding: 8px;
+				margin: 8px;
+				text-decoration: none;
+			}
+			.center {
+				max-width: 100%;
+				display: block;
+				margin-left: auto;
+				margin-right: auto;
+			}
+			.header {
+				border-bottom: 2px var(--accent-3) solid;
+				padding-bottom: 8px;
+				margin-bottom: 8px;
+			}
+			.codeblock {
+				background: #1f1f1f;
+				border: 1px var(--accent-3) solid;
+				border-radius: var(--radius-normal);
+			}
+			.codeblock pre {
+				margin: 0;
+				padding: 12px;
+				font-family: monospace,monospace;
+				font-size: 85%;
+				line-height: 1.45;
+			}
+			.codeblock pre span {
+				font-family: monospace,monospace;
+			}
+			.tankicon {
+				max-width: 115px;
+				display: block;
+				margin: auto;
+			}
+			.parameter {
+				text-align: center;
+			}
+			.credits {
+				opacity: 0.5;
+				font-size: small;
+				font-style: italic;
+			}
+			.info {
+				background: var(--accent-2);
+				border: 1px var(--accent-3) solid;
+				border-radius: var(--radius-normal);
+				padding: 8px;
+				margin: 16px;
+				max-width: 70%;
+				margin-left: auto;
+				margin-right: auto;
+			}
+		</style>
+	</head>
+	<body style="background-color: var(--accent-1);">
+		<div style="background: var(--accent-2);">
+			<img class="center" alt="TankExtensions" src="images/logo.png">
+			<div class="nav">
+					<a href="#Usage">Usage</a><a href="#Path_Maker">Path Maker</a><a href="#Tank_Combiner">Tank Combiner</a><a href="#Tank_Types">Tank Types</a><a href="#Functions">Functions</a>
+			</div>
+		</div>
+		<div class="info">
+			<div class="header" id="Usage"><img class="center" alt="Usage" src="images/usage.png"></div>
+			<p>To add any of these custom tanks to your mission you first need to include the main script and any tank scripts of your choosing. This can be done through a <code>RunScriptCode</code> output on bignet or added to your own mission script file if you have one.</p>
+			<div class="codeblock"><pre><span class="vsc-green">// This example loads the main script, two optional tank scripts, and two other scripts for one of the tanks</span>
+<span class="vsc-green">// You can include as many tank scripts as needed</span>
+<span class="vsc-blue">InitWaveOutput</span>
+<span class="vsc-deep-blue">{</span>
+    <span class="vsc-lime">Target</span> <span class="vsc-white">bignet</span>
+    <span class="vsc-lime">Action</span> <span class="vsc-purple">RunScriptCode</span>
+    <span class="vsc-lime">Param</span>
+    <span class="vsc-orange">"IncludeScript(`tankextensions_main`, getroottable())
+    IncludeScript(`tankextensions/combattank`, getroottable())
+    IncludeScript(`tankextensions/combattank_weapons/minigun`, getroottable())
+    IncludeScript(`tankextensions/combattank_weapons/rocketpod`, getroottable())
+    IncludeScript(`tankextensions/tankdozer`, getroottable())"</span>
+<span class="vsc-deep-blue">}</span></pre></div>
+			<p>Once the scripts are included, set the <code>Name</code> keyvalue of any tank in your popfile to one that the scripts provide.</p>
+			<div class="codeblock"><pre><span class="vsc-blue">Tank</span>
+<span class="vsc-deep-yellow">{</span>
+    <span class="vsc-lime">Name</span> <span class="vsc-orange">"combattank|minigun|rocketpod"</span>
+    <span class="vsc-lime">Health</span> <span class="vsc-light-green">30000</span>
+    <span class="vsc-lime">Speed</span> <span class="vsc-light-green">75</span>
+    <span class="vsc-lime">StartingPathTrackNode</span> <span class="vsc-orange">"tank_path_1"</span>
+    <span class="vsc-blue">OnBombDroppedOutput</span>
+    <span class="vsc-deep-purple">{</span>
+        <span class="vsc-lime">Target</span> <span class="vsc-white">boss_deploy_relay</span>
+        <span class="vsc-lime">Action</span> <span class="vsc-purple">Trigger</span>
+    <span class="vsc-deep-purple">}</span>
+<span class="vsc-deep-yellow">}</span></pre></div>
+			<p style="color: var(--red); font-weight: bold;">All custom tanks and information on what can be put into the <code>Name</code> keyvalue are in the <a style="font-weight: bold; color: var(--blue);" href="#Tank_Types">Tank Types</a> section.</p>
+			<p>Other functionalities such as creating tank paths or setting tank icons can be found in the <a href="https://github.com/potato-tf/TankExtensions/blob/main/mvm_slick_v4a_tankextensions.pop">example popfile</a>. Tank names and script functions are listed further down the documentation. If you want to make a new tank type yourself then refer to the <a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/exampletank.nut">example tank script</a>.</p>
+		</div>
+		<div class="info">
+			<div class="header" id="Path_Maker"><img class="center" alt="Path Maker" src="images/pathmaker.png"></div>
+			<p>Path Maker allows for quickly creating paths without the need for going around the map using getpos or opening the hammer editor.</p>
+			<p>If tankextensions_main is loaded, Path Maker can be started using this command: <code>ent_fire !activator runscriptcode "TankExt.PathMaker(self)"</code>. Replace <code>ent_fire</code> with <code>sm_ent_fire</code> if on a testing.potato.tf server.</p>
+			<div><img class="center" alt="Path Maker Models" src="images/pathmakermodels.png"></div>
+			<b style="color: var(--red)">Axis nodes</b> are your placed path nodes, if a node is highlighted yellow then that is the most recently placed node and can be deleted with the secondary fire. <b style="color: var(--red)">Blue guides</b> are path nodes that already exist in the map, their targetname will be shown above them and will point towards their next path node. The <b style="color: var(--red)">purple guide</b> is the best position for your last path node so tanks can be properly aligned while deploying. When you're finished placing all the path nodes you can print them with <b>TankExt</b>, <b>PopExt+</b>, or <b>Rafmod</b> formatting to console. Note that TankExtensions's CreatePaths function will merge the last node to a node in the map if they share the same position.
+		</div>
+		<div class="info">
+			<div class="header" id="Tank_Combiner"><img class="center" alt="Tank Combiner" src="images/tankcombiner.png"></div>
+			<p>Tanks made via TankExtensions can be combined into one; providing all the functionality of the chosen tanks at once. Applying this is done by adding multiple valid tank names separated by <code>^</code> into the tank's Name keyvalue. (i.e. <code>Name "painttank|255 127 0^stickytank^paratank^fireringtank"</code>)</p>
+			<p>Do note that keyvalues such as TeamNum, Scale, or Model will only apply once when iterating through the tanks. An example being <code>"redtank^painttank|255 0 0"</code> applying the Red Tank model but not the Paint Tank model, vice versa if the names are swapped around.</p>
+		</div>
+		<div class="info" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; border-bottom: 0;">
+			<div class="header" id="Tank_Types"><img class="center" alt="Tank Types" src="images/tanktypes.png"></div>
+			<p>The table below provides details on what can go into a tank's Name keyvalue. You should first know the following formatting required to modify the listed tank types.</p>
+			<img class="center" alt="A big tank name" src="images/mightbecomplicated.webp">
+			<p><b style="color: var(--red)">Suffixes</b> are appended to the tank's name for different effects. <code>tankName</code> + <code>_suffix1</code> + <code>_suffix2</code> = <code>tankName_suffix1_suffix2</code>.
+			<p><b style="color: var(--red)">Parameters</b> are separated by <code>|</code> and can modify certain aspects of the tank type. A tank with 2 parameters can be written as <code>tankboss|parameter1|parameter2</code><br></p>
+			<p><b style="color: var(--red)">Quick Keyvalues</b> allow for making slight modifications on how a tank spawns. The start of a keyvalue list is denoted with <code>$</code>, the values of the keys are separated with <code>|</code>, and each keyvalue is separated with <code>^</code>.</p>
+			<details>
+				<summary><b>List of Keyvalues</b></summary>
+				<table>
+					<tr>
+						<th>Keyvalue</th>
+						<th>Description</th>
+					</tr>
+					<tr>
+						<td><code>color</code></td>
+						<td>
+							Colors the tank, treads, and bomb mechanism. <code>"255 127 0"</code> would result in an orange tank.
+						</td>
+					</tr>
+					<tr>
+						<td><code>disablebomb</code></td>
+						<td>
+							Set to 1 to only hide the bomb mechanism.
+						</td>
+					</tr>
+					<tr>
+						<td><code>disablechildmodels</code></td>
+						<td>
+							Set to 1 to hide the tank's tracks and bomb mechanism.
+						</td>
+					</tr>
+					<tr>
+						<td><code>disableoutline</code></td>
+						<td>
+							Set to 1 to hide the tank's outline that is normally visible through walls.
+						</td>
+					</tr>
+					<tr>
+						<td><code>disablesmokestack</code></td>
+						<td>
+							Set to 1 to hide the tank's smokestack.
+						</td>
+					</tr>
+					<tr>
+						<td><code>disabletracks</code></td>
+						<td>
+							Set to 1 to only hide the tank's tracks.
+						</td>
+					</tr>
+					<tr>
+						<td><code>engineloopsound</code></td>
+						<td>
+							Accepts a sound path string to replace the tank's looping sound. Normally this sound is for the rumbling of the engine and the movement of the tank tracks.
+						</td>
+					</tr>
+					<tr>
+						<td><code>model</code></td>
+						<td>
+							Accepts a model path string that replaces the body of the tank.
+						</td>
+					</tr>
+					<tr>
+						<td><code>nodestructionmodel</code></td>
+						<td>
+							Set to 1 to hide the tank's explosion animation. Does not get rid of the explosion particle.
+						</td>
+					</tr>
+					<tr>
+						<td><code>noscreenshake</code></td>
+						<td>
+							Set to 1 to disable the screenshake effect that occurs when standing near the tank.
+						</td>
+					</tr>
+					<tr>
+						<td><code>pingsound</code></td>
+						<td>
+							Accepts a sound path string to replace the tank's ping noise that occurs every 5 seconds.
+						</td>
+					</tr>
+					<tr>
+						<td><code>scale</code></td>
+						<td>
+							Sets the tank's model scale value.
+						</td>
+					</tr>
+					<tr>
+						<td><code>teamnum</code></td>
+						<td>
+							Sets the tank's team value. 2 is for red, 3 is for blue.
+						</td>
+					</tr>
+				</table>
+			</details>
+			<p><b style="color: var(--red)">ScriptFunctions</b> are not part of a tank's name but they can be ran by firing a <code>CallScriptFunction</code> input on the tank with the param being the script function name.</p>
+			<div class="codeblock"><pre><span class="vsc-green">// You can use a dummy wavespawn to call these script functions in vanilla</span>
+<span class="vsc-blue">WaveSpawn</span>
+<span class="vsc-deep-blue">{</span>
+    <span class="vsc-lime">WaitForAllDead</span> <span class="vsc-orange">"w4b"</span>
+    <span class="vsc-blue">FirstSpawnOutput</span>
+    <span class="vsc-deep-yellow">{</span>
+        <span class="vsc-lime">Target</span> <span class="vsc-orange">"ubertank|-1|-1"</span>
+        <span class="vsc-lime">Action</span> <span class="vsc-purple">CallScriptFunction</span>
+        <span class="vsc-lime">Param</span> <span class="vsc-orange">"ToggleUber"</span>
+    <span class="vsc-deep-yellow">}</span>
+<span class="vsc-deep-blue">}</span></pre></div>
+		</div>
+		<table>
+			<tr style="position:sticky; z-index:1; top:0">
+				<th></th>
+				<th>Script File</th>
+				<th>Tank Names</th>
+				<th>Suffixes</th>
+				<th>Parameters</th>
+				<th>ScriptFunctions</th>
+				<th style="width: 50%;">Description</th>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/bannertank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/bannertank.nut">bannertank.nut</a></td>
+				<td>
+					<code>bannertank</code>
+				</td>
+				<td>
+					<p><code>_backup</code></p>
+					<p><code>_buff</code></p>
+					<p><code>_conch</code></p>
+					<p><code>_noselfeffect</code></p>
+				</td>
+				<td></td>
+				<td style="color: var(--red)">
+					AddBannerBackup<br>
+					AddBannerBuff<br>
+					AddBannerConch<br>
+					RemoveBannerBackup<br>
+					RemoveBannerBuff<br>
+					RemoveBannerConch
+				</td>
+				<td>
+					<p>Applies the selected banner effects to all teammates within a 540hu radius. The tank by default will also gain these same effects, you can disable them using the <code>_noselfeffect</code> suffix.</p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/blimp.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/blimp.nut">blimp.nut</a></td>
+				<td>
+					<code>blimp</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Same as a normal tank but it traverses the sky.</p>
+					<p class="credits">Blimp model by <a href="https://steamcommunity.com/profiles/76561198058809573">Glitch</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/chewchewtank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/chewchewtank.nut">chewchewtank.nut</a></td>
+				<td>
+					<code>chewchewtank</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Li'l Chew Chew from pl_frontier but in tank form. Each bite deals 1000 damage and does not effect giants.</p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/combattank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank.nut">combattank.nut</a></td>
+				<td>
+					<code>combattank</code>
+				</td>
+				<td>
+					<p><code>_bomb</code></p>
+					<p><code>_nolaser</code></p>
+				</td>
+				<td class="parameter">
+					<p><code>right_weapon</code></p>
+					<p><code>left_weapon</code></p>
+				</td>
+				<td style="color: var(--red)">
+					ToggleUber
+				</td>
+				<td>
+					<p>Weaponized tank. This comes with its own script files for each weapon within <a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/">scripts/vscripts/tankextensions/combattank_weapons/</a>. Load those scripts like you would with tanks; the weapon names go into either of the tank's parameters.</p>
+					<table>
+						<tr>
+							<th>Script File</th>
+							<th>Weapon Names</th>
+						</tr>
+						<tr>
+							<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/fireball.nut">fireball.nut</a></td>
+							<td>fireball</td>
+						</tr>
+						<tr>
+							<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/minigun.nut">minigun.nut</a></td>
+							<td>minigun</td>
+						</tr>
+						<tr>
+							<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/railgun.nut">railgun.nut</a></td>
+							<td>railgun</td>
+						</tr>
+						<tr>
+							<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/rocketpod.nut">rocketpod.nut</a></td>
+							<td>rocketpod<br>rocketpod_homing</td>
+						</tr>
+					</table>
+					<p>This tank by default will not have a visible bomb mechanism to indicate that it will not deploy the bomb, useful for if the tank is on a looping path. The <code>_bomb</code> suffix will add a bomb mechanism if desired. The <code>_nolaser</code> suffix hides the laser beam permanently. <code>ToggleUber</code> makes the tank invulnerable until the function is called again.</p>
+					<p class="credits">Tank and weapon models by <a href="https://steamcommunity.com/profiles/76561198070293827">Charlie</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/drilltank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/drilltank.nut">drilltank.nut</a></td>
+				<td>
+					<code>drilltank</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Adds a big drill at the front of the tank. Deals 50 damage to the victim every 0.33 seconds (150 dps) that applies bleed and 75% movement stun for 1 second. Deals no damage while in the bomb deploy sequence.</p>
+					<p class="credits">Drill model by <a href="https://steamcommunity.com/profiles/76561198139139265">KrazyZark</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/exampletank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/exampletank.nut">exampletank.nut</a></td>
+				<td>
+					<code>exampletank</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>This tank serves no purpose other than to show the basics in making a tank type.</p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/fireringtank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/fireringtank.nut">fireringtank.nut</a></td>
+				<td>
+					<code>fireringtank</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Every 0.5 seconds will activate a trigger around the base of the tank that ignites enemies.</p>
+					<p class="credits">Concept by <a href="https://steamcommunity.com/profiles/76561198158093750">Bazooks</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/frontlinecart.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/frontlinecart.nut">frontlinecart.nut</a></td>
+				<td>
+					<code>frontlinecart</code>
+				</td>
+				<td>
+					<code>_crit</code>
+				</td>
+				<td class="parameter">
+					<p><code>projectile_shortrange</code></p>
+					<p><code>projectile_longrange</code></p>
+				</td>
+				<td></td>
+				<td>
+					<p>Small mobile turret that shoots a chosen projectile at 5 angles. Allows 2 parameters of: <code>rocket</code>, <code>grenade</code>, <code>jarate</code>, <code>milk</code>, <code>gas</code>. First parameter is the normal projectile type and the second parameter is the close range projectile type. The second parameter can be left blank to not switch to close ranged projectiles. The <code>_crit</code> suffix makes all projectiles crit.</p>
+					<p class="credits">Cart model from the <a href="https://frontline.tf2maps.net">Frontline Supply Drop</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/hammertank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/hammertank.nut">hammertank.nut</a></td>
+				<td>
+					<code>hammertank</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Adds a giant Necro Smasher onto the tank. Activates when an enemy is within a 256hu radius from its smashing position. Deals 2500 damage to enemies within a 128hu radius or pushes enemies away within a 384hu radius upon smashing. Has a 2.6 second cooldown after smashing.</p>
+					<p class="credits">Concept from <a href="https://steamcommunity.com/profiles/76561198000559913">Sntr</a>'s <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=2710939862">Lost Valley</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/jumptank.gif"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/jumptank.nut">jumptank.nut</a></td>
+				<td>
+					<code>jumptank</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td style="color: var(--red)">
+					Jump
+				</td>
+				<td>
+					<p>Causes the tank to jump high in the air periodically. When the tank is falling it will crush enemies beneath it, instantly killing them. When landing it will push enemies away. Set <code>JUMPTANK_JUMP_COOLDOWN</code> to a value below 0 to disable automatic jumping for all jumptanks.</p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/painttank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/painttank.nut">painttank.nut</a></td>
+				<td>
+					<code>painttank</code>
+				</td>
+				<td></td>
+				<td class="parameter">
+					<p><code>color</code></p>
+				</td>
+				<td></td>
+				<td>
+					<p>A tank model that allows for more colors much like adding paints for hats. First parameter is the color. (i.e. <code>"painttank|255 127 0"</code> results in an orange tank)</p>
+					<p class="credits">Tank model by <a href="https://steamcommunity.com/profiles/76561198036209556">CTriggerHurt</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/paratank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/paratank.nut">paratank.nut</a></td>
+				<td>
+					<code>paratank</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Adds a parachute to the tank. If there's no floor underneath the tank then it will move towards path nodes similarly to a blimp until there's ground again. This will usually require a custom tank path so the tank's descent doesn't look unnatural.</p>
+					<p class="credits">Parachute model from <a href="https://steamcommunity.com/profiles/76561198041314432">PenolAkushari</a>'s <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=1858986178">Silent Sky</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/redtank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/redtank.nut">redtank.nut</a></td>
+				<td>
+					<code>redtank</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Changes the tanks team to red and swaps the tank model with a red textured version. Useful when combined with other tank types that don't have custom models.</p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/scaletank.gif"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/scaletank.nut">scaletank.nut</a></td>
+				<td>
+					<code>scaletank</code>
+				</td>
+				<td></td>
+				<td class="parameter">
+					<p><code>scale_lowhealth</code></p>
+				</td>
+				<td></td>
+				<td>
+					<p>Tank will resize itself as its health gets lower. First parameter is the resulting scale when at low health.</p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/sentrytank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/sentrytank.nut">sentrytank.nut</a></td>
+				<td>
+					<code>sentrytank</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Adds 2 invincible level 3 sentries ontop of the tank. The sentries cannot attack enemies that are directly beside the tank. Sappers destroy themselves after 8 seconds if placed on either of the sentries, Red-Tape Recorder does not degrade their levels.</p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/speedtank.gif"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/speedtank.nut">speedtank.nut</a></td>
+				<td>
+					<code>speedtank</code>
+				</td>
+				<td></td>
+				<td class="parameter">
+					<p><code>speed_lowhealth</code></p>
+				</td>
+				<td></td>
+				<td>
+					<p>Tank will alter its speed as its health gets lower. First parameter is the resulting speed when at low health.</p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/stickytank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/stickytank.nut">stickytank.nut</a></td>
+				<td>
+					<code>stickytank</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Fires a barrage of non-crit and crit stickies in front of the tank. Stickies detonate 7 seconds after the tank began firing.</p>
+					<p class="credits">Concept by <a href="https://steamcommunity.com/profiles/76561197965468138">Hell-met</a><br>Tank turret model from the <a href="https://frontline.tf2maps.net">Frontline Supply Drop</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/tankdozer.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/tankdozer.nut">tankdozer.nut</a></td>
+				<td>
+					<code>tankdozer</code>
+				</td>
+				<td>
+					<code>_nosentry</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>An "armored" tank with 4 breakable sides and a big level 2 sentry ontop. The breakables have 2000 health each and the sentry has 9000 health. Players can get stuck inside of the tanks armor then crushed if they get too close. Sappers destroy themselves after 10 seconds when placed but deal extra damage to the sentry (500 health across 10 seconds.)</p>
+					<p class="credits">Concept from <a href="https://steamcommunity.com/profiles/76561198000559913">Sntr</a>'s <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=1797845264">Rust Valley</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/targetank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/targetank.nut">targetank.nut</a></td>
+				<td>
+					<code>targetank</code><br>
+					<code>targetank_color</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Charges similarly to demo's shields. The tank slows down to 15hu/s on the first 2 seconds then speeds up to 300hu/s for 3 seconds. Has a recharge duration of 10 seconds. Hitting an enemy deals 75 damage and high knockback. <code>targetank_color</code> sets the model to the PaintTank, the color reflects the tank's current charge meter (oranger when about to start a charge and redder after completing the charge.)</p>
+					<p class="credits">Concept by <a href="https://steamcommunity.com/profiles/76561198024198604">PDA Expert</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/teletank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/teletank.nut">teletank.nut</a></td>
+				<td>
+					<code>teletank</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Places a fake teleporter ontop of the tank that teleports spawned bots that have the <code>bot_teletank</code> tag. Teleported bots will spawn with 5 seconds of ubercharge.</p>
+					<p class="credits">Concept by <a href="https://steamcommunity.com/profiles/76561198115147053">dexc34</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/ubertank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/ubertank.nut">ubertank.nut</a></td>
+				<td>
+					<code>ubertank</code>
+				</td>
+				<td></td>
+				<td class="parameter">
+					<p><code>uber_wait_time</code></p>
+					<p><code>uber_duration</code></p>
+				</td>
+				<td style="color: var(--red)">
+					ToggleUber
+				</td>
+				<td>
+					<p>Has the ability to become invulnerable for a defined amount of time. First parameter is the amount of time after spawning until the tank becomes ubered and the second parameter is the duration of the uber. Setting either parameter to -1 will disable that parameter's functionality. <code>ToggleUber</code> flips the uber state, if a duration is set then it will automatically toggle back off after the given time.</p>
+					<p class="credits">Tank model by <a href="https://steamcommunity.com/profiles/76561198158093750">Bazooks</a></p>
+				</td>
+			</tr>
+			<tr>
+				<td><img class="tankicon" src="images/tanks/vactank.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/vactank.nut">vactank.nut</a></td>
+				<td>
+					<code>vactank</code>
+				</td>
+				<td>
+					<code>_bullet</code><br>
+					<code>_blast</code><br>
+					<code>_fire</code><br>
+				</td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Adds any combination of the Vaccinator's uber effects to the tank. Adding a suffix will resist the chosen damage type.</p>
+					<p class="credits">Vaccinator bubble model by <a href="https://steamcommunity.com/profiles/76561198054722423">Tumby</a> and <a href="https://steamcommunity.com/profiles/76561198020560509">Izotope</a></p>
+				</td>
+			</tr>
+		</table>
+		<div class="info" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; border-bottom: 0;">
+			<div class="header" id="Functions"><img class="center" alt="Functions" src="images/functions.png"></div>
+			<p>This section only serves a purpose for people who are very familiar with working on vscript files.</p>
+			<p>Always prepend <code>TankExt.</code> to any of these functions when using them. (i.e <code>NewTankType()</code> becomes <code>TankExt.NewTankType()</code>)</p>
+		</div>
+		<table style="width: 100%;">
+			<tr style="position:sticky; z-index:10; top:0">
+				<th>Function</th>
+				<th>Signature</th>
+				<th style="width: 50%;">Description</th>
+			</tr>
+			<tr>
+				<td><code>AddTankIcon</code></td>
+				<td><code>void AddTankIcon(integer <i>tankCount</i>, string <i>tankIcon</i>, string <i>tankName</i>, integer <i>index</i> = null)</code></td>
+				<td>
+					Adds a custom tank icon to the wavebar. The tank name parameter accepts wildcards.
+				</td>
+			</tr>
+			<tr>
+				<td><code>AddThinkToEnt</code></td>
+				<td><code>void AddThinkToEnt(handle <i>entity</i>, string <i>FuncName</i>)</code></td>
+				<td>
+					Wrapper for <code>AddThinkToEnt</code>. If the entity is a tank then it will add the think function to its think table. If PopExt+ is loaded then it will use the renamed native function.
+				</td>
+			</tr>
+			<tr>
+				<td><code>ApplyTankTableByName</code></td>
+				<td><code>void ApplyTankTableByName(handle <i>tank</i>, handle <i>path</i>, string <i>tankType</i>)</code></td>
+				<td>
+					Looks for a tank type that matches the inputted tank's name then applies what is given by the table.
+				</td>
+			</tr>
+			<tr>
+				<td><code>ApplyTankType</code></td>
+				<td><code>void ApplyTankType(handle <i>tank</i>)</code></td>
+				<td>
+					Called by any path_track entity. First checks for any quick keyvalues, then runs <code>ApplyTankTableByName</code>.
+				</td>
+			</tr>
+			<tr>
+				<td><code>ApproachAngle</code></td>
+				<td><code>float ApproachAngle(float <i>target</i>, float <i>input</i>, float <i>speed</i>)</code></td>
+				<td>
+					Rotates the inputted value by the speed value towards the target value. The returned angle value is normalized.
+					<p class="credits">From the <a href="https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/VScript_Examples">TF2 VScript Examples</a> page</p>
+				</td>
+			</tr>
+			<tr>
+				<td><code>Clamp</code></td>
+				<td><code>float Clamp(float <i>input</i>, float <i>low</i>, float <i>high</i>)</code></td>
+				<td>
+					If the input is below the low value, returns the low value. If above the high value, returns the high value.
+				</td>
+			</tr>
+			<tr>
+				<td><code>CreateLoopPaths</code></td>
+				<td><code>void CreateLoopPaths(handle <i>table</i>)</code></td>
+				<td>
+					Similar to <code>CreatePaths</code> except it can make paths loop forever. The last node of each path must use the same position as a previously defined node.
+				</td>
+			</tr>
+			<tr>
+				<td><code>CreatePaths</code></td>
+				<td><code>void CreatePaths(handle <i>table</i>)</code></td>
+				<td>
+					Can create multiple paths.
+				</td>
+			</tr>
+			<tr>
+				<td><code>DelayFunction</code></td>
+				<td><code>void DelayFunction(handle <i>entity</i>, handle <i>scope</i>, float <i>delay</i>, handle <i>function</i>)</code></td>
+				<td>
+					Delays a function and calls it after the specified time. If an entity is defined then it will use its ScriptScope and can only call when the entity exists. The used scope can be overriden by the second parameter. The first two parameters can be left null if neither are needed.
+				</td>
+			</tr>
+			<tr>
+				<td><code>DispatchParticleEffectOn</code></td>
+				<td><code>void DispatchParticleEffectOn(handle <i>entity</i>, string <i>name</i>, string <i>attachment</i> = null)</code></td>
+				<td>
+					Spawns a particle and attaches it to the entity. Can be placed on a model's attachment if defined.
+				</td>
+			</tr>
+			<tr>
+				<td><code>ExtraTankKeyValues</code></td>
+				<td><code>void ExtraTankKeyValues(handle <i>tank</i>, handle <i>path</i>, handle <i>table</i>)</code></td>
+				<td>
+					Used by <code>ApplyTankType</code> and <code>ApplyTankTableByName</code> to implement the keyvalue functions listed in <code>NewTankType</code>.
+				</td>
+			</tr>
+			<tr>
+				<td><code>GetMultiScopeTable</code></td>
+				<td><code>handle GetMultiScopeTable(handle <i>scope</i>, string <i>tankType</i>)</code></td>
+				<td>
+					Returns the scope of a tank type within its MultiScope table. Returns <code>null</code> instead if MultiScope doesn't exist or if the name isn't in the MultiScope
+				</td>
+			</tr>
+			<tr>
+				<td><code>HasTankPathOutput</code></td>
+				<td><code>bool HasTankPathOutput(handle <i>path</i>)</code></td>
+				<td>
+					Returns true if the entity has TankExtensions's required path output. This is used automatically and never needs to be used manually.
+				</td>
+			</tr>
+			<tr>
+				<td><code>IntersectionBoxBox</code></td>
+				<td><code>bool IntersectionBoxBox(Vector <i>origin1</i>, Vector <i>mins1</i>, Vector <i>maxs1</i>, Vector <i>origin2</i>, Vector <i>mins2</i>, Vector <i>maxs2</i>)</code></td>
+				<td>
+					Returns true if the first bounding box intersects with the second bounding box.
+				</td>
+			</tr>
+			<tr>
+				<td><code>IterateIcons</code></td>
+				<td><code>void IterateIcons(handle <i>callback</i>)</code></td>
+				<td>
+					Allows for easier reading and writing of the wavebar icon netprops. The inputted function needs 4 parameters (iIndex, sNames, sCounts, sFlags). Returning <code>true</code> will break the loop.
+				</td>
+			</tr>
+			<tr>
+				<td><code>IsPlayerStealthedOrDisguised</code></td>
+				<td><code>bool IsPlayerStealthedOrDisguised(handle <i>player</i>)</code></td>
+				<td>
+					Returns true if the player is fully cloaked or has a disguise except when burning, jarated, or bleeding. Always returns false if the entity is not a player.
+				</td>
+			</tr>
+			<tr>
+				<td><code>NewTankType</code></td>
+				<td><code>void NewTankType(string <i>name</i>, handle <i>table</i>)</code></td>
+				<td>
+					Adds the inputted table with the specified name to the TankScripts or TankScriptsWild table which get ran when a tank with a matching name spawns.
+					<details>
+						<summary><b>List of Keyvalues</b></summary>
+						<table>
+							<tr>
+								<th>Keyvalue</th>
+								<th>Description</th>
+							</tr>
+							<tr>
+								<td><code>Color</code></td>
+								<td>
+									Colors the tank, treads, and bomb mechanism. <code>"255 127 0"</code> would result in an orange tank.
+								</td>
+							</tr>
+							<tr>
+								<td><code>DisableBomb</code></td>
+								<td>
+									Set to 1 to only hide the bomb mechanism.
+								</td>
+							</tr>
+							<tr>
+								<td><code>DisableChildModels</code></td>
+								<td>
+									Set to 1 to hide the tank tracks and bomb mechanism.
+								</td>
+							</tr>
+							<tr>
+								<td><code>DisableOutline</code></td>
+								<td>
+									Set to 1 to hide the tank's outline that is normally visible through walls.
+								</td>
+							</tr>
+							<tr>
+								<td><code>DisableSmokestack</code></td>
+								<td>
+									Set to 1 to hide the tank's smokestack.
+								</td>
+							</tr>
+							<tr>
+								<td><code>DisableTracks</code></td>
+								<td>
+									Set to 1 to only hide the tank tracks.
+								</td>
+							</tr>
+							<tr>
+								<td><code>EngineLoopSound</code></td>
+								<td>
+									Accepts a sound path string to replace the tank's looping sound. Normally this sound is for the rumbling of the engine and the movement of the tank tracks.
+								</td>
+							</tr>
+							<tr>
+								<td><code>Model</code></td>
+								<td>
+									Accepts a model path string or a table of multiple model path strings. The keyvalues for a table are: <code>Tank</code>, <code>Damage1</code>, <code>Damage2</code>, <code>Damage3</code>, <code>LeftTrack</code>, <code>RightTrack</code>, <code>Bomb</code>.
+								</td>
+							</tr>
+							<tr>
+								<td><code>NoDestructionModel</code></td>
+								<td>
+									Set to 1 to hide the tank's explosion animation. Does not get rid of the explosion particle.
+								</td>
+							</tr>
+							<tr>
+								<td><code>NoScreenShake</code></td>
+								<td>
+									Set to 1 to disables the screenshake effect that occurs when standing near the tank.
+								</td>
+							</tr>
+							<tr>
+								<td><code>OnSpawn</code></td>
+								<td>
+									This function is called within its own tank type scope, comes with variables: <code>self</code>, <code>sTankName</code>, <code>hTankPath</code>. You can add a think function to the tank by defining a function named <code>Think()</code>. Think functions also come with variables: <code>flTime</code>, <code>vecOrigin</code>, <code>angRotation</code>, <code>iTeamNum</code>, <code>iHealth</code>, <code>iMaxHealth</code>.
+								</td>
+							</tr>
+							<tr>
+								<td><code>OnDeath</code></td>
+								<td>
+									This function is called when the tank dies, exactly like SetDestroyCallback.
+								</td>
+							</tr>
+							<tr>
+								<td><code>PingSound</code></td>
+								<td>
+									Accepts a sound path string to replace the tank's ping noise that occurs every 5 seconds.
+								</td>
+							</tr>
+							<tr>
+								<td><code>Scale</code></td>
+								<td>
+									Sets the tank's model scale value.
+								</td>
+							</tr>
+							<tr>
+								<td><code>TeamNum</code></td>
+								<td>
+									Sets the tank's team value. 2 is for red, 3 is for blue.
+								</td>
+							</tr>
+						</table>
+					</details>
+				</td>
+			</tr>
+			<tr>
+				<td><code>NormalizeAngle</code></td>
+				<td><code>float NormalizeAngle(float <i>angle</i>)</code></td>
+				<td>
+					Converts an angle value to be within the usual boundaries of an angle. The physical angle will not change. -180 < x ≤ 180
+					<p class="credits">From the <a href="https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/VScript_Examples">TF2 VScript Examples</a> page</p>
+				</td>
+			</tr>
+			<tr>
+				<td><code>PathMaker</code></td>
+				<td><code>void PathMaker(handle <i>player</i>)</code></td>
+				<td>
+					Outputs paths for <code>CreatePaths</code> or <code>CreateLoopPaths</code> to console. Read the Path Maker section above for more info.
+				</td>
+			</tr>
+			<tr>
+				<td><code>PrecacheParticle</code></td>
+				<td><code>void PrecacheParticle(string <i>name</i>)</code></td>
+				<td>
+					Precaches a particle. This is only useful if a particle isn't precached when using <code>DispatchParticleEffect</code> or <code>DispatchParticleEffectOn</code>
+				</td>
+			</tr>
+			<tr>
+				<td><code>PrecacheSound</code></td>
+				<td><code>void PrecacheSound(string <i>soundName</i>)</code></td>
+				<td>
+					Wrapper for <code>PrecacheSound</code>. Detects if the sound is a file or a soundscript.
+				</td>
+			</tr>
+			<tr>
+				<td><code>SetDestroyCallback</code></td>
+				<td><code>void SetDestroyCallback(handle <i>entity</i>, handle <i>callback</i>)</code></td>
+				<td>
+					When the inputted entity dies, calls the inputted function.
+					<p class="credits">From the <a href="https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/Script_Functions">TF2 Script Functions</a> page</p>
+				</td>
+			</tr>
+			<tr>
+				<td><code>SetEntityColor</code></td>
+				<td><code>void SetEntityColor(handle <i>entity</i>, int <i>r</i>, int <i>g</i>, int <i>b</i>, int <i>a</i>)</code></td>
+				<td>
+					Sets the entity's color and alpha. Alternatively, use a color/alpha input via <code>AcceptInput</code> to achieve the same effect.
+					<p class="credits">From the <a href="https://developer.valvesoftware.com/wiki/Source_SDK_Base_2013/Scripting/VScript_Examples">SDK VScript Examples</a> page</p>
+				</td>
+			</tr>
+			<tr>
+				<td><code>SetParentArray</code></td>
+				<td><code>void SetParentArray(handle <i>arrayChildren</i>, handle <i>parent</i>, string <i>attachment</i> = null)</code></td>
+				<td>
+					All the entities listed in the array will be parented to the defined parent. Can be parented to one of the parent's attachments if defined.
+				</td>
+			</tr>
+			<tr>
+				<td><code>SetPathConnection</code></td>
+				<td><code>void SetPathConnection(handle <i>path1</i>, handle <i>path2</i>, handle <i>pathAlt</i> = null)</code></td>
+				<td>
+					Connects the first path_track to the second path_track. Optionally adds an alternative, toggleable path_track to the first path_track.
+				</td>
+			</tr>
+			<tr>
+				<td><code>SetTankColor</code></td>
+				<td><code>void SetTankColor(handle <i>tank</i>, string <i>rgb</i>)</code></td>
+				<td>
+					Colors the tank, treads, and bomb mechanism. <code>"255 127 0"</code> would result in an orange tank.
+				</td>
+			</tr>
+			<tr>
+				<td><code>SetTankModel</code></td>
+				<td><code>void SetTankModel(handle <i>tank</i>, handle <i>model</i>)</code></td>
+				<td>
+					Accepts a single model path string or a table of multiple model path strings. The keyvalues for the table are: <code>Tank</code>, <code>LeftTrack</code>, <code>RightTrack</code>, <code>Bomb</code>.
+				</td>
+			</tr>
+			<tr>
+				<td><code>SetValueOverrides</code></td>
+				<td><code>void SetValueOverrides(handle <i>table</i>)</code></td>
+				<td>
+					Overrides any values that are allowed to be customized within the available tank types.
+				</td>
+			</tr>
+			<tr>
+				<td><code>SpawnEntityFromTableFast</code></td>
+				<td><code>void SpawnEntityFromTableFast(string <i>classname</i>, handle <i>keyvalues</i>)</code></td>
+				<td>
+					Experimental function to spawn entities without a perf warning. Has only been tested on entities with a model.
+				</td>
+			</tr>
+			<tr>
+				<td><code>VectorAngles</code></td>
+				<td><code>QAngle VectorAngles(Vector <i>input</i>)</code></td>
+				<td>
+					Converts the Vector to a QAngle. The QAngle is the angle towards the Vector.
+					<p class="credits">From the <a href="https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/VScript_Examples">TF2 VScript Examples</a> page</p>
+				</td>
+			</tr>
+		</table>
+	</body>
+</html>

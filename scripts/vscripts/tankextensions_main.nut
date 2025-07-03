@@ -582,7 +582,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		{
 			local CustomParams = split(sTankName.slice(iCustomParamsBegin + 1), "^")
 			sTankName = sTankName.slice(0, iCustomParamsBegin)
-			hTank.KeyValueFromString("targetname", sTankName)
 
 			local ParamTable = {}
 			foreach(CustomParam in CustomParams)
@@ -728,7 +727,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		if(Check("DisableOutline") && TankTable.DisableOutline == 1)
 		{
 			Add("DisableOutline")
-			SetPropBool(self, "m_bGlowEnabled", false)
+			SetPropBool(hTank, "m_bGlowEnabled", false)
 			EntFireByHandle(hTank, "RunScriptCode", "SetPropBool(self, `m_bGlowEnabled`, false)", 0.066, null, null)
 		}
 
