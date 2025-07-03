@@ -10,7 +10,7 @@ PrecacheModel(BLIMP_MODEL)
 TankExt.PrecacheSound(BLIMP_SOUND_ENGINE)
 
 TankExt.NewTankType("blimp", {
-	Model              = BLIMP_MODEL
+	Model = BLIMP_MODEL
 	DisableChildModels = 1
 	NoScreenShake      = 1
 	EngineLoopSound    = BLIMP_SOUND_ENGINE
