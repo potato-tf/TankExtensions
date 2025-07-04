@@ -398,7 +398,7 @@
 							<td>rocketpod<br>rocketpod_homing</td>
 						</tr>
 					</table>
-					<p>This tank by default will not have a visible bomb mechanism to indicate that it will not deploy the bomb, useful for if the tank is on a looping path. The <code>_bomb</code> suffix will add a bomb mechanism if desired. The <code>_nolaser</code> suffix hides the laser beam permanently. <code>ToggleUber</code> makes the tank invulnerable until the function is called again.</p>
+					<p>This tank has an optional bomb attachment, by default the tank will not spawn with a bomb mechanism for use with looping paths. The <code>_bomb</code> suffix will add a bomb mechanism if desired. The <code>_nolaser</code> suffix hides the laser beam permanently. <code>ToggleUber</code> makes the tank invulnerable until the function is called again.</p>
 					<p class="credits">Tank and weapon models by <a href="https://steamcommunity.com/profiles/76561198070293827">Charlie</a></p>
 				</td>
 			</tr>
@@ -412,7 +412,7 @@
 				<td></td>
 				<td></td>
 				<td>
-					<p>Adds a big drill at the front of the tank. Deals 50 damage to the victim every 0.33 seconds (150 dps) that applies bleed and 75% movement stun for 1 second. Deals no damage while in the bomb deploy sequence.</p>
+					<p>Adds a big drill to the front of the tank. Deals 50 damage to the victim every 0.33 seconds (150 dps) which apply bleed and 75% movement stun for 1 second. Deals no damage while in the bomb deploy sequence.</p>
 					<p class="credits">Drill model by <a href="https://steamcommunity.com/profiles/76561198139139265">KrazyZark</a></p>
 				</td>
 			</tr>
@@ -439,7 +439,7 @@
 				<td></td>
 				<td></td>
 				<td>
-					<p>Every 0.5 seconds will activate a trigger around the base of the tank that ignites enemies.</p>
+					<p>Every 0.5 seconds a ring of fire will emit from the tank which ignite enemies.</p>
 					<p class="credits">Concept by <a href="https://steamcommunity.com/profiles/76561198158093750">Bazooks</a></p>
 				</td>
 			</tr>
@@ -458,7 +458,7 @@
 				</td>
 				<td></td>
 				<td>
-					<p>Small mobile turret that shoots a chosen projectile at 5 angles. Allows 2 parameters of: <code>rocket</code>, <code>grenade</code>, <code>jarate</code>, <code>milk</code>, <code>gas</code>. First parameter is the normal projectile type and the second parameter is the close range projectile type. The second parameter can be left blank to not switch to close ranged projectiles. The <code>_crit</code> suffix makes all projectiles crit.</p>
+					<p>Small mobile turret that shoot a chosen projectile at 5 angles. Allows 2 parameters of: <code>rocket</code>, <code>grenade</code>, <code>jarate</code>, <code>milk</code>, <code>gas</code>. First parameter is the normal projectile type and the second parameter is the close range projectile type. The second parameter can be left blank to not switch to close ranged projectiles. The <code>_crit</code> suffix makes all projectiles crit.</p>
 					<p class="credits">Cart model from the <a href="https://frontline.tf2maps.net">Frontline Supply Drop</a></p>
 				</td>
 			</tr>
@@ -477,6 +477,20 @@
 				</td>
 			</tr>
 			<tr>
+				<td><img class="tankicon" src="images/tanks/helicopter.webp"></img></td>
+				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/helicopter.nut">helicopter.nut</a></td>
+				<td>
+					<code>helicopter</code>
+				</td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td>
+					<p>Traverses the sky (like a blimp), aims and shoots rockets at enemies (like a combattank), shoots a burst of stickies at enemies (like a stickytank), and can deploy the bomb (like a tank).</p>
+					<p class="credits">Inspired by <a href="https://steamcommunity.com/profiles/76561198835403557">Royal</a>'s <a href="https://wiki.teamfortress.com/wiki/Operation_Galvanized_Gauntlet">Dover 2</a> mission<br>Models from the <a href="https://frontline.tf2maps.net">Frontline Supply Drop</a></p>
+				</td>
+			</tr>
+			<tr>
 				<td><img class="tankicon" src="images/tanks/jumptank.gif"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/jumptank.nut">jumptank.nut</a></td>
 				<td>
@@ -488,7 +502,7 @@
 					Jump
 				</td>
 				<td>
-					<p>Causes the tank to jump high in the air periodically. When the tank is falling it will crush enemies beneath it, instantly killing them. When landing it will push enemies away. Set <code>JUMPTANK_JUMP_COOLDOWN</code> to a value below 0 to disable automatic jumping for all jumptanks.</p>
+					<p>Causes the tank to jump high in the air periodically. When the tank is falling it will crush enemies beneath it, instantly killing them. When landing it will push enemies away. Set <code>JUMPTANK_JUMP_COOLDOWN</code> to a value below 0 to disable automatic jumping for all jumptanks. Setting <code>JUMPTANK_USE_SPECIAL_DEPLOY</code> to true will change how the deploy sequence looks.</p>
 				</td>
 			</tr>
 			<tr>
@@ -587,7 +601,7 @@
 				<td></td>
 				<td></td>
 				<td>
-					<p>Fires a barrage of non-crit and crit stickies in front of the tank. Stickies detonate 7 seconds after the tank began firing.</p>
+					<p>Fires a barrage of non-crit and crit stickies in front of the tank. Stickies detonate 6.5 seconds after the tank began firing.</p>
 					<p class="credits">Concept by <a href="https://steamcommunity.com/profiles/76561197965468138">Hell-met</a><br>Tank turret model from the <a href="https://frontline.tf2maps.net">Frontline Supply Drop</a></p>
 				</td>
 			</tr>
@@ -632,7 +646,7 @@
 				<td></td>
 				<td></td>
 				<td>
-					<p>Places a fake teleporter ontop of the tank that teleports spawned bots that have the <code>bot_teletank</code> tag. Teleported bots will spawn with 5 seconds of ubercharge.</p>
+					<p>Places a fake teleporter ontop of the tank that teleport spawned bots with the <code>bot_teletank</code> tag. Teleported bots will spawn with 1 second of ubercharge.</p>
 					<p class="credits">Concept by <a href="https://steamcommunity.com/profiles/76561198115147053">dexc34</a></p>
 				</td>
 			</tr>

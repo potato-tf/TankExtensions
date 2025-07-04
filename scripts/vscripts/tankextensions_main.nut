@@ -865,18 +865,15 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 						vecDifference -= vecFakeOrigin
 						vecDifference *= -1
-						if(vecDifference.z >= 0)
-						{
-							local vecMins = self.GetBoundingMins()
-							local vecMaxs = self.GetBoundingMaxs()
-							foreach(hPlayer in Players)
-								if(hPlayer.IsValid() && hPlayer.IsAlive())
-								{
-									local vecPlayer = hPlayer.GetOrigin()
-									if(TankExt.IntersectionBoxBox(vecFakeOrigin, vecMins, vecMaxs, vecPlayer, hPlayer.GetPlayerMins(), hPlayer.GetPlayerMaxs()))
-										hPlayer.SetAbsOrigin(vecPlayer + Vector(0, 0, vecDifference.z))
-								}
-						}
+						local vecMins = self.GetBoundingMins()
+						local vecMaxs = self.GetBoundingMaxs()
+						foreach(hPlayer in Players)
+							if(hPlayer.IsValid() && hPlayer.IsAlive())
+							{
+								local vecPlayer = hPlayer.GetOrigin()
+								if(TankExt.IntersectionBoxBox(vecFakeOrigin, vecMins, vecMaxs, vecPlayer, hPlayer.GetPlayerMins(), hPlayer.GetPlayerMaxs()))
+									hPlayer.SetAbsOrigin(vecPlayer + (hPlayer.GetFlags() & FL_ONGROUND ? Vector(0, 0, vecDifference.z) : vecDifference))
+							}
 					}
 					self.SetAbsOrigin(vecFakeOrigin)
 					self.GetLocomotionInterface().Reset()
@@ -1160,14 +1157,19 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		if(sAttachment) iAttachment = hParent.LookupAttachment(sAttachment)
 		foreach(hChild in hChildren)
 		{
-			SetPropEntity(hChild, "m_hMovePeer", hParent.FirstMoveChild())
-			SetPropEntity(hParent, "m_hMoveChild", hChild)
-			SetPropEntity(hChild, "m_pParent", hParent)
-			SetPropEntity(hChild, "m_hMoveParent", hParent)
-			SetPropEntity(hChild, "m_Network.m_hParent", hParent)
+			local vecOrigin   = hChild.GetOrigin()
+			local angRotation = hChild.GetAbsAngles()
+			hChild.AcceptInput("SetParent", "!activator", hParent, null)
+			// SetPropEntity(hChild, "m_hMovePeer", hParent.FirstMoveChild())
+			// SetPropEntity(hParent, "m_hMoveChild", hChild)
+			// SetPropEntity(hChild, "m_pParent", hParent)
+			// SetPropEntity(hChild, "m_hMoveParent", hParent)
+			// SetPropEntity(hChild, "m_Network.m_hParent", hParent)
 			SetPropEntity(hChild, "m_hLightingOrigin", hParent)
 			if(sAttachment)
 				SetPropInt(hChild, "m_iParentAttachment", iAttachment)
+			hChild.SetLocalOrigin(vecOrigin)
+			hChild.SetLocalAngles(angRotation)
 		}
 	}
 	hDelayFunction = null
@@ -1692,7 +1694,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			switch(typeof Value)
 			{
 				case "string"  : hEnt.KeyValueFromString(sKey, Value); break
-				case "QAngle"  : hEnt.KeyValueFromString(sKey, format("%f %f %f", Key.x, Key.y, Key.z)); break
+				case "QAngle"  : hEnt.KeyValueFromString(sKey, format("%f %f %f", Value.x, Value.y, Value.z)); break
 				case "Vector"  : hEnt.KeyValueFromVector(sKey, Value); break
 				case "float"   : hEnt.KeyValueFromFloat(sKey, Value); break
 				case "integer" : hEnt.KeyValueFromInt(sKey, Value); break
