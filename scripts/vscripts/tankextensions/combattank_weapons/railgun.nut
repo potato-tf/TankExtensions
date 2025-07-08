@@ -8,7 +8,7 @@ local COMBATTANK_VALUES_TABLE = {
 	COMBATTANK_RAILGUN_MODEL_CASING         = "models/bots/boss_bot/combat_tank/railgun_case.mdl"
 	COMBATTANK_RAILGUN_PARTICLE_TRACER_RED  = "dxhr_sniper_rail_red"
 	COMBATTANK_RAILGUN_PARTICLE_TRACER_BLUE = "dxhr_sniper_rail_blue"
-	COMBATTANK_RAILGUN_COOLDOWN_TIME        = 10
+	COMBATTANK_RAILGUN_COOLDOWN_TIME        = 8
 	COMBATTANK_RAILGUN_BULLET_DAMAGE        = 300
 	COMBATTANK_RAILGUN_CLIP_SIZE            = 3
 }
@@ -70,7 +70,6 @@ TankExt.CombatTankWeapons["railgun"] <- {
 			iClip--
 			flNextAttack = Time() + (iClip == 0 ? COMBATTANK_RAILGUN_COOLDOWN_TIME : 0.7)
 			SetLaserColor(null)
-			hTank_scope.bLock = false
 			bCharging = false
 			hTank_scope.AddToSoundQueue({
 				sound_name  = COMBATTANK_RAILGUN_SND_FIRE1
@@ -184,7 +183,6 @@ TankExt.CombatTankWeapons["railgun"] <- {
 			if(!bCharging && bInLaser && bCanAttack && flCoolPercent <= 0)
 			{
 				SetLaserColor("150 90 0")
-				hTank_scope.bLock = true
 				bCharging = true
 				hTank_scope.AddToSoundQueue({
 					sound_name  = COMBATTANK_RAILGUN_SND_CHARGE

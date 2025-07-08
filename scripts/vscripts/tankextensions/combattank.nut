@@ -198,7 +198,7 @@ TankExt.NewTankType("combattank*", {
 		local CombatScope = this
 		self.GetScriptScope().ToggleUber <- @() CombatScope.ToggleUber()
 
-		bLock <- false
+		// bLock <- false
 		function Think()
 		{
 			foreach(sSound, Table in SoundQueue)
@@ -213,8 +213,8 @@ TankExt.NewTankType("combattank*", {
 			}
 
 			vecMount = self.GetAttachmentOrigin(self.LookupAttachment("weapon_l"))
-			if(!bLock)
-			{
+			// if(!bLock)
+			// {
 				hTarget   = null
 				vecTarget = null
 				flDist    = COMBATTANK_MAX_RANGE
@@ -252,8 +252,8 @@ TankExt.NewTankType("combattank*", {
 					}
 					if(hTarget) break
 				}
-			}
-			if(hTarget && !hTarget.IsValid()) hTarget = null
+			// }
+			// if(hTarget && !hTarget.IsValid()) hTarget = null
 
 			if(hTarget != hTargetLast)
 			{
