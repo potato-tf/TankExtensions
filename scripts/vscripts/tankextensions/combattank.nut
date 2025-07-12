@@ -20,7 +20,7 @@ local COMBATTANK_VALUES_TABLE = {
 	COMBATTANK_MODEL                = "models/bots/boss_bot/combat_tank_mk2/mk2_combat_tank_chassis.mdl"
 	COMBATTANK_TRACK_L_RED          = "models/bots/boss_bot/tankred_track_l.mdl"
 	COMBATTANK_TRACK_R_RED          = "models/bots/boss_bot/tankred_track_r.mdl"
-	COMBATTANK_MAX_RANGE            = 1400
+	COMBATTANK_MAX_RANGE            = 1800
 }
 foreach(k,v in COMBATTANK_VALUES_TABLE)
 	if(!(k in TankExt.ValueOverrides))

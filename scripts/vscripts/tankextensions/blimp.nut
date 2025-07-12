@@ -32,12 +32,31 @@ TankExt.NewTankType("blimp*", {
 	{
 		local sParams = split(sTankName, "|")
 		local iParamsLength = sParams.len()
+
 		if(sParams[0].find("_red")) self.SetTeam(TF_TEAM_RED)
+
+		local bParticles = false
+		local hParticle1, hParticle2, hParticle3, hParticle4
+		if(sParams[0].find("_customparticles"))
+		{
+			bParticles = true
+			hParticle1 = SpawnEntityFromTable("info_particle_system", { angles = QAngle(10, 106, -10), effect_name = "mvm_blimp_smoke", start_active = 1 })
+			hParticle2 = SpawnEntityFromTable("info_particle_system", { angles = QAngle(10, 106, -10), effect_name = "mvm_blimp_smoke_exhaust" })
+			TankExt.SetParentArray([hParticle1, hParticle2], self, "smoke_attachment")
+			hParticle3 = SpawnEntityFromTable("info_particle_system", { angles = QAngle(90, 0, -90), effect_name = "mvm_blimp_propeller_wind", start_active = 1 })
+			TankExt.SetParentArray([hParticle3], self, "propeller_l")
+			hParticle4 = SpawnEntityFromTable("info_particle_system", { angles = QAngle(90, 0, -90), effect_name = "mvm_blimp_propeller_wind", start_active = 1 })
+			TankExt.SetParentArray([hParticle4], self, "propeller_r")
+		}
+
 		if(iParamsLength >= 2)
 		{
 			SetPropInt(self, "m_iTextureFrameIndex", 2)
 			self.AcceptInput("Color", sParams[1], null, null)
 		}
+
+		local flSpeedLast         = 75.0
+		local flHealthPercentLast = 1.0
 
 		local iBombAttachment  = self.LookupAttachment("bomb_pos")
 		local iPropAttachmentL = self.LookupAttachment("propeller_l")
@@ -55,6 +74,34 @@ TankExt.NewTankType("blimp*", {
 		local bFoundWorld  = false
 		function Think()
 		{
+			if(bParticles)
+			{
+				local flSpeed = GetPropFloat(self, "m_speed")
+				if(flSpeed == 0.0 && flSpeedLast != 0.0)
+				{
+					hParticle3.AcceptInput("Stop", null, null, null)
+					hParticle4.AcceptInput("Stop", null, null, null)
+				}
+				else if(flSpeed != 0.0 && flSpeedLast == 0.0)
+				{
+					hParticle3.AcceptInput("Start", null, null, null)
+					hParticle4.AcceptInput("Start", null, null, null)
+				}
+				flSpeedLast = flSpeed
+
+				local flHealthPercent = iHealth / iMaxHealth.tofloat()
+				if(flHealthPercent <= 0.5 && flHealthPercentLast > 0.5)
+				{
+					hParticle1.AcceptInput("Stop", null, null, null)
+					hParticle2.AcceptInput("Start", null, null, null)
+				}
+				else if(flHealthPercent > 0.5 && flHealthPercentLast <= 0.5)
+				{
+					hParticle1.AcceptInput("Start", null, null, null)
+					hParticle2.AcceptInput("Stop", null, null, null)
+				}
+				flHealthPercentLast = flHealthPercent
+			}
 			if(!bDeploying)
 			{
 				local vecPropL = self.GetAttachmentOrigin(iPropAttachmentL)

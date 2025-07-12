@@ -1044,7 +1044,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	{
 		local ApplyModel = function(hEntity, sModel)
 		{
-			local bSmokeStack = hEntity == hTank && sModel != hTank.GetModelName()
+			local bSmokeStack = hEntity == hTank && sModel != hTank.GetModelName() && GetPropInt(hTank, "touchStamp") >= 2 && !("DisableSmokestackThink" in hTank.GetScriptScope())
 			local iModelIndex = PrecacheModel(sModel)
 			local sSequence   = hEntity.GetSequenceName(hEntity.GetSequence())
 			hEntity.SetModel(sModel)
@@ -1052,7 +1052,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			SetPropIntArray(hEntity, "m_nModelIndexOverrides", iModelIndex, 0)
 			SetPropIntArray(hEntity, "m_nModelIndexOverrides", iModelIndex, 3)
 			hEntity.SetSequence(hEntity.LookupSequence(sSequence))
-			if(bSmokeStack && GetPropInt(hTank, "touchStamp") >= 2)
+			if(bSmokeStack)
 			{
 				local iAttachment = hTank.LookupAttachment("smoke_attachment")
 				if(iAttachment != 0)

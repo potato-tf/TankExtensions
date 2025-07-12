@@ -2,9 +2,10 @@ local HELICOPTER_VALUES_TABLE = {
 	HELICOPTER_MODEL        = "models/props_frontline/helicopter_windows.mdl"
 	HELICOPTER_TURRET_MODEL = "models/props_frontline/tank_turret.mdl"
 	HELICOPTER_SOUND_ENGINE = "^npc/attack_helicopter/aheli_rotor_loop1.wav"
-	HELICOPTER_MAX_RANGE    = 1600
+	HELICOPTER_MAX_RANGE    = 2000
 
 	HELICOPTER_ROCKET_SND_FIRE        = "Weapon_Airstrike.AltFire"
+	HELICOPTER_ROCKET_SND_FIRE_CRIT   = "Weapon_Airstrike.CritFire"
 	HELICOPTER_ROCKET_SPLASH          = 146
 	HELICOPTER_ROCKET_SPEED           = 600
 	HELICOPTER_ROCKET_DAMAGE          = 100
@@ -15,6 +16,7 @@ local HELICOPTER_VALUES_TABLE = {
 	HELICOPTER_ROCKET_PARTICLE_TRAIL  = "rockettrail_airstrike"
 
 	HELICOPTER_STICKY_SND_FIRE       = ")weapons/stickybomblauncher_shoot.wav"
+	HELICOPTER_STICKY_SND_FIRE_CRIT  = ")weapons/stickybomblauncher_shoot_crit.wav"
 	HELICOPTER_STICKY_MODEL          = "models/weapons/w_models/w_stickybomb.mdl"
 	HELICOPTER_STICKY_SPREAD         = 30
 	HELICOPTER_STICKY_SPLASH_RADIUS  = 189
@@ -35,9 +37,11 @@ PrecacheModel(HELICOPTER_ROCKET_MODEL)
 PrecacheModel(HELICOPTER_STICKY_MODEL)
 TankExt.PrecacheSound(HELICOPTER_SOUND_ENGINE)
 TankExt.PrecacheSound(HELICOPTER_ROCKET_SND_FIRE)
+TankExt.PrecacheSound(HELICOPTER_ROCKET_SND_FIRE_CRIT)
 TankExt.PrecacheSound(HELICOPTER_STICKY_SND_FIRE)
+TankExt.PrecacheSound(HELICOPTER_STICKY_SND_FIRE_CRIT)
 
-TankExt.NewTankType("helicopter", {
+TankExt.NewTankType("helicopter*", {
 	DisableChildModels = 1
 	DisableSmokestack  = 1
 	EngineLoopSound    = "misc/null.wav"
@@ -50,11 +54,12 @@ TankExt.NewTankType("helicopter", {
 		EmitSoundEx({
 			sound_name  = HELICOPTER_SOUND_ENGINE
 			channel     = CHAN_STATIC
-			sound_level = 130
+			sound_level = 150
 			entity      = self
 			filter_type = RECIPIENT_FILTER_GLOBAL
 		})
 
+		local bCrit     = sTankName.find("_crit") ? true : false
 		local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
 		local hModel    = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = HELICOPTER_MODEL, defaultanim = "Hover_idle", skin = (bBlueTeam ? 1 : 0) })
 		hModel.AcceptInput("SetAnimation", "Lift_to_hover", null, null)
@@ -318,7 +323,7 @@ TankExt.NewTankType("helicopter", {
 							flTimeRocket = flTime + HELICOPTER_ROCKET_COOLDOWN
 							hMimicRocket.AcceptInput("FireOnce", null, null, null)
 							EmitSoundEx({
-								sound_name  = HELICOPTER_ROCKET_SND_FIRE
+								sound_name  = bCrit ? HELICOPTER_ROCKET_SND_FIRE_CRIT : HELICOPTER_ROCKET_SND_FIRE
 								sound_level = 90
 								entity      = self
 								filter_type = RECIPIENT_FILTER_GLOBAL
@@ -334,6 +339,7 @@ TankExt.NewTankType("helicopter", {
 									hRocket.SetSkin(iTeamNum == TF_TEAM_BLUE ? 1 : 0)
 									hRocket.SetTeam(iTeamNum)
 									hRocket.SetOwner(self)
+									if(bCrit) SetPropBool(hRocket, "m_bCritical", true)
 
 									hRocket.ValidateScriptScope()
 									local hRocket_scope = hRocket.GetScriptScope()
@@ -366,8 +372,13 @@ TankExt.NewTankType("helicopter", {
 										hTrail.KeyValueFromString("attachment_name", "trail")
 										hTrail.KeyValueFromInt("attachment_type", 4)
 										hTrail.KeyValueFromInt("spawnflags", 64)
-										DispatchSpawn(hTrail)
+										hTrail.DispatchSpawn()
 										hTrail.AcceptInput("StartTouch", null, hRocket, hRocket)
+										if(bCrit)
+										{
+											hTrail.KeyValueFromString("particle_name", iTeamNum == TF_TEAM_BLUE ? "critical_rocket_blue" : "critical_rocket_red")
+											hTrail.AcceptInput("StartTouch", null, hRocket, hRocket)
+										}
 										hTrail.Kill()
 									}
 								}
@@ -381,7 +392,7 @@ TankExt.NewTankType("helicopter", {
 								hMimicSticky.AcceptInput("DetonateStickies", null, null, null)
 							})
 							EmitSoundEx({
-								sound_name  = HELICOPTER_STICKY_SND_FIRE
+								sound_name  = bCrit ? HELICOPTER_STICKY_SND_FIRE_CRIT : HELICOPTER_STICKY_SND_FIRE
 								sound_level = 90
 								pitch       = 95
 								entity      = self
@@ -394,6 +405,7 @@ TankExt.NewTankType("helicopter", {
 									hSticky.SetOwner(self)
 									hSticky.SetTeam(iTeamNum)
 									hSticky.SetSkin(iTeamNum == TF_TEAM_BLUE ? 1 : 0)
+									if(bCrit) SetPropBool(hSticky, "m_bCritical", true)
 									hStickies.append(hSticky)
 								}
 						}
