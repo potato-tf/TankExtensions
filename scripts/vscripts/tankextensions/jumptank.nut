@@ -63,7 +63,7 @@ TankExt.NewTankType("jumptank", {
 					local vecOrigin = self.GetOrigin()
 					bJumping        = true
 					vecFakeOrigin   = vecOrigin
-					vecFakeVelocity = self.GetForwardVector() * GetPropFloat(self, "m_speed") + Vector(0, 0, 1024) * pow(Trace.fraction, 0.65)
+					vecFakeVelocity = (!bDeploying ? self.GetForwardVector() * GetPropFloat(self, "m_speed") : Vector()) + Vector(0, 0, 1024) * pow(Trace.fraction, 0.65)
 					ValidPlayers.clear()
 					for(local i = 1; i <= MAX_CLIENTS; i++)
 					{

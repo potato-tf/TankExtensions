@@ -160,6 +160,7 @@ TankExt.CombatTankWeapons["minigun"] <- {
 					hParticleMuzzle2.AcceptInput("Stop", null, null, null)
 					hParticleCasing1.AcceptInput("Stop", null, null, null)
 					hParticleCasing2.AcceptInput("Stop", null, null, null)
+					self.SetBodygroup(1, 0)
 				}
 			}
 			else if(iState != 0)

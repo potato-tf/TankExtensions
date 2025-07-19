@@ -872,7 +872,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 							{
 								local vecPlayer = hPlayer.GetOrigin()
 								if(TankExt.IntersectionBoxBox(vecFakeOrigin, vecMins, vecMaxs, vecPlayer, hPlayer.GetPlayerMins(), hPlayer.GetPlayerMaxs()))
-									hPlayer.SetAbsOrigin(vecPlayer + (hPlayer.GetFlags() & FL_ONGROUND ? Vector(0, 0, vecDifference.z) : vecDifference))
+									hPlayer.SetAbsOrigin(vecPlayer + (hPlayer.GetFlags() & FL_ONGROUND ? Vector(0, 0, vecDifference.z + 0.01) : vecDifference))
 							}
 					}
 					self.SetAbsOrigin(vecFakeOrigin)
@@ -987,19 +987,20 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				Set(PreviousIcon[0], PreviousIcon[1], PreviousIcon[2])
 				PreviousIcon = PreviousIconTemp
 			}
-			local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIndex)
-			if(sIconName == "tank")
-				SetPropIntArray(hObjectiveResource, sCounts, GetPropIntArray(hObjectiveResource, sCounts, iIndex) - iCount, iIndex)
-			else if(iPlacement != null && iPlacement == iCurrentPlacement)
+			local sIconName  = GetPropStringArray(hObjectiveResource, sNames, iIndex)
+			local iIconCount = GetPropIntArray(hObjectiveResource, sCounts, iIndex)
+			if(iPlacement != null && iPlacement == iCurrentPlacement)
 			{
 				PreviousIcon = [
-					GetPropStringArray(hObjectiveResource, sNames, iIndex),
-					GetPropIntArray(hObjectiveResource, sCounts, iIndex),
+					sIconName,
+					iIconCount,
 					GetPropIntArray(hObjectiveResource, sFlags, iIndex)
 				]
 				Set(sIcon, iCount, MVM_CLASS_FLAG_NORMAL | MVM_CLASS_FLAG_MINIBOSS)
 			}
-			else if(iPlacement == null && (sIconName == "" || sIconName == sIcon))
+			else if(sIconName == "tank")
+				SetPropIntArray(hObjectiveResource, sCounts, iIconCount - iCount, iIndex)
+			else if(iPlacement == null && ((sIconName == "" && iIconCount == 0) || sIconName == sIcon))
 			{
 				Set(sIcon, iCount, MVM_CLASS_FLAG_NORMAL | MVM_CLASS_FLAG_MINIBOSS)
 				return true

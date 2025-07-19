@@ -122,6 +122,11 @@ TankExt.NewTankType("blimp*", {
 					{
 						self.StopSound("MVM.TankDeploy")
 					})
+					if(bParticles)
+					{
+						hParticle3.AcceptInput("Stop", null, null, null)
+						hParticle4.AcceptInput("Stop", null, null, null)
+					}
 				}
 			}
 			else if(!bFoundWorld)
