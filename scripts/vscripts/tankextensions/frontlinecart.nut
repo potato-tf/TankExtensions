@@ -37,6 +37,9 @@ TankExt.NewTankType("frontlinecart*", {
 	DisableSmokestack  = 1
 	Scale              = 0.5
 	NoDestructionModel = 1
+	Model              = {
+		Visual = "models/empty.mdl"
+	}
 	function OnSpawn()
 	{
 		local bFinalSkin = self.GetSkin() == 1
@@ -58,7 +61,6 @@ TankExt.NewTankType("frontlinecart*", {
 		hTouch.SetSolid(SOLID_BBOX)
 		local hDisp = SpawnEntityFromTable("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "12.5 19 -1", angles = "-90 0 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
 		EmitSoundEx({ entity = hDisp, sound_name = "misc/null.wav", filter_type = RECIPIENT_FILTER_GLOBAL, flags = SND_STOP | SND_IGNORE_NAME })
-		hTouch.KeyValueFromString("targetname", "")
 		TankExt.SetParentArray([hTouch], self)
 		SetPropEntity(hTouch, "m_pParent", null)
 		TankExt.SetParentArray([hDisp], hModel, "light")
@@ -124,7 +126,7 @@ TankExt.NewTankType("frontlinecart*", {
 			local iType = bCloseRange ? iProjectileTypeClose : iProjectileType
 			local ApplyToProjectile = function(hEnt)
 			{
-				SetPropBool(hEnt, "m_bForcePurgeFixedupStrings", true)
+				TankExt.MarkForPurge(hEnt)
 				hEnt.SetSolid(SOLID_BSP)
 				hEnt.SetTeam(iTeamNum)
 				hEnt.SetOwner(self)
@@ -256,15 +258,11 @@ TankExt.NewTankType("frontlinecart*", {
 		local flAngleNW = 22.5
 		local flAngleW  = 45 + 22.5
 
-		local iEmpty     = PrecacheModel("models/empty.mdl")
 		local iDeploySeq = self.LookupSequence("deploy")
 		local flTimeFire = Time() + 2
 		local bDeploying = false
 		function Think()
 		{
-			SetPropIntArray(self, "m_nModelIndexOverrides", iEmpty, 0)
-			SetPropIntArray(self, "m_nModelIndexOverrides", iEmpty, 3)
-
 			EmitSoundEx({
 				sound_name  = "misc/null.wav"
 				pitch       = 105

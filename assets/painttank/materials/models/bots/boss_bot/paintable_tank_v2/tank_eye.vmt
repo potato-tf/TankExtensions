@@ -1,6 +1,6 @@
 VertexLitGeneric
 {
-	$basetexture models\bots\boss_bot\paintable_tank_v2\tank_eye
+	$basetexture models/bots/boss_bot/paintable_tank_v2/tank_eye
 	$blendtintbybasealpha 1
 
 	$envmap vgui/white
@@ -14,27 +14,27 @@ VertexLitGeneric
 
 	// $basetexture vgui/black
 	// $selfillum 1
-	// $selfillummask models\bots\boss_bot\paintable_tank_v2\tank_eye
+	// $selfillummask models/bots/boss_bot/paintable_tank_v2/tank_eye
 	// $envmaptint "[0.125 0.125 0.125]"
 	// Doesn't work in this case
 	// $selfillummaskscale 0.125
 
 	// $color2 "[0.125 0.125 0.125]"
 
-	// $detail				models\bots\boss_bot\paintable_tank_v2\tank_eye
+	// $detail				models/bots/boss_bot/paintable_tank_v2/tank_eye
 	// $detailblendfactor	1
 	// $detailscale		1
 	// $detailblendmode	5
 
 	// $envmap vgui/white
-	// $envmapmask models\bots\boss_bot\paintable_tank_v2\tank_eye
+	// $envmapmask models/bots/boss_bot/paintable_tank_v2/tank_eye
 	// $envmaptint "[1 1 1]"
 	// $envmaptint "[0.125 0.125 0.125]"
 
 	// $EmissiveBlendEnabled		1
 	// $EmissiveBlendStrength		1
 	// $EmissiveBlendTexture		vgui/white
-	// $EmissiveBlendBaseTexture	models\bots\boss_bot\paintable_tank_v2\tank_eye
+	// $EmissiveBlendBaseTexture	models/bots/boss_bot/paintable_tank_v2/tank_eye
 	// $EmissiveBlendFlowTexture	vgui/white
 	// $EmissiveBlendTint			" [ 1 1 1 ] "
 	// $EmissiveBlendScrollVector	" [ 0 0 ] "

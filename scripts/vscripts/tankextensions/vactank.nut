@@ -98,7 +98,6 @@ TankExt.NewTankType("vactank*", {
 			foreach(hShield in hShields)
 			{
 				local hShieldFade = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = VACTANK_MODEL, skin = hShield.GetSkin(), disableshadows = 1, renderfx = kRenderFxFadeFast })
-				SetPropBool(hShieldFade, "m_bForcePurgeFixedupStrings", true)
 				SetPropInt(hShieldFade, "m_clrRender", GetPropInt(hShield, "m_clrRender"))
 				TankExt.SetParentArray([hShieldFade], self)
 				EntFireByHandle(hShieldFade, "Kill", null, 1, null, null)

@@ -412,14 +412,44 @@ foreach(k,v in UNOFFICIAL_CONSTANTS)
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
+// cleanup if the script is called again
+if("TankExt" in ROOT)
+{
+	if(TankExt.hThinkEnt.IsValid()) TankExt.hThinkEnt.Kill()
+}
+
 local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 ::TankExt <- {
+	hThinkEnt   = null
+	RevertPaths = []
 	function OnGameEvent_recalculate_holidays(_) { if(GetRoundState() == 3) { delete ::TankExt } }
 	function OnGameEvent_mvm_begin_wave(_)
 	{
+		// iterate through all path_tracks and offset them by a tiny amount if they overlap
+		local Paths = []
 		for(local hPath; hPath = FindByClassname(hPath, "path_track");)
-			if(!TankExt.HasTankPathOutput(hPath))
-				AddOutput(hPath, "OnPass", "!activator", "RunScriptCode", "TankExt.ApplyTankType(self)", -1, -1)
+			Paths.append([hPath, hPath.GetOrigin()])
+
+		local iLength = Paths.len()
+		while(iLength > 1)
+		{
+			local vecPath  = Paths[0][1]
+			local flOffset = 1e-5
+			foreach(i, array in Paths)
+			{
+				if(i == 0) continue
+				if((vecPath - array[1]).LengthSqr() == 0)
+				{
+					array[0].SetAbsOrigin(vecPath + Vector(0, 0, flOffset))
+					flOffset += 1e-5
+					RevertPaths.append(array)
+					Paths.remove(i)
+					iLength--
+				}
+			}
+			Paths.remove(0)
+			iLength--
+		}
 
 		foreach(array in QueuedTankIcons)
 			AddTankIcon(array[0], array[1], null, array[3])
@@ -427,6 +457,10 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	}
 	function OnGameEvent_mvm_wave_complete(params)
 	{
+		foreach(array in RevertPaths)
+			array[0].SetAbsOrigin(array[1])
+		RevertPaths.clear()
+
 		QueuedTankIcons.clear()
 		CustomTankIcons.clear()
 		CustomTankIconsWild.clear()
@@ -462,7 +496,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	TankScriptsWild = {}
 	function CreateLoopPaths(PathTable)
 	{
-		Convars.SetValue("sig_etc_path_track_is_server_entity", 0)
 		foreach(sPathName, OriginArray in PathTable)
 		{
 			if(FindByName(null, format("%s_1", sPathName)))
@@ -481,13 +514,11 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			local hPath1 = SpawnEntityFromTable("path_track", {
 				origin     = OriginArray[0]
 				targetname = format("%s_1", sPathName)
-				"OnPass#1" : format("%s_2,CallScriptFunction,LoopInitialize,0,-1", sPathName)
-				"OnPass#2" : "!activator,RunScriptCode,TankExt.ApplyTankType(self),0,-1"
+				OnPass     = format("%s_2,CallScriptFunction,LoopInitialize,0,-1", sPathName)
 			})
-			local hPath2 = SpawnEntityFromTable("path_track", {
+			local hPath2 = TankExt.SpawnEntityFromTableSafe("path_track", {
 				origin     = OriginArray[1]
 				targetname = format("%s_2", sPathName)
-				vscripts   = "tankextensions/misc/loopingpath_think"
 			})
 			local hPath3 = SpawnEntityFromTable("path_track", {
 				origin     = Vector(99999)
@@ -495,12 +526,14 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			})
 			TankExt.SetPathConnection(hPath1, hPath2)
 			TankExt.SetPathConnection(hPath2, hPath3)
+
+			hPath2.ValidateScriptScope()
 			local hPath_scope = hPath2.GetScriptScope()
+			IncludeScript("tankextensions/misc/loopingpath_think", hPath_scope)
 			hPath_scope.OriginArray  <- OriginArray
 			hPath_scope.sPathName    <- sPathName
 			hPath_scope.iArrayLength <- iArrayLength
 			hPath_scope.iLoopStart   <- iLoopStart
-			SetPropBool(hPath2, "m_bForcePurgeFixedupStrings", true)
 			TankExt.AddThinkToEnt(hPath2, "PathThink")
 		}
 	}
@@ -520,7 +553,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					origin     = vecOrigin
 					targetname = format("%s_%i", sPathName, i + 1)
 					target     = i != iArrayLength ? format("%s_%i", sPathName, i + 2) : ""
-					OnPass     = "!activator,RunScriptCode,TankExt.ApplyTankType(self),0,-1"
 				}
 				if(i == iArrayLength - 1)
 				{
@@ -533,19 +565,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			SpawnEntityGroupFromTable(PathGroup)
 		}
 	}
-	function HasTankPathOutput(hPath)
-	{
-		local iTotalOutputs = GetNumElements(hPath, "OnPass")
-		local bHasOutput = false
-		for(local i = 0; i <= iTotalOutputs; i++)
-		{
-			local OutputTable = {}
-			GetOutputTable(hPath, "OnPass", OutputTable, i)
-			if("parameter" in OutputTable && OutputTable.parameter == "TankExt.ApplyTankType(self)")
-				{ bHasOutput = true; break }
-		}
-		return bHasOutput
-	}
 	function NewTankType(sName, Table)
 	{
 		sName = sName.tolower()
@@ -557,13 +576,10 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		else
 			TankExt.TankScripts[sName] <- Table
 	}
-	function ApplyTankType(hTank)
+	function ApplyTankType(hTank, hPath)
 	{
-		if(!hTank.IsValid() || hTank.GetClassname() != "tank_boss" || hTank.GetEFlags() & EFL_NO_MEGAPHYSCANNON_RAGDOLL) return
-		local hPath = caller
 		local sTankName = hTank.GetName().tolower()
-		hTank.AddEFlags(EFL_NO_MEGAPHYSCANNON_RAGDOLL)
-		SetPropBool(hTank, "m_bForcePurgeFixedupStrings", true)
+		TankExt.MarkForPurge(hTank)
 
 		// legacy
 		local UseLegacy = function()
@@ -576,6 +592,8 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			foreach(sName, Table in TankScriptsWildLegacy)
 				if(startswith(sTankName, sName))
 					{ UseLegacy(); break }
+
+		local vecMins = hTank.GetBoundingMins(), vecMaxs = hTank.GetBoundingMaxs()
 
 		local iCustomParamsBegin = sTankName.find("$")
 		if(iCustomParamsBegin != null)
@@ -590,19 +608,20 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 				local ParamName = Params[0].tolower()
 				local ValidKeyValues = {
-					"Model"              : null
-					"DisableChildModels" : "tointeger"
-					"DisableTracks"      : "tointeger"
-					"DisableBomb"        : "tointeger"
-					"Color"              : null
-					"TeamNum"            : "tointeger"
-					"DisableOutline"     : "tointeger"
-					"DisableSmokestack"  : "tointeger"
-					"NoScreenShake"      : "tointeger"
-					"EngineLoopSound"    : null
-					"PingSound"          : null
-					"Scale"              : "tofloat"
-					"NoDestructionModel" : "tointeger"
+					"Color"                  : null
+					"DisableBomb"            : "tointeger"
+					"DisableChildModels"     : "tointeger"
+					"DisableOutline"         : "tointeger"
+					"DisableSmokestack"      : "tointeger"
+					"DisableTracks"          : "tointeger"
+					"EngineLoopSound"        : null
+					"Model"                  : null
+					"NoDestructionModel"     : "tointeger"
+					"NoScreenShake"          : "tointeger"
+					"PingSound"              : null
+					"ReplaceModelCollisions" : "tointeger"
+					"Scale"                  : "tofloat"
+					"TeamNum"                : "tointeger"
 				}
 				foreach(sName, sType in ValidKeyValues)
 					if(sName.tolower() == ParamName)
@@ -622,6 +641,11 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		}
 		else
 			ApplyTankTableByName(hTank, hPath, sTankName)
+
+		local hTank_scope  = hTank.GetScriptScope()
+		local flModelScale = hTank.GetModelScale()
+		if(!("bReplaceModelCollisions" in hTank_scope && hTank_scope.bReplaceModelCollisions))
+			hTank.SetSize(vecMins * (1 / flModelScale), vecMaxs * (1 / flModelScale))
 	}
 	function ExtraTankKeyValues(hTank, hPath, TankTable)
 	{
@@ -654,21 +678,38 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 		if(Check("Model"))
 		{
+			Add("Model")
 			if(typeof TankTable.Model == "string")
 				TankTable.Model = { Default = TankTable.Model }
+
+			local bModel  = false
+			local bVisual = false
+			if("Default" in TankTable.Model)
+			{
+				bModel = true
+				if(!("Damage1" in TankTable.Model))
+					TankTable.Model.Damage1 <- TankTable.Model.Default
+				if(!("Damage2" in TankTable.Model))
+					TankTable.Model.Damage2 <- TankTable.Model.Damage1
+				if(!("Damage3" in TankTable.Model))
+					TankTable.Model.Damage3 <- TankTable.Model.Damage2
+			}
+
 			TankExt.SetTankModel(hTank, {
-				Tank       = TankTable.Model.Default
+				Tank       = bModel ? TankTable.Model.Default : null
 				LeftTrack  = "LeftTrack" in TankTable.Model ? TankTable.Model.LeftTrack : null
 				RightTrack = "RightTrack" in TankTable.Model ? TankTable.Model.RightTrack : null
 				Bomb       = "Bomb" in TankTable.Model ? TankTable.Model.Bomb : null
 			})
 
-			if(!("Damage1" in TankTable.Model))
-				TankTable.Model.Damage1 <- TankTable.Model.Default
-			if(!("Damage2" in TankTable.Model))
-				TankTable.Model.Damage2 <- TankTable.Model.Damage1
-			if(!("Damage3" in TankTable.Model))
-				TankTable.Model.Damage3 <- TankTable.Model.Damage2
+			local iModelIndex = 0
+			if("Visual" in TankTable.Model)
+			{
+				bVisual = true
+				iModelIndex = PrecacheModel(TankTable.Model.Visual)
+				SetPropIntArray(hTank, "m_nModelIndexOverrides", iModelIndex, 0)
+				SetPropIntArray(hTank, "m_nModelIndexOverrides", iModelIndex, 3)
+			}
 
 			hTank_scope.sModelLast <- hTank.GetModelName()
 			hTank_scope.ModelThink <- function()
@@ -676,19 +717,27 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				local sModel = self.GetModelName()
 				if(sModel != sModelLast)
 				{
-					local sNewModel = sModel
+					if(bModel)
+					{
+						local sNewModel = sModel
 
-					if(sModel.find("damage1"))
-						sNewModel = TankTable.Model.Damage1
-					else if(sModel.find("damage2"))
-						sNewModel = TankTable.Model.Damage2
-					else if(sModel.find("damage3"))
-						sNewModel = TankTable.Model.Damage3
-					else
-						sNewModel = TankTable.Model.Default
+						if(sModel == "models/bots/boss_bot/boss_tank.mdl")
+							sNewModel = TankTable.Model.Default
+						else if(sModel == "models/bots/boss_bot/boss_tank_damage1.mdl")
+							sNewModel = TankTable.Model.Damage1
+						else if(sModel == "models/bots/boss_bot/boss_tank_damage2.mdl")
+							sNewModel = TankTable.Model.Damage2
+						else if(sModel == "models/bots/boss_bot/boss_tank_damage3.mdl")
+							sNewModel = TankTable.Model.Damage3
 
-					TankExt.SetTankModel(hTank, { Tank = sNewModel })
-					sModel = sNewModel
+						TankExt.SetTankModel(hTank, { Tank = sNewModel })
+						sModel = sNewModel
+					}
+					if(bVisual)
+					{
+						SetPropIntArray(hTank, "m_nModelIndexOverrides", iModelIndex, 0)
+						SetPropIntArray(hTank, "m_nModelIndexOverrides", iModelIndex, 3)
+					}
 				}
 				sModelLast = sModel
 			}
@@ -734,7 +783,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		if(Check("DisableSmokestack") && TankTable.DisableSmokestack == 1)
 		{
 			Add("DisableSmokestack")
-			hTank_scope.DisableSmokestackThink <- function()	{ self.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null) }
+			hTank_scope.DisableSmokestackThink <- function() { self.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null) }
 			TankExt.AddThinkToEnt(hTank, "DisableSmokestackThink")
 		}
 
@@ -803,7 +852,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		}
 
 		if(Check("Scale"))
-			hTank.SetModelScale(TankTable.Scale, -1), Add("Scale")
+			SetPropFloat(hTank, "m_flModelScale", TankTable.Scale), Add("Scale")
 
 		if(Check("NoDestructionModel") && TankTable.NoDestructionModel == 1)
 		{
@@ -838,6 +887,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				if(hPlayer) Players.append(hPlayer)
 			}
 
+			hTank.AcceptInput("SetStepHeight", "18", null, null)
 			hTank_scope.bNoGravity <- true
 			hTank_scope.NoGravityThink <- function()
 			{
@@ -878,14 +928,21 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					self.SetAbsOrigin(vecFakeOrigin)
 					self.GetLocomotionInterface().Reset()
 				}
-				else
+				else if(hGoal)
 				{
 					vecFakeOrigin = self.GetOrigin()
 					if((vecFakeOrigin - hGoal.GetOrigin()).Length2D() < 20.0)
 						hGoal = GetPropEntity(hGoal, "m_pnext")
 				}
+				self.AcceptInput("SetStepHeight", bNoGravity || !(self.GetFlags() & FL_ONGROUND) ? "18" : "100", null, null)
 			}
 			TankExt.AddThinkToEnt(hTank, "NoGravityThink")
+		}
+
+		if(Check("ReplaceModelCollisions") && TankTable.ReplaceModelCollisions == 1)
+		{
+			Add("ReplaceModelCollisions")
+			hTank_scope.bReplaceModelCollisions <- true
 		}
 	}
 	function ApplyTankTableByName(hTank, hPath, sTankName)
@@ -965,7 +1022,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	QueuedTankIcons      = []
 	CustomTankIcons      = {}
 	CustomTankIconsWild  = {}
-	function AddTankIcon(iCount, sIcon, sTankName, iPlacement = null)
+	function AddTankIcon(iCount, sIcon, sTankName, iPlacement = null, iFlagOverrides = MVM_CLASS_FLAG_NORMAL | MVM_CLASS_FLAG_MINIBOSS)
 	{
 		local PreviousIcon
 		local iCurrentPlacement = 0
@@ -989,6 +1046,10 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			}
 			local sIconName  = GetPropStringArray(hObjectiveResource, sNames, iIndex)
 			local iIconCount = GetPropIntArray(hObjectiveResource, sCounts, iIndex)
+
+			if(sIconName == "tank")
+				SetPropIntArray(hObjectiveResource, sCounts, iIconCount - iCount, iIndex)
+
 			if(iPlacement != null && iPlacement == iCurrentPlacement)
 			{
 				PreviousIcon = [
@@ -996,13 +1057,11 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					iIconCount,
 					GetPropIntArray(hObjectiveResource, sFlags, iIndex)
 				]
-				Set(sIcon, iCount, MVM_CLASS_FLAG_NORMAL | MVM_CLASS_FLAG_MINIBOSS)
+				Set(sIcon, iCount, iFlagOverrides)
 			}
-			else if(sIconName == "tank")
-				SetPropIntArray(hObjectiveResource, sCounts, iIconCount - iCount, iIndex)
 			else if(iPlacement == null && ((sIconName == "" && iIconCount == 0) || sIconName == sIcon))
 			{
-				Set(sIcon, iCount, MVM_CLASS_FLAG_NORMAL | MVM_CLASS_FLAG_MINIBOSS)
+				Set(sIcon, iCount, iFlagOverrides)
 				return true
 			}
 			iCurrentPlacement++
@@ -1024,6 +1083,22 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 	//////////////////////// Utilities ////////////////////////
 
+	function MarkForPurge(hEnt)
+	{
+		SetPropBool(hEnt, "m_bForcePurgeFixedupStrings", true)
+	}
+	function CreateByClassnameSafe(sClassname)
+	{
+		local hEnt = CreateByClassname(sClassname)
+		MarkForPurge(hEnt)
+		return hEnt
+	}
+	function SpawnEntityFromTableSafe(sClassname, KeyValues)
+	{
+		local hEnt = SpawnEntityFromTable(sClassname, KeyValues)
+		MarkForPurge(hEnt)
+		return hEnt
+	}
 	function IterateIcons(func)
 	{
 		for(local i = 0; i < MVM_CLASS_TYPES_PER_WAVE_MAX; i++)
@@ -1051,7 +1126,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			hEntity.SetModel(sModel)
 			SetPropInt(hEntity, "m_nModelIndex", iModelIndex)
 			SetPropIntArray(hEntity, "m_nModelIndexOverrides", iModelIndex, 0)
-			SetPropIntArray(hEntity, "m_nModelIndexOverrides", iModelIndex, 3)
 			hEntity.SetSequence(hEntity.LookupSequence(sSequence))
 			if(bSmokeStack)
 			{
@@ -1077,8 +1151,11 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		if(typeof Model == "string")
 			{ ApplyModel(hTank, Model); return }
 
-		if("Tank" in Model)
+		if("Tank" in Model && Model.Tank)
+		{
 			ApplyModel(hTank, Model.Tank)
+			SetPropIntArray(hTank, "m_nModelIndexOverrides", GetPropIntArray(hTank, "m_nModelIndexOverrides", 0), 3)
+		}
 		for(local hChild = hTank.FirstMoveChild(); hChild; hChild = hChild.NextMovePeer())
 		{
 			local sChildModel = hChild.GetModelName().tolower()
@@ -1088,6 +1165,8 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				ApplyModel(hChild, Model.RightTrack)
 			else if("Bomb" in Model && Model.Bomb && sChildModel.find("bomb_mechanism"))
 				ApplyModel(hChild, Model.Bomb)
+
+			SetPropIntArray(hChild, "m_nModelIndexOverrides", GetPropIntArray(hChild, "m_nModelIndexOverrides", 0), 3)
 		}
 	}
 	function SetTankColor(hTank, sColor)
@@ -1173,41 +1252,9 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			hChild.SetLocalAngles(angRotation)
 		}
 	}
-	hDelayFunction = null
 	function DelayFunction(hTarget, Scope, flDelay, func)
 	{
-		if(!hDelayFunction)
-		{
-			hDelayFunction = CreateByClassname("logic_relay")
-			SetPropBool(hDelayFunction, "m_bForcePurgeFixedupStrings", true)
-			hDelayFunction.DispatchSpawn()
-			hDelayFunction.ValidateScriptScope()
-			local hDelayFunction_scope = hDelayFunction.GetScriptScope()
-			hDelayFunction_scope.DelayTable <- {}
-			hDelayFunction_scope.Think <- function()
-			{
-				local flTime = Time()
-				foreach(array, func in DelayTable)
-				{
-					local hTarget = array[0]
-					if(hTarget && !hTarget.IsValid()) delete DelayTable[array]
-					else if(flTime >= array[2])
-					{
-						if(hTarget)
-						{
-							local Scope = array[1]
-							if(!Scope) hTarget.ValidateScriptScope()
-							func.call(Scope ? Scope : hTarget.GetScriptScope())
-						}
-						else func()
-						delete DelayTable[array]
-					}
-				}
-				return -1
-			}
-			TankExt.AddThinkToEnt(hDelayFunction, "Think")
-		}
-		hDelayFunction.GetScriptScope().DelayTable[[hTarget, Scope, Time() + flDelay]] <- func
+		hThinkEnt.GetScriptScope().DelayTable[[hTarget, Scope, Time() + flDelay]] <- func
 	}
 	function GetMultiScopeTable(Scope, sName)
 	{
@@ -1288,7 +1335,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		if(entity == null) return
 		if(name == null)
 			{ entity.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null); return }
-		local hParticle = CreateByClassname("trigger_particle")
+		local hParticle = CreateByClassnameSafe("trigger_particle")
 		hParticle.KeyValueFromString("particle_name", name)
 		if(attachment)
 			hParticle.KeyValueFromString("attachment_name", attachment)
@@ -1690,7 +1737,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	}
 	function SpawnEntityFromTableFast(sClassname, Table)
 	{
-		local hEnt = CreateByClassname(sClassname)
+		local hEnt = CreateByClassnameSafe(sClassname)
 		foreach(sKey, Value in Table)
 			switch(typeof Value)
 			{
@@ -1706,6 +1753,63 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	}
 }
 __CollectGameEventCallbacks(TankExt)
+
+local hThinkEnt = TankExt.CreateByClassnameSafe("logic_relay")
+hThinkEnt.ValidateScriptScope()
+local hThinkEnt_scope = hThinkEnt.GetScriptScope()
+hThinkEnt_scope.FindTanks <- function()
+{
+	for(local hTank; hTank = FindByClassname(hTank, "tank_boss");)
+		if(!(hTank.GetEFlags() & EFL_NO_MEGAPHYSCANNON_RAGDOLL))
+		{
+			hTank.AddEFlags(EFL_NO_MEGAPHYSCANNON_RAGDOLL)
+			local vecOrigin = hTank.GetOrigin()
+
+			local flStepHeight = hTank.GetLocomotionInterface().GetStepHeight()
+			local Trace = {
+				start = vecOrigin + Vector(0, 0, flStepHeight + 0.001)
+				end   = vecOrigin + Vector(0, 0, -(flStepHeight + 0.01))
+				mask  = CONTENTS_SOLID
+			}
+			TraceLineEx(Trace)
+			if(Trace.hit) hTank.SetAbsOrigin(Trace.endpos)
+
+			for(local hPath; hPath = FindByClassname(hPath, "path_track");) // FindByClassnameNearest and FindByClassnameWithin do not work with server side entities (rafmod specific issue)
+				if((vecOrigin - hPath.GetOrigin()).LengthSqr() == 0)
+				{
+					TankExt.ApplyTankType(hTank, hPath)
+					break
+				}
+		}
+}
+hThinkEnt_scope.DelayTable <- {}
+hThinkEnt_scope.Think <- function()
+{
+	// FindTanks
+	EntFireByHandle(self, "CallScriptFunction", "FindTanks", -1, null, null) // delayed to the end of the tick to find tanks on the same tick
+
+	// DelayFunction
+	local flTime = Time()
+	foreach(array, func in DelayTable)
+	{
+		local hTarget = array[0]
+		if(hTarget && !hTarget.IsValid()) delete DelayTable[array]
+		else if(flTime >= array[2])
+		{
+			if(hTarget)
+			{
+				local Scope = array[1]
+				if(!Scope) hTarget.ValidateScriptScope()
+				func.call(Scope ? Scope : hTarget.GetScriptScope())
+			}
+			else func()
+			delete DelayTable[array]
+		}
+	}
+	return -1
+}
+TankExt.AddThinkToEnt(hThinkEnt, "Think")
+TankExt.hThinkEnt = hThinkEnt
 
 local TankExtLegacy = {
 	TankScriptsLegacy = {}

@@ -41,14 +41,13 @@ function LoopInitialize()
 }
 function Respawn()
 {
-	local hPath = SpawnEntityFromTable("path_track", {
+	local hPath = TankExt.SpawnEntityFromTableSafe("path_track", {
 		origin     = OriginArray[1]
 		targetname = format("%s_2", sPathName)
-		vscripts   = "tankextensions/misc/loopingpath_think"
 	})
-	SetPropBool(hPath, "m_bForcePurgeFixedupStrings", true)
-
+	hPath.ValidateScriptScope()
 	local hPath_scope = hPath.GetScriptScope()
+	IncludeScript("tankextensions/misc/loopingpath_think", hPath_scope)
 	hPath_scope.OriginArray  <- OriginArray
 	hPath_scope.sPathName    <- sPathName
 	hPath_scope.iArrayLength <- iArrayLength

@@ -49,6 +49,9 @@ TankExt.NewTankType("helicopter*", {
 	NoDestructionModel = 1
 	NoGravity          = 1
 	Scale              = 0.75
+	Model              = {
+		Visual = "models/empty.mdl"
+	}
 	function OnSpawn()
 	{
 		EmitSoundEx({
@@ -128,8 +131,6 @@ TankExt.NewTankType("helicopter*", {
 		TraceLineEx(Trace)
 		if(Trace.hit) self.SetAbsOrigin(Trace.endpos)
 
-		local iEmpty = PrecacheModel("models/empty.mdl")
-
 		local flTimeToLaunch = Time() + 5.4
 		local bLaunched      = false
 
@@ -146,9 +147,6 @@ TankExt.NewTankType("helicopter*", {
 
 		function Think()
 		{
-			SetPropIntArray(self, "m_nModelIndexOverrides", iEmpty, 0)
-			SetPropIntArray(self, "m_nModelIndexOverrides", iEmpty, 3)
-
 			if(!bLaunched)
 			{
 				local flLaunchPercent = (5.4 - flTimeToLaunch + flTime) / 5.4
@@ -332,7 +330,7 @@ TankExt.NewTankType("helicopter*", {
 							for(local hRocket; hRocket = FindByClassnameWithin(hRocket, "tf_projectile_rocket", hMimicRocket.GetOrigin(), 1);)
 								if(hRocket.GetOwner() == hMimicRocket)
 								{
-									SetPropBool(hRocket, "m_bForcePurgeFixedupStrings", true)
+									TankExt.MarkForPurge(hRocket)
 									hRocket.SetSize(Vector(), Vector())
 									hRocket.SetSolid(SOLID_BSP)
 									hRocket.SetSequence(1)
@@ -366,8 +364,7 @@ TankExt.NewTankType("helicopter*", {
 									if(HELICOPTER_ROCKET_PARTICLE_TRAIL != "rockettrail")
 									{
 										hRocket.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
-										local hTrail = CreateByClassname("trigger_particle")
-										SetPropBool(hTrail, "m_bForcePurgeFixedupStrings", true)
+										local hTrail = TankExt.CreateByClassnameSafe("trigger_particle")
 										hTrail.KeyValueFromString("particle_name", HELICOPTER_ROCKET_PARTICLE_TRAIL)
 										hTrail.KeyValueFromString("attachment_name", "trail")
 										hTrail.KeyValueFromInt("attachment_type", 4)

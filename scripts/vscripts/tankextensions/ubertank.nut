@@ -1,14 +1,21 @@
 local UBERTANK_VALUES_TABLE = {
-	UBERTANK_MODEL        = "models/bots/boss_bot/boss_tank_ubered.mdl"
-	UBERTANK_SND_UBER     = "player/invulnerable_on.wav"
-	UBERTANK_SND_UBER_OFF = "player/invulnerable_off.wav"
-	UBERTANK_SKIN_UBER    = 2
+	UBERTANK_MODEL          = "models/bots/boss_bot/ubertank/boss_tank_uber.mdl"
+	UBERTANK_MODEL_TRACK_L  = "models/bots/boss_bot/ubertank/tank_uber_track_l.mdl"
+	UBERTANK_MODEL_TRACK_R  = "models/bots/boss_bot/ubertank/tank_uber_track_r.mdl"
+	UBERTANK_MODEL_BOMB     = "models/bots/boss_bot/ubertank/bomb_mechanism_uber.mdl"
+	UBERTANK_SND_UBER       = "player/invulnerable_on.wav"
+	UBERTANK_SND_UBER_OFF   = "player/invulnerable_off.wav"
+	UBERTANK_SKIN_UBER_RED  = 0
+	UBERTANK_SKIN_UBER_BLUE = 1
 }
 foreach(k,v in UBERTANK_VALUES_TABLE)
 	if(!(k in TankExt.ValueOverrides))
 		ROOT[k] <- v
 
 PrecacheModel(UBERTANK_MODEL)
+PrecacheModel(UBERTANK_MODEL_TRACK_L)
+PrecacheModel(UBERTANK_MODEL_TRACK_R)
+PrecacheModel(UBERTANK_MODEL_BOMB)
 TankExt.PrecacheSound(UBERTANK_SND_UBER)
 TankExt.PrecacheSound(UBERTANK_SND_UBER_OFF)
 
@@ -38,13 +45,24 @@ TankExt.NewTankType("ubertank*", {
 		if(sParams.len() == 1) sParams.append(0)
 		if(sParams.len() == 2) sParams.append(30)
 
+		local ModelInfo = { Tank = { entity = self, modelname = null, skin = 0, color = 0 } }
+		for(local hChild = self.FirstMoveChild(); hChild; hChild = hChild.NextMovePeer())
+		{
+			local sChildModel = hChild.GetModelName().tolower()
+			local Table       = { entity = hChild, modelname = null, skin = 0, color = 0 }
+
+			if(sChildModel.find("track_l"))
+				ModelInfo.LeftTrack <- Table
+			else if(sChildModel.find("track_r"))
+				ModelInfo.RightTrack <- Table
+			else if(sChildModel.find("bomb_mechanism"))
+				ModelInfo.Bomb <- Table
+		}
+
 		local flTimeStart = sParams[1].tofloat()
 		if(flTimeStart >= 0) TankExt.DelayFunction(self, this, flTimeStart, @() ToggleUber())
 
-		local sModelLast  = null
 		local flDuration  = sParams[2].tofloat()
-		local iColorLast  = 0
-		local iSkinLast   = 0
 		local bUberFizzle = false
 		bUbered <- false
 		function ToggleUber()
@@ -54,16 +72,25 @@ TankExt.NewTankType("ubertank*", {
 				{
 					if(flDuration >= 0) TankExt.DelayFunction(self, this, flDuration, @() ToggleUber())
 					bUbered    = true
-					sModelLast = self.GetModelName()
-					iColorLast = GetPropInt(self, "m_clrRender")
-					iSkinLast  = self.GetSkin()
-					SetPropInt(self, "m_takedamage", DAMAGE_EVENTS_ONLY)
-					self.AcceptInput("Color", "127 127 127", null, null)
-					self.SetSkin(UBERTANK_SKIN_UBER)
-					TankExt.SetTankModel(self, UBERTANK_MODEL)
 					EmitSoundEx({
 						sound_name  = UBERTANK_SND_UBER
 						filter_type = RECIPIENT_FILTER_GLOBAL
+					})
+
+					local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
+					foreach(sName, Table in ModelInfo)
+					{
+						Table.modelname = Table.entity.GetModelName()
+						Table.skin      = Table.entity.GetSkin()
+						Table.color     = GetPropInt(Table.entity, "m_clrRender")
+						Table.entity.SetSkin(bBlueTeam ? UBERTANK_SKIN_UBER_BLUE : UBERTANK_SKIN_UBER_RED)
+						SetPropInt(Table.entity, "m_clrRender", 0xFFFFFFFF)
+					}
+					TankExt.SetTankModel(self, {
+						Tank       = UBERTANK_MODEL
+						LeftTrack  = UBERTANK_MODEL_TRACK_L
+						RightTrack = UBERTANK_MODEL_TRACK_R
+						Bomb       = UBERTANK_MODEL_BOMB
 					})
 				}
 				else
@@ -77,10 +104,17 @@ TankExt.NewTankType("ubertank*", {
 					{
 						bUbered     = false
 						bUberFizzle = false
-						SetPropInt(self, "m_takedamage", DAMAGE_YES)
-						SetPropInt(self, "m_clrRender", iColorLast)
-						self.SetSkin(iSkinLast)
-						TankExt.SetTankModel(self, sModelLast)
+						TankExt.SetTankModel(self, {
+							Tank       = ModelInfo.Tank.modelname
+							LeftTrack  = ModelInfo.LeftTrack.modelname
+							RightTrack = ModelInfo.RightTrack.modelname
+							Bomb       = ModelInfo.Bomb.modelname
+						})
+						foreach(sName, Table in ModelInfo)
+						{
+							Table.entity.SetSkin(Table.skin)
+							SetPropInt(Table.entity, "m_clrRender", Table.color)
+						}
 					})
 				}
 		}
@@ -94,14 +128,15 @@ TankExt.NewTankType("ubertank*", {
 				local sModel = self.GetModelName()
 				if(sModel != UBERTANK_MODEL)
 				{
-					sModelLast = sModel
+					ModelInfo.Tank.modelname = sModel
 					TankExt.SetTankModel(self, UBERTANK_MODEL)
 				}
 			}
 			if(bUberFizzle)
 			{
-				local flColor = 63.5 - sin(flTime * 20.95) * 63.5 // 20.95 == PI / 0.3 * 0.5
-				self.AcceptInput("Color", format("%i %i %i", flColor, flColor, flColor), null, null)
+				local flColor = 127.5 - sin(flTime * 20.95) * 127.5 // 20.95 == PI / 0.3 * 0.5
+				foreach(sName, Table in ModelInfo)
+					Table.entity.AcceptInput("Color", format("%i %i %i", flColor, flColor, flColor), null, null)
 			}
 		}
 	}

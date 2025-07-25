@@ -44,6 +44,9 @@ TankExt.NewTankType("chewchewtank", {
 	DisableSmokestack  = 1
 	NoDestructionModel = 1
 	EngineLoopSound    = ")ambient/machines/train_freight_loop2.wav"
+	Model              = {
+		Visual = "models/empty.mdl"
+	}
 	function OnSpawn()
 	{
 		local hTrack = null
@@ -54,6 +57,7 @@ TankExt.NewTankType("chewchewtank", {
 
 		local hModel    = TankExt.SpawnEntityFromTableFast("prop_dynamic", { origin = "40 0 0", defaultanim = "move", model = CHEWCHEWTANK_MODEL })
 		local hWheels   = TankExt.SpawnEntityFromTableFast("prop_dynamic", { origin = "40 0 0", defaultanim = "move", disableshadows = 1, model = CHEWCHEWTANK_MODEL_WHEELS })
+		local hParticle = SpawnEntityFromTable("info_particle_system", { origin = "64 0 192", start_active = 1, effect_name = "smoke_train" })
 		local hFakeBomb = TankExt.SpawnEntityFromTableFast("prop_dynamic", { origin = "44 0 -38", modelscale = 0.75, disableshadows = 1, model = "models/bots/boss_bot/bomb_mechanism.mdl" })
 		local hChomp    = SpawnEntityFromTable("trigger_multiple", {
 			origin       = "152 0 66"
@@ -77,16 +81,12 @@ TankExt.NewTankType("chewchewtank", {
 			}
 		}
 
-		TankExt.SetParentArray([hModel, hWheels, hFakeBomb, hChomp], self)
+		TankExt.SetParentArray([hModel, hWheels, hParticle, hFakeBomb, hChomp], self)
 		SetPropEntity(hChomp, "m_pParent", null)
 
-		local iEmpty     = PrecacheModel("models/empty.mdl")
 		local bDeploying = false
 		function Think()
 		{
-			SetPropIntArray(self, "m_nModelIndexOverrides", iEmpty, 0)
-			SetPropIntArray(self, "m_nModelIndexOverrides", iEmpty, 3)
-
 			// now i know this looks bad but theres no other reliable way to detect buildings
 			hChomp.AcceptInput("Disable", null, null, null)
 			hChomp.AcceptInput("Enable", null, null, null)

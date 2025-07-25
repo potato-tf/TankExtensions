@@ -81,7 +81,7 @@ TankExt.CombatTankWeapons["rocketpod"] <- {
 				for(local hRocket; hRocket = FindByClassnameWithin(hRocket, "tf_projectile_rocket", hWeapon.GetOrigin(), 64);)
 				{
 					if(hRocket.GetOwner() != hWeapon || hRocket.GetEFlags() & EFL_NO_MEGAPHYSCANNON_RAGDOLL) continue
-					SetPropBool(hRocket, "m_bForcePurgeFixedupStrings", true)
+					TankExt.MarkForPurge(hRocket)
 
 					local iTeamNum = hTank.GetTeam()
 					hRocket.SetSize(Vector(), Vector())
@@ -123,8 +123,7 @@ TankExt.CombatTankWeapons["rocketpod"] <- {
 					if(sTrail != "rockettrail")
 					{
 						hRocket.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
-						local hTrail = CreateByClassname("trigger_particle")
-						SetPropBool(hTrail, "m_bForcePurgeFixedupStrings", true)
+						local hTrail = TankExt.CreateByClassnameSafe("trigger_particle")
 						hTrail.KeyValueFromString("particle_name", sTrail)
 						hTrail.KeyValueFromString("attachment_name", "trail")
 						hTrail.KeyValueFromInt("attachment_type", 4)

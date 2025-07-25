@@ -123,14 +123,12 @@ TankExt.CombatTankWeapons["minigun"] <- {
 								}
 							}
 
-							local hParticleTracer = SpawnEntityFromTable("info_particle_system", {
+							local hParticleTracer = TankExt.SpawnEntityFromTableSafe("info_particle_system", {
 								effect_name = COMBATTANK_MINIGUN_PARTICLE_TRACER
 								start_active = 1
 							})
-							SetPropBool(hParticleTracer, "m_bForcePurgeFixedupStrings", true)
 							TankExt.SetParentArray([hParticleTracer], self, iBarrel ? "barrel_1" : "barrel_2")
-							local hTracerTarget = SpawnEntityFromTable("info_target", { origin = Trace.endpos, spawnflags = 0x01 })
-							SetPropBool(hTracerTarget, "m_bForcePurgeFixedupStrings", true)
+							local hTracerTarget = TankExt.SpawnEntityFromTableSafe("info_target", { origin = Trace.endpos, spawnflags = 0x01 })
 							hTracerTarget.AddEFlags(EFL_IN_SKYBOX | EFL_FORCE_CHECK_TRANSMIT)
 							SetPropEntityArray(hParticleTracer, "m_hControlPointEnts", hTracerTarget, 0)
 							EntFireByHandle(hParticleTracer, "Kill", null, 0.066, null, null)

@@ -107,14 +107,13 @@ TankExt.CombatTankWeapons["railgun"] <- {
 			local vecBarrel = self.GetAttachmentOrigin(self.LookupAttachment("barrel"))
 			local bBlueTeam = iTeamNum == TF_TEAM_BLUE
 
-			local hParticle = SpawnEntityFromTable("info_particle_system", {
+			local hParticle = TankExt.SpawnEntityFromTableSafe("info_particle_system", {
 				origin       = vecBarrel
 				effect_name  = (bBlueTeam ? COMBATTANK_RAILGUN_PARTICLE_TRACER_BLUE : COMBATTANK_RAILGUN_PARTICLE_TRACER_RED)
 				start_active = 1
 			})
-			SetPropBool(hParticle, "m_bForcePurgeFixedupStrings", true)
 
-			local hBeamShock = SpawnEntityFromTable("env_beam", {
+			local hBeamShock = TankExt.SpawnEntityFromTableSafe("env_beam", {
 				lightningstart = "bignet"
 				lightningend   = "bignet"
 				texture        = "effects/electro_beam.vmt"
@@ -122,12 +121,11 @@ TankExt.CombatTankWeapons["railgun"] <- {
 				spawnflags     = 256
 				TextureScroll  = 32
 			})
-			SetPropBool(hBeamShock, "m_bForcePurgeFixedupStrings", true)
 			SetPropEntityArray(hBeamShock, "m_hAttachEntity", hBeamShock, 0)
 			SetPropEntityArray(hBeamShock, "m_hAttachEntity", hParticle, 1)
 			hBeamShock.SetAbsOrigin(vecTracer)
 
-			local hBeamShot = SpawnEntityFromTable("env_beam", {
+			local hBeamShot = TankExt.SpawnEntityFromTableSafe("env_beam", {
 				lightningstart = "bignet"
 				lightningend   = "bignet"
 				texture        = "sprites/laserbeam.vmt"
@@ -135,7 +133,6 @@ TankExt.CombatTankWeapons["railgun"] <- {
 				spawnflags     = 256
 				TextureScroll  = 32
 			})
-			SetPropBool(hBeamShot, "m_bForcePurgeFixedupStrings", true)
 			SetPropEntityArray(hBeamShot, "m_hAttachEntity", hBeamShot, 0)
 			SetPropEntityArray(hBeamShot, "m_hAttachEntity", hParticle, 1)
 			hBeamShot.SetAbsOrigin(vecTracer)

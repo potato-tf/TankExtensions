@@ -104,10 +104,8 @@ TankExt.NewTankType("combattank*", {
 		local bFinalSkin = self.GetSkin() == 1
 		if(sParams[0].find("_nolaser") == null)
 		{
-			hBeam = SpawnEntityFromTable("env_beam", { lightningstart = "bignet", lightningend = "bignet", boltwidth = 0.75, texture = "sprites/laserbeam.vmt", rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
-			SetPropBool(hBeam, "m_bForcePurgeFixedupStrings", true)
-			hBeamEnd = SpawnEntityFromTable("env_sprite", { model = "sprites/glow1.vmt", rendermode = 5, rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
-			SetPropBool(hBeamEnd, "m_bForcePurgeFixedupStrings", true)
+			hBeam = TankExt.SpawnEntityFromTableSafe("env_beam", { lightningstart = "bignet", lightningend = "bignet", boltwidth = 0.75, texture = "sprites/laserbeam.vmt", rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
+			hBeamEnd = TankExt.SpawnEntityFromTableSafe("env_sprite", { model = "sprites/glow1.vmt", rendermode = 5, rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
 			SetPropEntityArray(hBeam, "m_hAttachEntity", hBeam, 0)
 			SetPropEntityArray(hBeam, "m_hAttachEntity", hBeamEnd, 1)
 		}
