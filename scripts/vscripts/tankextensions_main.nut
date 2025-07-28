@@ -392,6 +392,14 @@ local UNOFFICIAL_CONSTANTS = {
 	MVM_CLASS_FLAG_SUPPORT_LIMITED = 32
 	MVM_CLASS_TYPES_PER_WAVE_MAX   = 24
 
+	SF_TRIGGER_ALLOW_CLIENTS			= 1
+	SF_TRIGGER_ALLOW_NPCS				= 2
+	SF_TRIGGER_ALLOW_PUSHABLES			= 4
+	SF_TRIGGER_ALLOW_PHYSICS			= 8
+	SF_TRIGGER_ONLY_PLAYER_ALLY_NPCS	= 16
+	SF_TRIGGER_ONLY_CLIENTS_IN_VEHICLES	= 32
+	SF_TRIGGER_ALLOW_ALL				= 64
+
 	// damagefilter redefinitions
 	DMG_USE_HITLOCATIONS                    = DMG_AIRBOAT
 	DMG_HALF_FALLOFF                        = DMG_RADIATION
@@ -1753,6 +1761,19 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	}
 }
 __CollectGameEventCallbacks(TankExt)
+
+// replace the packed version of the script if it exists and move the tank types over
+if("TankExtPacked" in ROOT)
+{
+	if(TankExtPacked.hThinkEnt.IsValid()) TankExtPacked.hThinkEnt.Kill()
+
+	foreach(k, v in TankExtPacked.TankScripts)
+		TankExt.TankScripts[k] <- v
+	foreach(k, v in TankExtPacked.TankScriptsWild)
+		TankExt.TankScriptsWild[k] <- v
+
+	TankExtPacked = TankExt
+}
 
 local hThinkEnt = TankExt.CreateByClassnameSafe("logic_relay")
 hThinkEnt.ValidateScriptScope()
