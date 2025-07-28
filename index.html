@@ -21,16 +21,17 @@
 				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 			}
 
-			.vsc-blue        { color: #569cd6; }
-			.vsc-deep-blue   { color: #179fff; }
-			.vsc-deep-purple { color: #da70d6; }
-			.vsc-deep-yellow { color: #ffd700; }
-			.vsc-green       { color: #6a9955; }
-			.vsc-light-green { color: #b5cea8; }
-			.vsc-lime        { color: #4ec9b0; }
-			.vsc-orange      { color: #ce915e; }
-			.vsc-purple      { color: #c586c0; }
-			.vsc-white       { color: #cccccc; }
+			.vsc-blue         { color: #569cd6; }
+			.vsc-deep-blue    { color: #179fff; }
+			.vsc-deep-purple  { color: #da70d6; }
+			.vsc-deep-yellow  { color: #ffd700; }
+			.vsc-green        { color: #6a9955; }
+			.vsc-light-green  { color: #b5cea8; }
+			.vsc-light-yellow { color: #dcdcaa; }
+			.vsc-lime         { color: #4ec9b0; }
+			.vsc-orange       { color: #ce915e; }
+			.vsc-purple       { color: #c586c0; }
+			.vsc-white        { color: #cccccc; }
 
 			table, td, th {
 				border-collapse: collapse;
@@ -141,11 +142,12 @@
 		<div style="background: var(--accent-2);">
 			<img class="center" alt="TankExtensions" src="images/logo.png">
 			<div class="nav">
-					<a href="#Usage">Usage</a><a href="#Path_Maker">Path Maker</a><a href="#Tank_Combiner">Tank Combiner</a><a href="#Tank_Types">Tank Types</a><a href="#Functions">Functions</a>
+					<a href="#Usage">Usage</a><a href="#Usage_For_Mappers">Usage For Mappers</a><a href="#Path_Maker">Path Maker</a><a href="#Tank_Types">Tank Types</a><a href="#Functions">Functions</a>
 			</div>
 		</div>
 		<div class="info">
 			<div class="header" id="Usage"><img class="center" alt="Usage" src="images/usage.png"></div>
+			<p style="color: var(--red); font-weight: bold;">IF YOU ARE PLANNING TO PACK THESE SCRIPTS INTO YOUR MAP THEN READ THE <a style="font-weight: bold; color: var(--blue);" href="#Usage_For_Mappers">Usage For Mappers</a> SECTION.</p>
 			<p>To add any of these custom tanks to your mission you first need to include the main script and any tank scripts of your choosing. This can be done through a <code>RunScriptCode</code> output on bignet or added to your own mission script file if you have one.</p>
 			<div class="codeblock"><pre><span class="vsc-green">// This example loads the main script, two optional tank scripts, and two other scripts for one of the tanks</span>
 <span class="vsc-green">// You can include as many tank scripts as needed</span>
@@ -177,22 +179,35 @@
 			<p>Other functionalities such as creating tank paths or setting tank icons can be found in the <a href="https://github.com/potato-tf/TankExtensions/blob/main/mvm_slick_v4a_tankextensions.pop">example popfile</a>. Tank names and script functions are listed further down the documentation. If you want to make a new tank type yourself then refer to the <a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/exampletank.nut">example tank script</a>.</p>
 		</div>
 		<div class="info">
+			<div class="header" id="Usage_For_Mappers"><img class="center" alt="Usage For Mappers" src="images/usageformappers.png"></div>
+			<p>If you plan to pack these scripts into your map so its missions can use custom tanks then pack the <b><a href="https://github.com/potato-tf/TankExtensions/blob/main/FOR_PACKING_INTO_MAPS/">MAP SPECIFIC SCRIPTS</a></b> instead of packing the main scripts. This is done so if the map were to be used on other servers that use a more updated version of TankExtensions then there would be no conflicts between the server's file and the map's file (packed map scripts always override server scripts).</p>
+			<p>With the map scripts packed in you will want to place a logic_script entity somewhere in your map with your own <code>.nut</code> file that loads the main script and tank scripts.</p>
+			<div class="codeblock"><pre><span class="vsc-green">// Example script file path "scripts/vscripts/mymapname.nut"
+// logic_script's "Entity Scripts" should be set to that new script's name ("mymapname")
+
+// This example loads the packed main script, two optional tank scripts, and two other scripts for one of the tanks
+// You can include as many tank scripts as needed</span>
+<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_main_packed"</span><span class="vsc-white">,</span> getroottable<span class="vsc-deep-purple">()</span><span class="vsc-deep-yellow">)</span></span>
+<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/combattank"</span><span class="vsc-white">,</span> getroottable<span class="vsc-deep-purple">()</span><span class="vsc-deep-yellow">)</span></span>
+<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/combattank_weapons/minigun"</span><span class="vsc-white">,</span> getroottable<span class="vsc-deep-purple">()</span><span class="vsc-deep-yellow">)</span></span>
+<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/combattank_weapons/rocketpod"</span><span class="vsc-white">,</span> getroottable<span class="vsc-deep-purple">()</span><span class="vsc-deep-yellow">)</span></span>
+<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/tankdozer"</span><span class="vsc-white">,</span> getroottable<span class="vsc-deep-purple">()</span><span class="vsc-deep-yellow">)</span></span></pre></div>
+			<p>The people who write the missions will <b>not</b> have to use the <code>InitWaveOutput</code> block to load the tank scripts that are already loaded by the map's script file and just have to name their tank according to the loaded tank scripts.</p>
+			<p>For scripters working on the map, TankExtensions's custom functions will use a <code>TankExtPacked</code> prefix instead of <code>TankExt</code></p>
+		</div>
+		<div class="info">
 			<div class="header" id="Path_Maker"><img class="center" alt="Path Maker" src="images/pathmaker.png"></div>
 			<p>Path Maker allows for quickly creating paths without the need for going around the map using getpos or opening the hammer editor.</p>
 			<p>If tankextensions_main is loaded, Path Maker can be started using this command: <code>ent_fire !activator runscriptcode "TankExt.PathMaker(self)"</code>. Replace <code>ent_fire</code> with <code>sm_ent_fire</code> if on a testing.potato.tf server.</p>
 			<div><img class="center" alt="Path Maker Models" src="images/pathmakermodels.png"></div>
 			<b style="color: var(--red)">Axis nodes</b> are your placed path nodes, if a node is highlighted yellow then that is the most recently placed node and can be deleted with the secondary fire. <b style="color: var(--red)">Blue guides</b> are path nodes that already exist in the map, their targetname will be shown above them and will point towards their next path node. The <b style="color: var(--red)">purple guide</b> is the best position for your last path node so tanks can be properly aligned while deploying. When you're finished placing all the path nodes you can print them with <b>TankExt</b>, <b>PopExt+</b>, or <b>Rafmod</b> formatting to console. Note that TankExtensions's CreatePaths function will merge the last node to a node in the map if they share the same position.
 		</div>
-		<div class="info">
-			<div class="header" id="Tank_Combiner"><img class="center" alt="Tank Combiner" src="images/tankcombiner.png"></div>
-			<p>Tanks made via TankExtensions can be combined into one; providing all the functionality of the chosen tanks at once. Applying this is done by adding multiple valid tank names separated by <code>^</code> into the tank's Name keyvalue. (i.e. <code>Name "painttank|255 127 0^stickytank^paratank^fireringtank"</code>)</p>
-			<p>Do note that keyvalues such as TeamNum, Scale, or Model will only apply once when iterating through the tanks. An example being <code>"redtank^painttank|255 0 0"</code> applying the Red Tank model but not the Paint Tank model, vice versa if the names are swapped around.</p>
-		</div>
 		<div class="info" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; border-bottom: 0;">
 			<div class="header" id="Tank_Types"><img class="center" alt="Tank Types" src="images/tanktypes.png"></div>
 			<p>The table below provides details on what can go into a tank's Name keyvalue. You should first know the following formatting required to modify the listed tank types.</p>
 			<img class="center" alt="A big tank name" src="images/mightbecomplicated.webp">
-			<p><b style="color: var(--red)">Suffixes</b> are appended to the tank's name for different effects. <code>tankName</code> + <code>_suffix1</code> + <code>_suffix2</code> = <code>tankName_suffix1_suffix2</code>.
+			<p><b style="color: var(--red)">Tank Combiner</b> lets a single tank use multiple tank scripts at once. Separate the individual tank names with <code>^</code>. A tank script with a defined keyvalue such as its model will override the same keyvalue from any other tank script to its right (<code>painttank|255 127 0^redtank</code> will only use the painttank model and not the redtank model).</p>
+			<p><b style="color: var(--red)">Suffixes</b> are optionally appended to the tank's name for different effects. <code>tankName</code> + <code>_suffix1</code> + <code>_suffix2</code> = <code>tankName_suffix1_suffix2</code>.
 			<p><b style="color: var(--red)">Parameters</b> are separated by <code>|</code> and can modify certain aspects of the tank type. A tank with 2 parameters can be written as <code>tankboss|parameter1|parameter2</code><br></p>
 			<p><b style="color: var(--red)">Quick Keyvalues</b> allow for making slight modifications on how a tank spawns. The start of a keyvalue list is denoted with <code>$</code>, the values of the keys are separated with <code>|</code>, and each keyvalue is separated with <code>^</code>.</p>
 			<details>
