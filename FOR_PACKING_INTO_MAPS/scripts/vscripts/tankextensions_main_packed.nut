@@ -1427,7 +1427,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			if(ExistsInScope(this, "hText"))
 			{
 				local sPlaceText = format("Grid Size : %i\nReload : Cycle Grid Size\nMouse1 : Add Path\nMouse2 : Undo Path\nReload + Crouch : Print Path", iGridSize)
-				local sPrintText = format("[Export Method]\nReload : Rafmod\nMouse1 : TankExtPacked\nMouse2 : PopExt+\nCrouch : Cancel", iGridSize)
+				local sPrintText = format("[Export Method]\nReload : Rafmod\nMouse1 : TankExt\nMouse2 : PopExt+\nCrouch : Cancel", iGridSize)
 				hText.KeyValueFromString("message", iPrintMode > 0 ? sPrintText : sPlaceText)
 				EntFireByHandle(hText, "Display", null, -1, self, null)
 			}
@@ -1760,16 +1760,6 @@ hThinkEnt_scope.FindTanks <- function()
 		{
 			hTank.AddEFlags(EFL_NO_MEGAPHYSCANNON_RAGDOLL)
 			local vecOrigin = hTank.GetOrigin()
-
-			local flStepHeight = hTank.GetLocomotionInterface().GetStepHeight()
-			local Trace = {
-				start = vecOrigin + Vector(0, 0, flStepHeight + 0.001)
-				end   = vecOrigin + Vector(0, 0, -(flStepHeight + 0.01))
-				mask  = CONTENTS_SOLID
-			}
-			TraceLineEx(Trace)
-			if(Trace.hit) hTank.SetAbsOrigin(Trace.endpos)
-
 			for(local hPath; hPath = FindByClassname(hPath, "path_track");) // FindByClassnameNearest and FindByClassnameWithin do not work with server side entities (rafmod specific issue)
 				if((vecOrigin - hPath.GetOrigin()).LengthSqr() == 0)
 				{
