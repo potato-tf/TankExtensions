@@ -442,14 +442,14 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		while(iLength > 1)
 		{
 			local vecPath  = Paths[0][1]
-			local flOffset = 1e-5
+			local flOffset = 0.5e-3
 			foreach(i, array in Paths)
 			{
 				if(i == 0) continue
-				if((vecPath - array[1]).LengthSqr() == 0)
+				if((vecPath - array[1]).Length2DSqr() == 0)
 				{
-					array[0].SetAbsOrigin(vecPath + Vector(0, 0, flOffset))
-					flOffset += 1e-5
+					array[0].SetAbsOrigin(vecPath + Vector(flOffset))
+					flOffset += 0.5e-3
 					RevertPaths.append(array)
 					Paths.remove(i)
 					iLength--
@@ -1761,7 +1761,7 @@ hThinkEnt_scope.FindTanks <- function()
 			hTank.AddEFlags(EFL_NO_MEGAPHYSCANNON_RAGDOLL)
 			local vecOrigin = hTank.GetOrigin()
 			for(local hPath; hPath = FindByClassname(hPath, "path_track");) // FindByClassnameNearest and FindByClassnameWithin do not work with server side entities (rafmod specific issue)
-				if((vecOrigin - hPath.GetOrigin()).LengthSqr() == 0)
+				if((vecOrigin - hPath.GetOrigin()).Length2DSqr() == 0)
 				{
 					TankExtPacked.ApplyTankType(hTank, hPath)
 					break
@@ -1771,7 +1771,6 @@ hThinkEnt_scope.FindTanks <- function()
 hThinkEnt_scope.DelayTable <- {}
 hThinkEnt_scope.Think <- function()
 {
-	// FindTanks
 	EntFireByHandle(self, "CallScriptFunction", "FindTanks", -1, null, null) // delayed to the end of the tick to find tanks on the same tick
 
 	// DelayFunction
