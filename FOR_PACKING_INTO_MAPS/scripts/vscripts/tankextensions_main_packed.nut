@@ -392,13 +392,13 @@ local UNOFFICIAL_CONSTANTS = {
 	MVM_CLASS_FLAG_SUPPORT_LIMITED = 32
 	MVM_CLASS_TYPES_PER_WAVE_MAX   = 24
 
-	SF_TRIGGER_ALLOW_CLIENTS			= 1
-	SF_TRIGGER_ALLOW_NPCS				= 2
-	SF_TRIGGER_ALLOW_PUSHABLES			= 4
-	SF_TRIGGER_ALLOW_PHYSICS			= 8
-	SF_TRIGGER_ONLY_PLAYER_ALLY_NPCS	= 16
-	SF_TRIGGER_ONLY_CLIENTS_IN_VEHICLES	= 32
-	SF_TRIGGER_ALLOW_ALL				= 64
+	SF_TRIGGER_ALLOW_CLIENTS            = 1
+	SF_TRIGGER_ALLOW_NPCS               = 2
+	SF_TRIGGER_ALLOW_PUSHABLES          = 4
+	SF_TRIGGER_ALLOW_PHYSICS            = 8
+	SF_TRIGGER_ONLY_PLAYER_ALLY_NPCS    = 16
+	SF_TRIGGER_ONLY_CLIENTS_IN_VEHICLES = 32
+	SF_TRIGGER_ALLOW_ALL                = 64
 
 	// damagefilter redefinitions
 	DMG_USE_HITLOCATIONS                    = DMG_AIRBOAT
@@ -448,7 +448,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				if(i == 0) continue
 				if((vecPath - array[1]).Length2DSqr() == 0)
 				{
-					array[0].SetAbsOrigin(vecPath + Vector(flOffset))
+					array[0].SetAbsOrigin(array[1] + Vector(flOffset))
 					flOffset += 0.5e-3
 					RevertPaths.append(array)
 					Paths.remove(i)
