@@ -11,9 +11,9 @@ local SENTRYTANK_VALUES_TABLE = {
 	SENTRYTANK_MODEL_TRACK_L         = "models/bots/boss_bot/tank_track_L_building.mdl"
 	SENTRYTANK_MODEL_TRACK_R         = "models/bots/boss_bot/tank_track_R_building.mdl"
 	SENTRYTANK_MODEL_BOMB            = "models/bots/boss_bot/bomb_mechanism_building.mdl"
-	SENTRYTANK_SENTRY_HEALTH         = 700
+	SENTRYTANK_SENTRY_HEALTH         = 4000
 	SENTRYTANK_SENTRY_DEFAULTUPGRADE = 2
-	SENTRYTANK_SENTRY_FLAGS          = SENTRY_FLAG_INVULN | SENTRY_FLAG_INFINITE_AMMO
+	SENTRYTANK_SENTRY_FLAGS          = SENTRY_FLAG_INFINITE_AMMO
 }
 foreach(k,v in SENTRYTANK_VALUES_TABLE)
 	if(!(k in TankExtPacked.ValueOverrides))
@@ -57,13 +57,14 @@ TankExtPacked.NewTankType("sentrytank", {
 		hSentry.AcceptInput("SetHealth", SENTRYTANK_SENTRY_HEALTH.tostring(), null, null)
 		function Think()
 		{
-			for(local hRocket; hRocket = FindByClassnameWithin(hRocket, "tf_projectile_sentryrocket", hSentry.GetAttachmentOrigin(2), 32);)
-				if(!(hRocket.GetEFlags() & EFL_NO_MEGAPHYSCANNON_RAGDOLL) && hRocket.GetOwner() == hSentry)
-				{
-					hRocket.AddEFlags(EFL_NO_MEGAPHYSCANNON_RAGDOLL)
-					local hTank = self
-					TankExtPacked.DelayFunction(hRocket, null, 0.2, @() self.SetOwner(hTank))
-				}
+			if(hSentry.IsValid())
+				for(local hRocket; hRocket = FindByClassnameWithin(hRocket, "tf_projectile_sentryrocket", hSentry.GetAttachmentOrigin(2), 32);)
+					if(!(hRocket.GetEFlags() & EFL_NO_MEGAPHYSCANNON_RAGDOLL) && hRocket.GetOwner() == hSentry)
+					{
+						hRocket.AddEFlags(EFL_NO_MEGAPHYSCANNON_RAGDOLL)
+						local hTank = self
+						TankExtPacked.DelayFunction(hRocket, null, 0.2, @() self.SetOwner(hTank))
+					}
 		}
 
 		local sUniqueName = UniqueString()
