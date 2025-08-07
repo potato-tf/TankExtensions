@@ -473,31 +473,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		CustomTankIcons.clear()
 		CustomTankIconsWild.clear()
 	}
-	function OnGameEvent_npc_hurt(params)
-	{
-		local hEnt = EntIndexToHScript(params.entindex)
-		if(params.damageamount < params.health || hEnt.GetClassname() != "tank_boss") return
-
-		local sTankName = hEnt.GetName().tolower()
-
-		local TankIcon
-		if(sTankName in CustomTankIcons) TankIcon = CustomTankIcons[sTankName]
-		else foreach(sTankIcon, Array in CustomTankIconsWild) if(startswith(sTankName, sTankIcon)) TankIcon = Array
-
-		if(TankIcon && TankIcon[0] > 0)
-		{
-			TankIcon[0]--
-			local sTankIcon = TankIcon[1]
-			IterateIcons(function(iIcon, sNames, sCounts, sFlags)
-			{
-				local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIcon)
-				if(sIconName == "tank")
-					SetPropIntArray(hObjectiveResource, sCounts, GetPropIntArray(hObjectiveResource, sCounts, iIcon) + 1, iIcon)
-				else if(sIconName == sTankIcon)
-					SetPropIntArray(hObjectiveResource, sCounts, GetPropIntArray(hObjectiveResource, sCounts, iIcon) - 1, iIcon)
-			})
-		}
-	}
 
 	ValueOverrides  = {}
 	TankScripts     = {}
@@ -1752,13 +1727,41 @@ __CollectGameEventCallbacks(TankExtPacked)
 
 local hThinkEnt = TankExtPacked.CreateByClassnameSafe("logic_relay")
 hThinkEnt.ValidateScriptScope()
-local hThinkEnt_scope = hThinkEnt.GetScriptScope()
+local hThinkEnt_scope      = hThinkEnt.GetScriptScope()
+local TankTable            = {}
+local DefaultTankIconsLast = 0
 hThinkEnt_scope.FindTanks <- function()
 {
 	for(local hTank; hTank = FindByClassname(hTank, "tank_boss");)
 		if(!(hTank.GetEFlags() & EFL_NO_MEGAPHYSCANNON_RAGDOLL))
 		{
 			hTank.AddEFlags(EFL_NO_MEGAPHYSCANNON_RAGDOLL)
+
+			// tank icons
+			local sTankName = hTank.GetName().tolower()
+
+			local ReturnIconArray
+			if(sTankName in TankExtPacked.CustomTankIcons)
+				ReturnIconArray = function()
+				{
+					if(sTankName in TankExtPacked.CustomTankIcons)
+						return TankExtPacked.CustomTankIcons[sTankName]
+				}
+			else foreach(sTankNameShort, Array in TankExtPacked.CustomTankIconsWild)
+				if(startswith(sTankName, sTankNameShort))
+				{
+					local sTankNameShort = sTankNameShort
+					ReturnIconArray = function()
+					{
+						if(sTankNameShort in TankExtPacked.CustomTankIconsWild)
+							return TankExtPacked.CustomTankIconsWild[sTankNameShort]
+					}
+					break
+				}
+
+			TankTable[hTank] <- ReturnIconArray // all tanks go in here, custom icon or not
+
+			// find the starting path node then apply the tank
 			local vecOrigin = hTank.GetOrigin()
 			for(local hPath; hPath = FindByClassname(hPath, "path_track");) // FindByClassnameNearest and FindByClassnameWithin do not work with server side entities (rafmod specific issue)
 				if((vecOrigin - hPath.GetOrigin()).Length2DSqr() == 0)
@@ -1767,6 +1770,48 @@ hThinkEnt_scope.FindTanks <- function()
 					break
 				}
 		}
+
+	local iDestroyedTanks    = 0
+	local iTankIconDecrement = 0
+	foreach(hTank, ReturnIconArray in TankTable)
+		if(!hTank.IsValid())
+		{
+			delete TankTable[hTank]
+
+			iDestroyedTanks++
+			if(!ReturnIconArray) // this tank has no custom icon
+			{
+				iTankIconDecrement++
+				continue
+			}
+
+			local IconArray = ReturnIconArray()
+			if(!(IconArray && IconArray[0] > 0)) continue
+			IconArray[0]--
+			local sTankIcon = IconArray[1]
+			TankExtPacked.IterateIcons(function(iIcon, sNames, sCounts, sFlags)
+			{
+				local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIcon)
+				if(sIconName == sTankIcon)
+					SetPropIntArray(hObjectiveResource, sCounts, GetPropIntArray(hObjectiveResource, sCounts, iIcon) - 1, iIcon)
+			})
+		}
+
+	TankExtPacked.IterateIcons(function(iIcon, sNames, sCounts, sFlags)
+	{
+		if(GetPropStringArray(hObjectiveResource, sNames, iIcon) == "tank")
+		{
+			local iCount          = GetPropIntArray(hObjectiveResource, sCounts, iIcon)
+			local iPredictedCount = DefaultTankIconsLast - iDestroyedTanks
+			if(iPredictedCount < 0)
+				iPredictedCount = 0
+			if(iCount != iPredictedCount)
+				DefaultTankIconsLast = iCount
+			else
+				SetPropIntArray(hObjectiveResource, sCounts, DefaultTankIconsLast -= iTankIconDecrement, iIcon)
+			return true
+		}
+	})
 }
 hThinkEnt_scope.DelayTable <- {}
 hThinkEnt_scope.Think <- function()

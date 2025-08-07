@@ -21,14 +21,14 @@ WaveSchedule
 			Param "
 IncludeScript(`tankextensions_main`, getroottable())
 
-//    This function will override any values defined within the tank scripts
-//    The value names are located in the tank script files
-// TankExt.SetValueOverrides({
-//     COMBATTANK_ROTATE_SPEED_DEFAULT   = 2    // default: 0.8
-//     COMBATTANK_MAX_RANGE              = 2000 // default: 1400
-//     COMBATTANK_MINIGUN_BULLET_DAMAGE  = 45   // default: 22
-//     COMBATTANK_ROCKETPOD_RELOAD_DELAY = 0    // default: 0.3
-// })
+// SetValueOverrides is optional and will override any values defined within the tank scripts
+// The value names are located in the tank script files
+TankExt.SetValueOverrides({
+    COMBATTANK_ROTATE_SPEED_DEFAULT   = 2    // default: 0.8
+    COMBATTANK_MAX_RANGE              = 2000 // default: 1400
+    COMBATTANK_MINIGUN_BULLET_DAMAGE  = 45   // default: 22
+    COMBATTANK_ROCKETPOD_RELOAD_DELAY = 0    // default: 0.3
+})
 
 IncludeScript(`tankextensions/bannertank`, getroottable())
 IncludeScript(`tankextensions/paratank`, getroottable())
@@ -38,11 +38,20 @@ IncludeScript(`tankextensions/combattank`, getroottable())
 IncludeScript(`tankextensions/combattank_weapons/minigun`, getroottable())
 IncludeScript(`tankextensions/combattank_weapons/rocketpod`, getroottable())
 
-// Adds a tank icon to the wavebar, (TankCount, IconName, TankName)
+// Adds a tank icon to the wavebar, (TankCount, IconName, TankName, PlacementIndex = null, IconFlags = MVM_CLASS_FLAG_NORMAL | MVM_CLASS_FLAG_MINIBOSS)
+// Valid icon flags:
+//  MVM_CLASS_FLAG_NONE
+//  MVM_CLASS_FLAG_NORMAL
+//  MVM_CLASS_FLAG_SUPPORT
+//  MVM_CLASS_FLAG_MISSION
+//  MVM_CLASS_FLAG_MINIBOSS
+//  MVM_CLASS_FLAG_ALWAYSCRIT
+//  MVM_CLASS_FLAG_SUPPORT_LIMITED
 TankExt.AddTankIcon(1, `tank_combat_minigun_rocket`, `combattank|minigun|rocketpod`)
-TankExt.AddTankIcon(1, `tank_banner_trio`, `bannertank*`)
 TankExt.AddTankIcon(1, `tank_sticky_hellmet`, `paratank^ubertank|0|16^stickytank`)
-TankExt.AddTankIcon(1, `tank_red`, `tankbossred`)
+// Wildcards are supported so you do not have to write the whole tank name
+TankExt.AddTankIcon(1, `tank_banner_trio`, `bannertank*`)
+TankExt.AddTankIcon(1, `tank_red`, `tankbossred*`)
 
 // Note that creating tank paths is NOT required to use the any of the custom tanks
 // Use Path Maker for easier tank path creation
