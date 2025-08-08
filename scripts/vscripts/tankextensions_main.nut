@@ -459,8 +459,9 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			iLength--
 		}
 
-		foreach(array in QueuedTankIcons)
-			AddTankIcon(array[0], array[1], null, array[3])
+		local TankIcons = clone QueuedTankIcons
+		foreach(array in TankIcons)
+			AddTankIcon(array[0], array[1], null, array[3], array[4])
 		QueuedTankIcons.clear()
 	}
 	function OnGameEvent_mvm_wave_complete(params)
@@ -1005,12 +1006,23 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	QueuedTankIcons      = []
 	CustomTankIcons      = {}
 	CustomTankIconsWild  = {}
-	function AddTankIcon(iCount, sIcon, sTankName, iPlacement = null, iFlagOverrides = MVM_CLASS_FLAG_NORMAL | MVM_CLASS_FLAG_MINIBOSS)
+	function AddTankIcon(iCount, sIcon, sTankName = null, iPlacement = null, iFlagOverrides = MVM_CLASS_FLAG_NORMAL | MVM_CLASS_FLAG_MINIBOSS)
 	{
 		local PreviousIcon
 		local iCurrentPlacement = 0
 		IterateIcons(function(iIndex, sNames, sCounts, sFlags)
 		{
+			local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIndex)
+			if(sIcon == "tank")
+			{
+				if(sIconName == "tank")
+				{
+					SetPropIntArray(hObjectiveResource, sFlags, iFlagOverrides, iIndex)
+					return true
+				}
+				return
+			}
+
 			local Set = function(sIcon, iCount, iFlags)
 			{
 				SetPropStringArray(hObjectiveResource, sNames, sIcon, iIndex)
@@ -1027,12 +1039,10 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				Set(PreviousIcon[0], PreviousIcon[1], PreviousIcon[2])
 				PreviousIcon = PreviousIconTemp
 			}
-			local sIconName  = GetPropStringArray(hObjectiveResource, sNames, iIndex)
-			local iIconCount = GetPropIntArray(hObjectiveResource, sCounts, iIndex)
 
+			local iIconCount = GetPropIntArray(hObjectiveResource, sCounts, iIndex)
 			if(sIconName == "tank")
 				SetPropIntArray(hObjectiveResource, sCounts, iIconCount - iCount, iIndex)
-
 			if(iPlacement != null && iPlacement == iCurrentPlacement)
 			{
 				PreviousIcon = [
@@ -1049,7 +1059,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			}
 			iCurrentPlacement++
 		})
-		if(sTankName)
+		if(sTankName && sIcon != "tank")
 		{
 			sTankName = sTankName.tolower()
 			if(sTankName[sTankName.len() - 1] == '*')
@@ -1059,9 +1069,8 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			}
 			else
 				CustomTankIcons[sTankName] <- [iCount, sIcon]
-
-			QueuedTankIcons.append([iCount, sIcon, null, iPlacement])
 		}
+		QueuedTankIcons.append([iCount, sIcon, null, iPlacement, iFlagOverrides])
 	}
 
 	//////////////////////// Utilities ////////////////////////
@@ -1833,7 +1842,12 @@ hThinkEnt_scope.FindTanks <- function()
 			if(iCount != iPredictedCount)
 				DefaultTankIconsLast = iCount
 			else
-				SetPropIntArray(hObjectiveResource, sCounts, DefaultTankIconsLast -= iTankIconDecrement, iIcon)
+			{
+				local DefaultTankIcons = DefaultTankIconsLast - iTankIconDecrement
+				if(DefaultTankIcons < 0) DefaultTankIcons = 0
+				SetPropIntArray(hObjectiveResource, sCounts, DefaultTankIcons, iIcon)
+				DefaultTankIconsLast = DefaultTankIcons
+			}
 			return true
 		}
 	})
