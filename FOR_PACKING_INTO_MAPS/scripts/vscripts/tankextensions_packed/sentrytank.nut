@@ -73,11 +73,12 @@ TankExtPacked.NewTankType("sentrytank", {
 		hTouch.SetSolid(SOLID_BBOX)
 		local hDisp = SpawnEntityFromTable("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "0 8 0", angles = "0 90 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
 		EmitSoundEx({ entity = hDisp, sound_name = "misc/null.wav", filter_type = RECIPIENT_FILTER_GLOBAL, flags = SND_STOP | SND_IGNORE_NAME })
-		SetPropEntity(hTouch, "m_pParent", null)
 		TankExtPacked.SetParentArray([hDisp], self, "smoke_attachment")
 
 		local hTouchReal = SpawnEntityFromTable("trigger_multiple", { spawnflags = 1 })
 		TankExtPacked.SetParentArray([hTouch, hTouchReal], self)
+		SetPropEntity(hTouch, "m_pParent", null)
+		SetPropEntity(hTouchReal, "m_pParent", null)
 		hTouchReal.SetSize(Vector(-512, -512, -128), Vector(512, 512, 384))
 		hTouchReal.SetSolid(SOLID_BBOX)
 		local PlayersTouching = []
