@@ -418,15 +418,29 @@ foreach(k,v in UNOFFICIAL_CONSTANTS)
 		ROOT[k] <- v
 	}
 
+::MarkForPurge <- @(hEnt) SetPropBool(hEnt, "m_bForcePurgeFixedupStrings", true)
+::CreateByClassnameSafe <- function(sClassname)
+{
+	local hEnt = CreateByClassname(sClassname)
+	MarkForPurge(hEnt)
+	return hEnt
+}
+::SpawnEntityFromTableSafe <- function(sClassname, KeyValues)
+{
+	local hEnt = SpawnEntityFromTable(sClassname, KeyValues)
+	MarkForPurge(hEnt)
+	return hEnt
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 // cleanup if the script is called again
 if("TankExtPacked" in ROOT)
 {
 	if(TankExtPacked.hThinkEnt.IsValid()) TankExtPacked.hThinkEnt.Kill()
-	delete ::TankExtPacked
 }
 
+local hGameRules = FindByClassname(null, "tf_gamerules")
 local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 ::TankExtPacked <- {
 	hThinkEnt   = null
@@ -442,14 +456,14 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		while(iLength > 1)
 		{
 			local vecPath  = Paths[0][1]
-			local flOffset = 0.5e-3
+			local flOffset = 1e-5
 			foreach(i, array in Paths)
 			{
 				if(i == 0) continue
-				if((vecPath - array[1]).Length2DSqr() == 0)
+				if((vecPath - array[1]).LengthSqr() == 0)
 				{
-					array[0].SetAbsOrigin(array[1] + Vector(flOffset))
-					flOffset += 0.5e-3
+					array[0].SetAbsOrigin(array[1] + Vector(0, 0, flOffset))
+					flOffset += 1e-5
 					RevertPaths.append(array)
 					Paths.remove(i)
 					iLength--
@@ -466,13 +480,88 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	}
 	function OnGameEvent_mvm_wave_complete(params)
 	{
-		foreach(array in RevertPaths)
-			array[0].SetAbsOrigin(array[1])
-		RevertPaths.clear()
-
 		QueuedTankIcons.clear()
 		CustomTankIcons.clear()
 		CustomTankIconsWild.clear()
+
+		bTankSpawnedThisWave = false
+
+		foreach(array in RevertPaths)
+			array[0].SetAbsOrigin(array[1])
+		RevertPaths.clear()
+	}
+
+	ActiveTanks          = {}
+	TanksThisTick        = {}
+	bTankSpawnedThisWave = false
+	function OnGameEvent_teamplay_broadcast_audio(params)
+	{
+		if(params.sound == "Announcer.MVM_Tank_Alert_Multiple")
+		{
+			for(local hTank; hTank = FindByClassname(hTank, "tank_boss");)
+				if(hTank != hThinkEnt)
+				{
+					if(!(hTank in TanksThisTick))
+						TanksThisTick[hTank] <- null
+
+					if(!(hTank.GetEFlags() & EFL_NO_MEGAPHYSCANNON_RAGDOLL))
+					{
+						hTank.AddEFlags(EFL_NO_MEGAPHYSCANNON_RAGDOLL)
+
+						// tank icons
+						local sTankName = hTank.GetName().tolower()
+
+						local CustomTankIcons = CustomTankIcons
+						local CustomTankIconsWild = CustomTankIconsWild
+
+						local ReturnIconArray
+						if(sTankName in CustomTankIcons)
+							ReturnIconArray = function()
+							{
+								if(sTankName in CustomTankIcons)
+									return CustomTankIcons[sTankName]
+							}
+						else foreach(sTankNameShort, Array in CustomTankIconsWild)
+							if(startswith(sTankName, sTankNameShort))
+							{
+								local sTankNameShort = sTankNameShort
+								ReturnIconArray = function()
+								{
+									if(sTankNameShort in CustomTankIconsWild)
+										return CustomTankIconsWild[sTankNameShort]
+								}
+								break
+							}
+
+						ActiveTanks[hTank] <- ReturnIconArray // all tanks go in here, custom icon or not
+
+						// find the starting path node then apply the tank
+						local vecOrigin = hTank.GetOrigin()
+						for(local hPath; hPath = FindByClassname(hPath, "path_track");) // FindByClassnameNearest and FindByClassnameWithin do not work with server side entities (rafmod specific issue)
+							if((vecOrigin - hPath.GetOrigin()).LengthSqr() == 0)
+							{
+								ApplyTankType(hTank, hPath)
+								break
+							}
+					}
+				}
+
+			TankExtPacked.DelayFunction(null, this, -1, function()
+			{
+				local iTanks = TanksThisTick.len()
+				if(iTanks == 0)
+					return
+
+				if(iTanks == 1)
+					if(bTankSpawnedThisWave)
+						hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Another", null, null)
+					else
+						hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Spawn", null, null)
+
+				bTankSpawnedThisWave = true
+				TanksThisTick.clear()
+			})
+		}
 	}
 
 	ValueOverrides  = {}
@@ -495,16 +584,16 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			if(iLoopStart == null)
 				return ClientPrint(null, 3, format("\x07ffb2b2[ERROR] Looping path (%s) endpoint does not connect to itself", sPathName))
 
-			local hPath1 = SpawnEntityFromTable("path_track", {
+			local hPath1 = SpawnEntityFromTableSafe("path_track", {
 				origin     = OriginArray[0]
 				targetname = format("%s_1", sPathName)
 				OnPass     = format("%s_2,CallScriptFunction,LoopInitialize,0,-1", sPathName)
 			})
-			local hPath2 = TankExtPacked.SpawnEntityFromTableSafe("path_track", {
+			local hPath2 = SpawnEntityFromTableSafe("path_track", {
 				origin     = OriginArray[1]
 				targetname = format("%s_2", sPathName)
 			})
-			local hPath3 = SpawnEntityFromTable("path_track", {
+			local hPath3 = SpawnEntityFromTableSafe("path_track", {
 				origin     = Vector(99999)
 				targetname = format("%s_3", sPathName)
 			})
@@ -563,7 +652,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	function ApplyTankType(hTank, hPath)
 	{
 		local sTankName = hTank.GetName().tolower()
-		TankExtPacked.MarkForPurge(hTank)
+		MarkForPurge(hTank)
 
 		local vecMins = hTank.GetBoundingMins(), vecMaxs = hTank.GetBoundingMaxs()
 
@@ -834,7 +923,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				local hDestruction = FindByClassnameNearest("tank_destruction", self.GetOrigin(), 16)
 				if(hDestruction)
 				{
-					local hParticle = SpawnEntityFromTable("info_particle_system", {
+					local hParticle = SpawnEntityFromTableSafe("info_particle_system", {
 						origin       = hDestruction.GetOrigin() + Vector(0, 0, 100)
 						effect_name  = "mvm_tank_destroy"
 						start_active = 1
@@ -1063,22 +1152,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 	//////////////////////// Utilities ////////////////////////
 
-	function MarkForPurge(hEnt)
-	{
-		SetPropBool(hEnt, "m_bForcePurgeFixedupStrings", true)
-	}
-	function CreateByClassnameSafe(sClassname)
-	{
-		local hEnt = CreateByClassname(sClassname)
-		MarkForPurge(hEnt)
-		return hEnt
-	}
-	function SpawnEntityFromTableSafe(sClassname, KeyValues)
-	{
-		local hEnt = SpawnEntityFromTable(sClassname, KeyValues)
-		MarkForPurge(hEnt)
-		return hEnt
-	}
 	function IterateIcons(func)
 	{
 		for(local i = 0; i < MVM_CLASS_TYPES_PER_WAVE_MAX; i++)
@@ -1234,7 +1307,16 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	}
 	function DelayFunction(hTarget, Scope, flDelay, func)
 	{
-		hThinkEnt.GetScriptScope().DelayTable[[hTarget, Scope, Time() + flDelay]] <- func
+		local sFuncName = UniqueString()
+		hThinkEnt.GetScriptScope()[sFuncName] <- function()
+		{
+			delete this[sFuncName]
+			if(!hTarget)
+				func.call(Scope || ROOT)
+			else if(hTarget.IsValid())
+				func.call(Scope || { self = hTarget })
+		}
+		EntFireByHandle(hThinkEnt, "CallScriptFunction", sFuncName, flDelay, null, null)
 	}
 	function GetMultiScopeTable(Scope, sName)
 	{
@@ -1411,12 +1493,12 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			if(ExistsInScope(this, "hText"))
 			{
 				local sPlaceText = format("Grid Size : %i\nReload : Cycle Grid Size\nMouse1 : Add Path\nMouse2 : Undo Path\nReload + Crouch : Print Path", iGridSize)
-				local sPrintText = format("[Export Method]\nReload : Rafmod\nMouse1 : TankExt\nMouse2 : PopExt+\nCrouch : Cancel", iGridSize)
+				local sPrintText = format("[Export Method]\nReload : Rafmod\nMouse1 : TankExtPacked\nMouse2 : PopExt+\nCrouch : Cancel", iGridSize)
 				hText.KeyValueFromString("message", iPrintMode > 0 ? sPrintText : sPlaceText)
 				EntFireByHandle(hText, "Display", null, -1, self, null)
 			}
 			else
-				hText = SpawnEntityFromTable("game_text", {
+				hText = SpawnEntityFromTableSafe("game_text", {
 					targetname = "pathmakertext"
 					message    = "test"
 					channel    = 0
@@ -1510,7 +1592,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					entity = self
 					filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
 				})
-				local hPath = SpawnEntityFromTable("prop_dynamic", {
+				local hPath = SpawnEntityFromTableSafe("prop_dynamic", {
 					origin         = vecTarget
 					targetname     = "pathmakerpath"
 					model          = "models/editor/axis_helper_thick.mdl"
@@ -1557,7 +1639,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			if(ExistsInScope(this, "hPathVisual"))
 				hPathVisual.SetAbsOrigin(vecTarget)
 			else
-				hPathVisual = SpawnEntityFromTable("prop_dynamic", {
+				hPathVisual = SpawnEntityFromTableSafe("prop_dynamic", {
 					model          = "models/editor/axis_helper_thick.mdl"
 					disableshadows = 1
 					rendermode     = 1
@@ -1578,7 +1660,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			}
 			else
 			{
-				hPathBeam = SpawnEntityFromTable("env_beam", {
+				hPathBeam = SpawnEntityFromTableSafe("env_beam", {
 					lightningstart = "bignet"
 					lightningend   = "bignet"
 					boltwidth      = 1
@@ -1605,7 +1687,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				}
 			}
 			else
-				hPathHatchVisual = SpawnEntityFromTable("prop_dynamic", {
+				hPathHatchVisual = SpawnEntityFromTableSafe("prop_dynamic", {
 					model          = "models/editor/cone_helper.mdl"
 					rendercolor    = "255 0 255"
 					disableshadows = 1
@@ -1626,11 +1708,11 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			}
 			else
 			{
-				hPathTrackVisual = SpawnEntityFromTable("prop_dynamic", {
+				hPathTrackVisual = SpawnEntityFromTableSafe("prop_dynamic", {
 					model          = "models/editor/cone_helper.mdl"
 					disableshadows = 1
 				})
-				local hWorldText = SpawnEntityFromTable("point_worldtext", {
+				local hWorldText = SpawnEntityFromTableSafe("point_worldtext", {
 					origin      = Vector(0, 0, 12)
 					color       = "0 255 255 255"
 					font        = 3
@@ -1643,7 +1725,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			if(ExistsInScope(this, "hGlow"))
 				SetPropEntity(hGlow, "m_hTarget", hLastPath)
 			else
-				hGlow = SpawnEntityFromTable("tf_glow", {
+				hGlow = SpawnEntityFromTableSafe("tf_glow", {
 					glowcolor  = "255 255 0 255"
 					target     = "bignet"
 				})
@@ -1659,7 +1741,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					local hPathNext = PathArray[i + 1][1]
 					local vecDirection = hPathNext.GetOrigin() - array[0]
 					vecDirection.Norm()
-					local hParticle = SpawnEntityFromTable("info_particle_system", {
+					local hParticle = SpawnEntityFromTableSafe("info_particle_system", {
 						origin       = array[0]
 						effect_name  = "spell_lightningball_hit_zap_blue"
 						start_active = 1
@@ -1731,126 +1813,69 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		hEnt.DispatchSpawn()
 		return hEnt
 	}
+
+	DefaultTankIconsLast = 0
+	function ThinkEntEndOfTick()
+	{
+		local iDestroyedTanks    = 0
+		local iTankIconDecrement = 0
+		foreach(hTank, ReturnIconArray in ActiveTanks)
+			if(!hTank.IsValid())
+			{
+				delete ActiveTanks[hTank]
+
+				iDestroyedTanks++
+				if(!ReturnIconArray) // this tank has no custom icon
+				{
+					iTankIconDecrement++
+					continue
+				}
+
+				local IconArray = ReturnIconArray()
+				if(!(IconArray && IconArray[0] > 0)) continue
+				IconArray[0]--
+				local sTankIcon = IconArray[1]
+				IterateIcons(function(iIcon, sNames, sCounts, sFlags)
+				{
+					local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIcon)
+					if(sIconName == sTankIcon)
+						SetPropIntArray(hObjectiveResource, sCounts, GetPropIntArray(hObjectiveResource, sCounts, iIcon) - 1, iIcon)
+				})
+			}
+
+		IterateIcons(function(iIcon, sNames, sCounts, sFlags)
+		{
+			if(GetPropStringArray(hObjectiveResource, sNames, iIcon) == "tank")
+			{
+				local iCount          = GetPropIntArray(hObjectiveResource, sCounts, iIcon)
+				local iPredictedCount = DefaultTankIconsLast - iDestroyedTanks
+				if(iPredictedCount < 0)
+					iPredictedCount = 0
+				if(iCount != iPredictedCount)
+					DefaultTankIconsLast = iCount
+				else
+				{
+					local DefaultTankIcons = DefaultTankIconsLast - iTankIconDecrement
+					if(DefaultTankIcons < 0) DefaultTankIcons = 0
+					SetPropIntArray(hObjectiveResource, sCounts, DefaultTankIcons, iIcon)
+					DefaultTankIconsLast = DefaultTankIcons
+				}
+				return true
+			}
+		})
+	}
 }
 __CollectGameEventCallbacks(TankExtPacked)
 
-local hThinkEnt = TankExtPacked.CreateByClassnameSafe("logic_relay")
+local hThinkEnt = CreateByClassnameSafe("logic_relay")
 hThinkEnt.ValidateScriptScope()
-local hThinkEnt_scope      = hThinkEnt.GetScriptScope()
-local TankTable            = {}
-local DefaultTankIconsLast = 0
-hThinkEnt_scope.FindTanks <- function()
-{
-	for(local hTank; hTank = FindByClassname(hTank, "tank_boss");)
-		if(!(hTank.GetEFlags() & EFL_NO_MEGAPHYSCANNON_RAGDOLL))
-		{
-			hTank.AddEFlags(EFL_NO_MEGAPHYSCANNON_RAGDOLL)
-
-			// tank icons
-			local sTankName = hTank.GetName().tolower()
-
-			local ReturnIconArray
-			if(sTankName in TankExtPacked.CustomTankIcons)
-				ReturnIconArray = function()
-				{
-					if(sTankName in TankExtPacked.CustomTankIcons)
-						return TankExtPacked.CustomTankIcons[sTankName]
-				}
-			else foreach(sTankNameShort, Array in TankExtPacked.CustomTankIconsWild)
-				if(startswith(sTankName, sTankNameShort))
-				{
-					local sTankNameShort = sTankNameShort
-					ReturnIconArray = function()
-					{
-						if(sTankNameShort in TankExtPacked.CustomTankIconsWild)
-							return TankExtPacked.CustomTankIconsWild[sTankNameShort]
-					}
-					break
-				}
-
-			TankTable[hTank] <- ReturnIconArray // all tanks go in here, custom icon or not
-
-			// find the starting path node then apply the tank
-			local vecOrigin = hTank.GetOrigin()
-			for(local hPath; hPath = FindByClassname(hPath, "path_track");) // FindByClassnameNearest and FindByClassnameWithin do not work with server side entities (rafmod specific issue)
-				if((vecOrigin - hPath.GetOrigin()).Length2DSqr() == 0)
-				{
-					TankExtPacked.ApplyTankType(hTank, hPath)
-					break
-				}
-		}
-
-	local iDestroyedTanks    = 0
-	local iTankIconDecrement = 0
-	foreach(hTank, ReturnIconArray in TankTable)
-		if(!hTank.IsValid())
-		{
-			delete TankTable[hTank]
-
-			iDestroyedTanks++
-			if(!ReturnIconArray) // this tank has no custom icon
-			{
-				iTankIconDecrement++
-				continue
-			}
-
-			local IconArray = ReturnIconArray()
-			if(!(IconArray && IconArray[0] > 0)) continue
-			IconArray[0]--
-			local sTankIcon = IconArray[1]
-			TankExtPacked.IterateIcons(function(iIcon, sNames, sCounts, sFlags)
-			{
-				local sIconName = GetPropStringArray(hObjectiveResource, sNames, iIcon)
-				if(sIconName == sTankIcon)
-					SetPropIntArray(hObjectiveResource, sCounts, GetPropIntArray(hObjectiveResource, sCounts, iIcon) - 1, iIcon)
-			})
-		}
-
-	TankExtPacked.IterateIcons(function(iIcon, sNames, sCounts, sFlags)
-	{
-		if(GetPropStringArray(hObjectiveResource, sNames, iIcon) == "tank")
-		{
-			local iCount          = GetPropIntArray(hObjectiveResource, sCounts, iIcon)
-			local iPredictedCount = DefaultTankIconsLast - iDestroyedTanks
-			if(iPredictedCount < 0)
-				iPredictedCount = 0
-			if(iCount != iPredictedCount)
-				DefaultTankIconsLast = iCount
-			else
-			{
-				local DefaultTankIcons = DefaultTankIconsLast - iTankIconDecrement
-				if(DefaultTankIcons < 0) DefaultTankIcons = 0
-				SetPropIntArray(hObjectiveResource, sCounts, DefaultTankIcons, iIcon)
-				DefaultTankIconsLast = DefaultTankIcons
-			}
-			return true
-		}
-	})
-}
-hThinkEnt_scope.DelayTable <- {}
+local hThinkEnt_scope = hThinkEnt.GetScriptScope()
 hThinkEnt_scope.Think <- function()
 {
-	EntFireByHandle(self, "CallScriptFunction", "FindTanks", -1, null, null) // delayed to the end of the tick to find tanks on the same tick
-
-	// DelayFunction
-	local flTime = Time()
-	foreach(array, func in DelayTable)
-	{
-		local hTarget = array[0]
-		if(hTarget && !hTarget.IsValid()) delete DelayTable[array]
-		else if(flTime >= array[2])
-		{
-			if(hTarget)
-			{
-				local Scope = array[1]
-				if(!Scope) hTarget.ValidateScriptScope()
-				func.call(Scope ? Scope : hTarget.GetScriptScope())
-			}
-			else func()
-			delete DelayTable[array]
-		}
-	}
+	EntFireByHandle(self, "RunScriptCode", "TankExtPacked.ThinkEntEndOfTick()", -1, null, null) // not using SetDestroyCallback to avoid conflicts
 	return -1
 }
 TankExtPacked.AddThinkToEnt(hThinkEnt, "Think")
 TankExtPacked.hThinkEnt = hThinkEnt
+
+SetPropString(hThinkEnt, "m_iClassname", "tank_boss") // this makes teamplay_broadcast_audio always get called when a tank spawns

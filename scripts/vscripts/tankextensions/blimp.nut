@@ -40,12 +40,12 @@ TankExt.NewTankType("blimp*", {
 		if(sParams[0].find("_customparticles"))
 		{
 			bParticles = true
-			hParticle1 = SpawnEntityFromTable("info_particle_system", { angles = QAngle(10, 106, -10), effect_name = "mvm_blimp_smoke", start_active = 1 })
-			hParticle2 = SpawnEntityFromTable("info_particle_system", { angles = QAngle(10, 106, -10), effect_name = "mvm_blimp_smoke_exhaust" })
+			hParticle1 = SpawnEntityFromTableSafe("info_particle_system", { angles = QAngle(10, 106, -10), effect_name = "mvm_blimp_smoke", start_active = 1 })
+			hParticle2 = SpawnEntityFromTableSafe("info_particle_system", { angles = QAngle(10, 106, -10), effect_name = "mvm_blimp_smoke_exhaust" })
 			TankExt.SetParentArray([hParticle1, hParticle2], self, "smoke_attachment")
-			hParticle3 = SpawnEntityFromTable("info_particle_system", { angles = QAngle(90, 0, -90), effect_name = "mvm_blimp_propeller_wind", start_active = 1 })
+			hParticle3 = SpawnEntityFromTableSafe("info_particle_system", { angles = QAngle(90, 0, -90), effect_name = "mvm_blimp_propeller_wind", start_active = 1 })
 			TankExt.SetParentArray([hParticle3], self, "propeller_l")
-			hParticle4 = SpawnEntityFromTable("info_particle_system", { angles = QAngle(90, 0, -90), effect_name = "mvm_blimp_propeller_wind", start_active = 1 })
+			hParticle4 = SpawnEntityFromTableSafe("info_particle_system", { angles = QAngle(90, 0, -90), effect_name = "mvm_blimp_propeller_wind", start_active = 1 })
 			TankExt.SetParentArray([hParticle4], self, "propeller_r")
 		}
 

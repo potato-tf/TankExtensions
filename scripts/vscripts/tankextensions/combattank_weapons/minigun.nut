@@ -27,7 +27,7 @@ TankExt.CombatTankWeapons["minigun"] <- {
 	DefaultAnim = "idle"
 	function OnSpawn()
 	{
-		local SpawnParticleSystem = @(sParticle) SpawnEntityFromTable("info_particle_system", { effect_name = sParticle })
+		local SpawnParticleSystem = @(sParticle) SpawnEntityFromTableSafe("info_particle_system", { effect_name = sParticle })
 		local hParticleMuzzle1 = SpawnParticleSystem(COMBATTANK_MINIGUN_PARTICLE_MUZZLE)
 		local hParticleMuzzle2 = SpawnParticleSystem(COMBATTANK_MINIGUN_PARTICLE_MUZZLE)
 		local hParticleCasing1 = SpawnParticleSystem(COMBATTANK_MINIGUN_PARTICLE_CASING)
@@ -116,19 +116,25 @@ TankExt.CombatTankWeapons["minigun"] <- {
 									local sClassname = hHit.GetClassname()
 									if(sClassname == "player")
 										if(!hHit.InCond(TF_COND_DISGUISED))
-											hHit.EmitSound("Flesh.BulletImpact")
+											hHit.EmitSound(
+												hHit.InCond( TF_COND_INVULNERABLE ) ||
+												hHit.InCond( TF_COND_INVULNERABLE_USER_BUFF ) ||
+												hHit.InCond( TF_COND_INVULNERABLE_HIDE_UNLESS_DAMAGED ) ||
+												hHit.InCond( TF_COND_INVULNERABLE_CARD_EFFECT ) ?
+												"FX_RicochetSound.Ricochet" : "Flesh.BulletImpact"
+											)
 									if(startswith(sClassname, "obj_"))
 										hHit.EmitSound("SolidMetal.BulletImpact")
 									hHit.TakeDamageCustom(hTank, hTank, null, Vector(), Vector(), COMBATTANK_MINIGUN_BULLET_DAMAGE, DMG_BULLET, TF_DMG_CUSTOM_MINIGUN)
 								}
 							}
 
-							local hParticleTracer = TankExt.SpawnEntityFromTableSafe("info_particle_system", {
+							local hParticleTracer = SpawnEntityFromTableSafe("info_particle_system", {
 								effect_name = COMBATTANK_MINIGUN_PARTICLE_TRACER
 								start_active = 1
 							})
 							TankExt.SetParentArray([hParticleTracer], self, iBarrel ? "barrel_1" : "barrel_2")
-							local hTracerTarget = TankExt.SpawnEntityFromTableSafe("info_target", { origin = Trace.endpos, spawnflags = 0x01 })
+							local hTracerTarget = SpawnEntityFromTableSafe("info_target", { origin = Trace.endpos, spawnflags = 0x01 })
 							hTracerTarget.AddEFlags(EFL_IN_SKYBOX | EFL_FORCE_CHECK_TRANSMIT)
 							SetPropEntityArray(hParticleTracer, "m_hControlPointEnts", hTracerTarget, 0)
 							EntFireByHandle(hParticleTracer, "Kill", null, 0.066, null, null)

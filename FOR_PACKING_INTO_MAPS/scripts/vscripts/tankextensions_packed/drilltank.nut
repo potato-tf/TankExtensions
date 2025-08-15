@@ -27,7 +27,6 @@ PrecacheModel(DRILLTANK_MODEL_DRILL)
 TankExtPacked.PrecacheSound(DRILLTANK_SOUND_SPIN)
 
 ::DrillTankEvents <- {
-	function OnGameEvent_recalculate_holidays(_) { if(GetRoundState() == 3) delete ::DrillTankEvents }
 	function OnScriptHook_OnTakeDamage(params)
 	{
 		local hVictim   = params.const_entity
@@ -55,9 +54,9 @@ TankExtPacked.NewTankType("drilltank", {
 		local bFinalSkin = self.GetSkin() == 1
 		local bBlueTeam  = self.GetTeam() == TF_TEAM_BLUE
 		local iSkin      = bBlueTeam ? bFinalSkin ? 2 : 0 : bFinalSkin ? 6 : 4
-		local hModel     = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", { model = DRILLTANK_MODEL_DRILL, skin = iSkin })
+		local hModel     = SpawnEntityFromTableSafe("prop_dynamic", { model = DRILLTANK_MODEL_DRILL, skin = iSkin })
 		hModel.AcceptInput("SetAnimation", "drill_spin", null, null)
-		local hDrillHurt = SpawnEntityFromTable("trigger_multiple", {
+		local hDrillHurt = SpawnEntityFromTableSafe("trigger_multiple", {
 			origin       = "162 0 97"
 			spawnflags   = 64
 			OnStartTouch = "!selfRunScriptCodeDrill(activator)0-1"

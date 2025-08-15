@@ -16,7 +16,7 @@ TankExt.NewTankType("paratank", {
 	NoGravity = 1
 	function OnSpawn()
 	{
-		local hParachute = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = PARATANK_PARACHUTE_MODEL })
+		local hParachute = SpawnEntityFromTableSafe("prop_dynamic", { model = PARATANK_PARACHUTE_MODEL })
 		hParachute.DisableDraw()
 		TankExt.SetParentArray([hParachute], self)
 

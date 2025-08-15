@@ -32,9 +32,9 @@ TankExtPacked.NewTankType("speedtank*", {
 		local hParticle1, hParticle2, hParticle3
 		if(bUsingCustomModel)
 		{
-			hParticle1 = SpawnEntityFromTable("info_particle_system", { effect_name = "blitz_jet_parent" })
-			hParticle2 = SpawnEntityFromTable("info_particle_system", { effect_name = "blitz_jet_parent" })
-			hParticle3 = SpawnEntityFromTable("info_particle_system", { effect_name = "blitz_jet_parent" })
+			hParticle1 = SpawnEntityFromTableSafe("info_particle_system", { effect_name = "blitz_jet_parent" })
+			hParticle2 = SpawnEntityFromTableSafe("info_particle_system", { effect_name = "blitz_jet_parent" })
+			hParticle3 = SpawnEntityFromTableSafe("info_particle_system", { effect_name = "blitz_jet_parent" })
 			TankExtPacked.SetParentArray([hParticle1], self, "jet_attachment_1")
 			TankExtPacked.SetParentArray([hParticle2], self, "jet_attachment_2")
 			TankExtPacked.SetParentArray([hParticle3], self, "jet_attachment_3")

@@ -20,7 +20,7 @@ foreach(k,v in HAMMERTANK_VALUES_TABLE)
 			if(HammerScope)
 			{
 				if(!("HAMMERTANK_KILL_ICON" in ROOT) || !HAMMERTANK_KILL_ICON || !HAMMERTANK_KILL_ICON.IsValid())
-					::HAMMERTANK_KILL_ICON <- SpawnEntityFromTable("info_target", { classname = "necro_smasher" })
+					::HAMMERTANK_KILL_ICON <- SpawnEntityFromTableSafe("info_target", { classname = "necro_smasher" })
 				params.force_friendly_fire = HAMMERTANK_FRIENDLY_FIRE
 				params.inflictor = HAMMERTANK_KILL_ICON
 				HAMMERTANK_KILL_ICON.SetAbsOrigin(HammerScope.vecSmash)
@@ -40,7 +40,7 @@ TankExt.PrecacheSound(")doors/vent_open2.wav")
 TankExt.NewTankType("hammertank", {
 	function OnSpawn()
 	{
-		local hHammer = TankExt.SpawnEntityFromTableFast("prop_dynamic", {
+		local hHammer = SpawnEntityFromTableSafe("prop_dynamic", {
 			model          = HAMMERTANK_MODEL_HAMMER
 			origin         = "-143 48 -28"
 			angles         = "-30 0 0"

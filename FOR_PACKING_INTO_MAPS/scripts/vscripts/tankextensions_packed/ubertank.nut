@@ -20,7 +20,6 @@ TankExtPacked.PrecacheSound(UBERTANK_SND_UBER)
 TankExtPacked.PrecacheSound(UBERTANK_SND_UBER_OFF)
 
 ::UberTankEvents <- {
-	OnGameEvent_recalculate_holidays = function(_) { if(GetRoundState() == 3) delete ::UberTankEvents }
 	OnScriptHook_OnTakeDamage = function(params)
 	{
 		local hAttacker = params.attacker

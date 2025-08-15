@@ -51,7 +51,7 @@ TankExt.PrecacheParticle("projectile_fireball")
 					if(bBonusDamage) EmitSoundOnClient("Weapon_DragonsFury.BonusDamagePain", hVictim)
 
 					if(hVictim.GetPlayerClass() == TF_CLASS_PYRO) hVictim.AddCondEx(TF_COND_BURNING_PYRO, COMBATTANK_FIREBALL_BURN_DURATION * 0.5, hOwner)
-					local hIgniter = TankExt.CreateByClassnameSafe("trigger_ignite")
+					local hIgniter = CreateByClassnameSafe("trigger_ignite")
 					hIgniter.KeyValueFromInt("spawnflags", 1)
 					hIgniter.KeyValueFromInt("burn_duration", COMBATTANK_FIREBALL_BURN_DURATION)
 					hIgniter.DispatchSpawn()
@@ -89,7 +89,7 @@ __CollectGameEventCallbacks(CombatTankFireballEvents)
 TankExt.CombatTankWeapons["fireball"] <- {
 	function SpawnModel()
 	{
-		local hFireball = CreateByClassname("funCBaseFlex")
+		local hFireball = CreateByClassnameSafe("funCBaseFlex")
 		hFireball.SetModel(COMBATTANK_FIREBALL_MODEL)
 		hFireball.SetPlaybackRate(1.0)
 		hFireball.DispatchSpawn()
@@ -143,7 +143,7 @@ TankExt.CombatTankWeapons["fireball"] <- {
 				local vecDirection = hTank_scope.vecTarget - vecOrigin
 				vecDirection.Norm()
 
-				local hProj = TankExt.CreateByClassnameSafe("func_rotating")
+				local hProj = CreateByClassnameSafe("func_rotating")
 
 				hProj.SetAbsOrigin(vecOrigin)
 				hProj.SetAbsVelocity(vecDirection * Convars.GetFloat("tf_fireball_speed"))

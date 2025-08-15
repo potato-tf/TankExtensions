@@ -59,8 +59,16 @@ PrecacheModel(TELETANK_MODEL_BOMB)
 						}
 
 						hPlayer.SetAbsOrigin(vecTeleport)
+
+						// if the bots last known nav area is their spawn they'll have spawn uber, this is the only entity that can reset their last known nav area purposely
+						local hTriggerFix = CreateByClassnameSafe("trigger_remove_tf_player_condition")
+						hTriggerFix.KeyValueFromInt("condition", TF_COND_INVULNERABLE_HIDE_UNLESS_DAMAGED)
+						hTriggerFix.KeyValueFromInt("spawnflags", 1)
+						hTriggerFix.DispatchSpawn()
+						hTriggerFix.AcceptInput("StartTouch", null, null, hPlayer)
+						hTriggerFix.Kill()
+
 						local flUberTime = Convars.GetFloat("tf_mvm_engineer_teleporter_uber_duration") * TELETANK_UBER_DURATION_MULT
-						hPlayer.RemoveCond(TF_COND_INVULNERABLE_HIDE_UNLESS_DAMAGED)
 						hPlayer.AddCondEx(TF_COND_INVULNERABLE, flUberTime, null)
 						hPlayer.AddCondEx(TF_COND_TELEPORTED, 30, null)
 						hPlayer.SetCollisionGroup(COLLISION_GROUP_DEBRIS)
@@ -100,7 +108,7 @@ TankExt.NewTankType("teletank", {
 		local bModelHasAttachment = self.LookupAttachment("building_attachment") != 0
 		local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
 		if(self.GetModelName() == TELETANK_MODEL) self.SetSkin(bBlueTeam ? 0 : 1)
-		hTeleporter <- TankExt.SpawnEntityFromTableFast("prop_dynamic", {
+		hTeleporter <- SpawnEntityFromTableSafe("prop_dynamic", {
 			model          = "models/buildables/teleporter_light.mdl"
 			defaultanim    = "running"
 			body           = 1
@@ -116,14 +124,14 @@ TankExt.NewTankType("teletank", {
 		TankExt.SetParentArray([hTeleporter], self, bModelHasAttachment ? "building_attachment" : null)
 
 		local sUniqueName = UniqueString()
-		local hTouch = SpawnEntityFromTable("dispenser_touch_trigger", { targetname = sUniqueName, spawnflags = 1 })
+		local hTouch = SpawnEntityFromTableSafe("dispenser_touch_trigger", { targetname = sUniqueName, spawnflags = 1 })
 		hTouch.SetSize(Vector(-512, -512, -128), Vector(512, 512, 384))
 		hTouch.SetSolid(SOLID_BBOX)
-		local hDisp = SpawnEntityFromTable("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "0 8 0", angles = "0 90 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
+		local hDisp = SpawnEntityFromTableSafe("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "0 8 0", angles = "0 90 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
 		EmitSoundEx({ entity = hDisp, sound_name = "misc/null.wav", filter_type = RECIPIENT_FILTER_GLOBAL, flags = SND_STOP | SND_IGNORE_NAME })
 		TankExt.SetParentArray([hDisp], self, "smoke_attachment")
 
-		local hTouchReal = SpawnEntityFromTable("trigger_multiple", { spawnflags = 1 })
+		local hTouchReal = SpawnEntityFromTableSafe("trigger_multiple", { spawnflags = 1 })
 		TankExt.SetParentArray([hTouch, hTouchReal], self)
 		SetPropEntity(hTouch, "m_pParent", null)
 		SetPropEntity(hTouchReal, "m_pParent", null)

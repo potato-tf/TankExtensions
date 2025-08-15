@@ -23,7 +23,6 @@ PrecacheModel(CHEWCHEWTANK_MODEL)
 PrecacheModel(CHEWCHEWTANK_MODEL_WHEELS)
 
 ::ChewChewTankEvents <- {
-	function OnGameEvent_recalculate_holidays(_) { if(GetRoundState() == 3) delete ::ChewChewTankEvents }
 	function OnScriptHook_OnTakeDamage(params)
 	{
 		local hVictim   = params.const_entity
@@ -55,11 +54,11 @@ TankExtPacked.NewTankType("chewchewtank", {
 			if(hChild.GetModelName().tolower().find("track_r"))
 				{ hTrack = hChild; break }
 
-		local hModel    = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", { origin = "40 0 0", defaultanim = "move", model = CHEWCHEWTANK_MODEL })
-		local hWheels   = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", { origin = "40 0 0", defaultanim = "move", disableshadows = 1, model = CHEWCHEWTANK_MODEL_WHEELS })
-		local hParticle = SpawnEntityFromTable("info_particle_system", { origin = "64 0 192", start_active = 1, effect_name = "smoke_train" })
-		local hFakeBomb = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", { origin = "44 0 -38", modelscale = 0.75, disableshadows = 1, model = "models/bots/boss_bot/bomb_mechanism.mdl" })
-		local hChomp    = SpawnEntityFromTable("trigger_multiple", {
+		local hModel    = SpawnEntityFromTableSafe("prop_dynamic", { origin = "40 0 0", defaultanim = "move", model = CHEWCHEWTANK_MODEL })
+		local hWheels   = SpawnEntityFromTableSafe("prop_dynamic", { origin = "40 0 0", defaultanim = "move", disableshadows = 1, model = CHEWCHEWTANK_MODEL_WHEELS })
+		local hParticle = SpawnEntityFromTableSafe("info_particle_system", { origin = "64 0 192", start_active = 1, effect_name = "smoke_train" })
+		local hFakeBomb = SpawnEntityFromTableSafe("prop_dynamic", { origin = "44 0 -38", modelscale = 0.75, disableshadows = 1, model = "models/bots/boss_bot/bomb_mechanism.mdl" })
+		local hChomp    = SpawnEntityFromTableSafe("trigger_multiple", {
 			origin       = "152 0 66"
 			spawnflags   = 64
 			OnStartTouch = "!selfRunScriptCodeChomp(activator)-1-1"

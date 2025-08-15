@@ -22,11 +22,11 @@ TankExt.NewTankType("fireringtank", {
 			sound_level = 82
 		})
 
-		local hIgniter = SpawnEntityFromTable("trigger_ignite", { spawnflags = 1, startdisabled = 1, damage_percent_per_second = FIRERINGTANK_DAMAGE_PERCENT, burn_duration = FIRERINGTANK_BURN_DURATION })
+		local hIgniter = SpawnEntityFromTableSafe("trigger_ignite", { spawnflags = 1, startdisabled = 1, damage_percent_per_second = FIRERINGTANK_DAMAGE_PERCENT, burn_duration = FIRERINGTANK_BURN_DURATION })
 		hIgniter.SetSize(Vector(-160, -160, -32), Vector(160, 160, 48))
 		hIgniter.SetSolid(SOLID_OBB)
 
-		hFilter <- SpawnEntityFromTable("filter_activator_tfteam", { teamnum = self.GetTeam(), negated = 1 })
+		hFilter <- SpawnEntityFromTableSafe("filter_activator_tfteam", { teamnum = self.GetTeam(), negated = 1 })
 		SetPropEntity(hIgniter, "m_hFilter", hFilter)
 
 		TankExt.SetParentArray([hIgniter], self)

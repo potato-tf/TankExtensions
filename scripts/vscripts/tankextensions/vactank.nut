@@ -51,21 +51,21 @@ TankExt.NewTankType("vactank*", {
 
 		if(sTankName.find("_bullet"))
 		{
-			local hShield = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = VACTANK_MODEL, skin = 2, disableshadows = 1, rendermode = 1 })
+			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = 2, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
 			TankExt.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BULLET | DMG_BUCKSHOT
 		}
 		if(sTankName.find("_blast"))
 		{
-			local hShield = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = VACTANK_MODEL, skin = 3, disableshadows = 1, rendermode = 1 })
+			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = 3, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
 			TankExt.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BLAST
 		}
 		if(sTankName.find("_fire"))
 		{
-			local hShield = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = VACTANK_MODEL, skin = 4, disableshadows = 1, rendermode = 1 })
+			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = 4, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
 			TankExt.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BURN | DMG_IGNITE
@@ -77,7 +77,7 @@ TankExt.NewTankType("vactank*", {
 		local iTeamNum       = self.GetTeam()
 		foreach(hShield in hShields)
 		{
-			local hParticle = SpawnEntityFromTable("info_particle_system", {
+			local hParticle = SpawnEntityFromTableSafe("info_particle_system", {
 				origin       = Vector(0, iOffset - iCenterOffset, 200)
 				effect_name  = format("vaccinator_%s_buff%i", iTeamNum == TF_TEAM_BLUE ? "blue" : "red", hShield.GetSkin() - 1)
 				start_active = 1
@@ -97,7 +97,7 @@ TankExt.NewTankType("vactank*", {
 
 			foreach(hShield in hShields)
 			{
-				local hShieldFade = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = VACTANK_MODEL, skin = hShield.GetSkin(), disableshadows = 1, renderfx = kRenderFxFadeFast })
+				local hShieldFade = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = hShield.GetSkin(), disableshadows = 1, renderfx = kRenderFxFadeFast })
 				SetPropInt(hShieldFade, "m_clrRender", GetPropInt(hShield, "m_clrRender"))
 				TankExt.SetParentArray([hShieldFade], self)
 				EntFireByHandle(hShieldFade, "Kill", null, 1, null, null)

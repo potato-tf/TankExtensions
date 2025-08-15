@@ -23,7 +23,7 @@ TankExt.NewTankType("tankdozer*", {
 	function OnSpawn()
 	{
 		local arrayModels = []
-		local SpawnBreakable = @(vecOrigin, sModel) TankExt.SpawnEntityFromTableFast("prop_dynamic", { origin = vecOrigin, model = sModel, solid = SOLID_VPHYSICS, "OnTakeDamage" : "!selfRunScriptCodeEmitSoundOn(TANKDOZER_SND_BREAKABLE_HURT,self)-1-1" })
+		local SpawnBreakable = @(vecOrigin, sModel) SpawnEntityFromTableSafe("prop_dynamic", { origin = vecOrigin, model = sModel, solid = SOLID_VPHYSICS, "OnTakeDamage" : "!selfRunScriptCodeEmitSoundOn(TANKDOZER_SND_BREAKABLE_HURT,self)-1-1" })
 
 		arrayModels.append(SpawnBreakable(Vector(8, 85, 121), TANKDOZER_MODEL_BREAKABLE1))
 		arrayModels.append(SpawnBreakable(Vector(8, -85, 121), TANKDOZER_MODEL_BREAKABLE1))
@@ -32,14 +32,14 @@ TankExt.NewTankType("tankdozer*", {
 		foreach(hBreakable in arrayModels)
 			SetPropInt(hBreakable, "m_takedamage", DAMAGE_YES), hBreakable.SetHealth(TANKDOZER_BREAKABLE_HEALTH)
 
-		arrayModels.append(TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = TANKDOZER_MODEL, solid = SOLID_VPHYSICS }))
+		arrayModels.append(SpawnEntityFromTableSafe("prop_dynamic", { model = TANKDOZER_MODEL, solid = SOLID_VPHYSICS }))
 		foreach(hEnt in arrayModels) hEnt.AddEFlags(EFL_DONTBLOCKLOS)
 
 		local bSentry = sTankName.find("_nosentry") == null
 		if(bSentry)
 		{
 			self.RemoveEFlags(EFL_DONTBLOCKLOS)
-			local hSentry = SpawnEntityFromTable("obj_sentrygun", { origin = "-37 0 176", angles = self.GetAbsAngles(), defaultupgrade = TANKDOZER_SENTRY_DEFAULTUPGRADE, modelscale = TANKDOZER_SENTRY_SCALE, spawnflags = 8, teamnum = self.GetTeam() })
+			local hSentry = SpawnEntityFromTableSafe("obj_sentrygun", { origin = "-37 0 176", angles = self.GetAbsAngles(), defaultupgrade = TANKDOZER_SENTRY_DEFAULTUPGRADE, modelscale = TANKDOZER_SENTRY_SCALE, spawnflags = 8, teamnum = self.GetTeam() })
 			hSentry.SetLocalAngles(QAngle())
 			hSentry.AcceptInput("SetHealth", TANKDOZER_SENTRY_HEALTH.tostring(), null, null)
 			arrayModels.append(hSentry)

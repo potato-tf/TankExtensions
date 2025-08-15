@@ -34,7 +34,6 @@ local BANNER_CONCH  = 1 << 2
 local BANNER_BACKUP = 1 << 3
 
 ::BannerTankEvents <- {
-	function OnGameEvent_recalculate_holidays(_) { if(GetRoundState() == 3) delete ::BannerTankEvents }
 	function OnScriptHook_OnTakeDamage(params)
 	{
 		local hAttacker  = params.attacker
@@ -81,7 +80,7 @@ TankExtPacked.NewTankType("bannertank*", {
 	{
 		local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
 
-		local hPackBuff = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", {
+		local hPackBuff = SpawnEntityFromTableSafe("prop_dynamic", {
 			origin        = "-48 -19 40"
 			angles        = "0 90 0"
 			model         = "models/weapons/c_models/c_buffpack/c_buffpack.mdl"
@@ -91,7 +90,7 @@ TankExtPacked.NewTankType("bannertank*", {
 			rendermode    = 1
 			renderamt     = 0
 		})
-		local hBannerBuff = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", {
+		local hBannerBuff = SpawnEntityFromTableSafe("prop_dynamic", {
 			origin        = "-57 -33 78"
 			angles        = "0 90 0"
 			model         = "models/weapons/c_models/c_buffbanner/c_buffbanner.mdl"
@@ -99,7 +98,7 @@ TankExtPacked.NewTankType("bannertank*", {
 			startdisabled = 1
 		})
 
-		local hPackConch = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", {
+		local hPackConch = SpawnEntityFromTableSafe("prop_dynamic", {
 			origin        = "-60 -18 40"
 			angles        = "0 0 0"
 			model         = "models/weapons/c_models/c_shogun_warpack/c_shogun_warpack.mdl"
@@ -109,7 +108,7 @@ TankExtPacked.NewTankType("bannertank*", {
 			rendermode    = 1
 			renderamt     = 0
 		})
-		local hBannerConch = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", {
+		local hBannerConch = SpawnEntityFromTableSafe("prop_dynamic", {
 			origin        = "-74 -10 78"
 			angles        = "0 0 0"
 			model         = "models/weapons/c_models/c_shogun_warbanner/c_shogun_warbanner.mdl"
@@ -117,7 +116,7 @@ TankExtPacked.NewTankType("bannertank*", {
 			startdisabled = 1
 		})
 
-		local hPackBackup = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", {
+		local hPackBackup = SpawnEntityFromTableSafe("prop_dynamic", {
 			origin        = "-48 19 40"
 			angles        = "0 270 0"
 			model         = "models/workshop/weapons/c_models/c_battalion_buffpack/c_battalion_buffpack.mdl"
@@ -127,7 +126,7 @@ TankExtPacked.NewTankType("bannertank*", {
 			rendermode    = 1
 			renderamt     = 0
 		})
-		local hBannerBackup = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", {
+		local hBannerBackup = SpawnEntityFromTableSafe("prop_dynamic", {
 			origin        = "-37 33 78"
 			angles        = "0 270 0"
 			model         = "models/weapons/c_models/c_battalion_buffbanner/c_batt_buffbanner.mdl"

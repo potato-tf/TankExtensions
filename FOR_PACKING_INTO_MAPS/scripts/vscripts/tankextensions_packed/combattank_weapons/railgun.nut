@@ -27,7 +27,7 @@ TankExtPacked.PrecacheSound(COMBATTANK_RAILGUN_SND_COOL_END)
 TankExtPacked.CombatTankWeapons["railgun"] <- {
 	function SpawnModel()
 	{
-		local hRailgun = CreateByClassname("funCBaseFlex")
+		local hRailgun = CreateByClassnameSafe("funCBaseFlex")
 		hRailgun.SetModel(COMBATTANK_RAILGUN_MODEL)
 		hRailgun.SetPlaybackRate(1.0)
 		hRailgun.DispatchSpawn()
@@ -42,7 +42,7 @@ TankExtPacked.CombatTankWeapons["railgun"] <- {
 		local iClip         = COMBATTANK_RAILGUN_CLIP_SIZE
 		local bCharging     = false
 
-		local hCasingShooter = SpawnEntityFromTable("env_shooter", {
+		local hCasingShooter = SpawnEntityFromTableSafe("env_shooter", {
 			origin           = Vector(-188, 5, 0)
 			angles           = QAngle(0, 90, 0)
 			shootmodel       = COMBATTANK_RAILGUN_MODEL_CASING
@@ -107,13 +107,13 @@ TankExtPacked.CombatTankWeapons["railgun"] <- {
 			local vecBarrel = self.GetAttachmentOrigin(self.LookupAttachment("barrel"))
 			local bBlueTeam = iTeamNum == TF_TEAM_BLUE
 
-			local hParticle = TankExtPacked.SpawnEntityFromTableSafe("info_particle_system", {
+			local hParticle = SpawnEntityFromTableSafe("info_particle_system", {
 				origin       = vecBarrel
 				effect_name  = (bBlueTeam ? COMBATTANK_RAILGUN_PARTICLE_TRACER_BLUE : COMBATTANK_RAILGUN_PARTICLE_TRACER_RED)
 				start_active = 1
 			})
 
-			local hBeamShock = TankExtPacked.SpawnEntityFromTableSafe("env_beam", {
+			local hBeamShock = SpawnEntityFromTableSafe("env_beam", {
 				lightningstart = "bignet"
 				lightningend   = "bignet"
 				texture        = "effects/electro_beam.vmt"
@@ -125,7 +125,7 @@ TankExtPacked.CombatTankWeapons["railgun"] <- {
 			SetPropEntityArray(hBeamShock, "m_hAttachEntity", hParticle, 1)
 			hBeamShock.SetAbsOrigin(vecTracer)
 
-			local hBeamShot = TankExtPacked.SpawnEntityFromTableSafe("env_beam", {
+			local hBeamShot = SpawnEntityFromTableSafe("env_beam", {
 				lightningstart = "bignet"
 				lightningend   = "bignet"
 				texture        = "sprites/laserbeam.vmt"

@@ -31,15 +31,15 @@ TankExt.NewTankType("exampletank", {
 	DisableSmokestack  = 0
 	DisableTracks      = 0
 	EngineLoopSound    = EXAMPLETANK_SND_ENGINE
-	// Model           = PAINTTANK_MODEL_COLOR
+	// Model           = EXAMPLETANK_MODEL_COLOR
 	Model = {
-		Default    = PAINTTANK_MODEL_COLOR
-		Damage1    = PAINTTANK_MODEL_COLOR_DAMAGE1
-		Damage2    = PAINTTANK_MODEL_COLOR_DAMAGE2
-		Damage3    = PAINTTANK_MODEL_COLOR_DAMAGE3
-		LeftTrack  = PAINTTANK_MODEL_COLOR_TRACK_L
-		RightTrack = PAINTTANK_MODEL_COLOR_TRACK_R
-		Bomb       = PAINTTANK_MODEL_COLOR_BOMB
+		Default    = EXAMPLETANK_MODEL_COLOR
+		Damage1    = EXAMPLETANK_MODEL_COLOR_DAMAGE1
+		Damage2    = EXAMPLETANK_MODEL_COLOR_DAMAGE2
+		Damage3    = EXAMPLETANK_MODEL_COLOR_DAMAGE3
+		LeftTrack  = EXAMPLETANK_MODEL_COLOR_TRACK_L
+		RightTrack = EXAMPLETANK_MODEL_COLOR_TRACK_R
+		Bomb       = EXAMPLETANK_MODEL_COLOR_BOMB
 	}
 	NoDestructionModel = 1
 	NoScreenShake      = 0
@@ -50,7 +50,7 @@ TankExt.NewTankType("exampletank", {
 	{
 		// Available definitons: self, sTankName, hTankPath
 		local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
-		local hProp = SpawnEntityFromTable("prop_dynamic", {
+		local hProp = SpawnEntityFromTableSafe("prop_dynamic", {
 			origin      = "-35 0 88"
 			model       = "models/player/heavy.mdl"
 			defaultanim = "taunt_russian"

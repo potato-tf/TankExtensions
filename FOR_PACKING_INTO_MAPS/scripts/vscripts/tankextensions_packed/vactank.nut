@@ -13,7 +13,6 @@ PrecacheModel(VACTANK_MODEL)
 TankExtPacked.PrecacheSound(VACTANK_SND_DEPLOY)
 
 ::VacTankEvents <- {
-	OnGameEvent_recalculate_holidays = function(_) { if(GetRoundState() == 3) delete ::VacTankEvents }
 	OnScriptHook_OnTakeDamage = function(params)
 	{
 		local hVictim = params.const_entity
@@ -51,21 +50,21 @@ TankExtPacked.NewTankType("vactank*", {
 
 		if(sTankName.find("_bullet"))
 		{
-			local hShield = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", { model = VACTANK_MODEL, skin = 2, disableshadows = 1, rendermode = 1 })
+			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = 2, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
 			TankExtPacked.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BULLET | DMG_BUCKSHOT
 		}
 		if(sTankName.find("_blast"))
 		{
-			local hShield = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", { model = VACTANK_MODEL, skin = 3, disableshadows = 1, rendermode = 1 })
+			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = 3, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
 			TankExtPacked.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BLAST
 		}
 		if(sTankName.find("_fire"))
 		{
-			local hShield = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", { model = VACTANK_MODEL, skin = 4, disableshadows = 1, rendermode = 1 })
+			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = 4, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
 			TankExtPacked.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BURN | DMG_IGNITE
@@ -77,7 +76,7 @@ TankExtPacked.NewTankType("vactank*", {
 		local iTeamNum       = self.GetTeam()
 		foreach(hShield in hShields)
 		{
-			local hParticle = SpawnEntityFromTable("info_particle_system", {
+			local hParticle = SpawnEntityFromTableSafe("info_particle_system", {
 				origin       = Vector(0, iOffset - iCenterOffset, 200)
 				effect_name  = format("vaccinator_%s_buff%i", iTeamNum == TF_TEAM_BLUE ? "blue" : "red", hShield.GetSkin() - 1)
 				start_active = 1
@@ -97,7 +96,7 @@ TankExtPacked.NewTankType("vactank*", {
 
 			foreach(hShield in hShields)
 			{
-				local hShieldFade = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", { model = VACTANK_MODEL, skin = hShield.GetSkin(), disableshadows = 1, renderfx = kRenderFxFadeFast })
+				local hShieldFade = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = hShield.GetSkin(), disableshadows = 1, renderfx = kRenderFxFadeFast })
 				SetPropInt(hShieldFade, "m_clrRender", GetPropInt(hShield, "m_clrRender"))
 				TankExtPacked.SetParentArray([hShieldFade], self)
 				EntFireByHandle(hShieldFade, "Kill", null, 1, null, null)

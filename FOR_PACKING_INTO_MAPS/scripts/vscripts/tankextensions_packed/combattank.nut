@@ -33,8 +33,7 @@ TankExtPacked.PrecacheSound(COMBATTANK_SND_ROTATE)
 TankExtPacked.PrecacheSound(COMBATTANK_SND_UBER)
 TankExtPacked.PrecacheSound(COMBATTANK_SND_UBER_OFF)
 
-::UberTankEvents <- {
-	function OnGameEvent_recalculate_holidays(_) { if(GetRoundState() == 3) delete ::UberTankEvents }
+::CombatTankEvents <- {
 	function OnScriptHook_OnTakeDamage(params)
 	{
 		local hAttacker = params.attacker
@@ -50,7 +49,7 @@ TankExtPacked.PrecacheSound(COMBATTANK_SND_UBER_OFF)
 		}
 	}
 }
-__CollectGameEventCallbacks(UberTankEvents)
+__CollectGameEventCallbacks(CombatTankEvents)
 
 TankExtPacked.CombatTankWeapons <- {}
 
@@ -104,8 +103,8 @@ TankExtPacked.NewTankType("combattank*", {
 		local bFinalSkin = self.GetSkin() == 1
 		if(sParams[0].find("_nolaser") == null)
 		{
-			hBeam = TankExtPacked.SpawnEntityFromTableSafe("env_beam", { lightningstart = "bignet", lightningend = "bignet", boltwidth = 0.75, texture = "sprites/laserbeam.vmt", rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
-			hBeamEnd = TankExtPacked.SpawnEntityFromTableSafe("env_sprite", { model = "sprites/glow1.vmt", rendermode = 5, rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
+			hBeam = SpawnEntityFromTableSafe("env_beam", { lightningstart = "bignet", lightningend = "bignet", boltwidth = 0.75, texture = "sprites/laserbeam.vmt", rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
+			hBeamEnd = SpawnEntityFromTableSafe("env_sprite", { model = "sprites/glow1.vmt", rendermode = 5, rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
 			SetPropEntityArray(hBeam, "m_hAttachEntity", hBeam, 0)
 			SetPropEntityArray(hBeam, "m_hAttachEntity", hBeamEnd, 1)
 		}
@@ -123,7 +122,7 @@ TankExtPacked.NewTankType("combattank*", {
 
 				if("Model" in WeaponTable)
 				{
-					hWeapon = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", { model = WeaponTable.Model, angles = "0 90 0", defaultanim = ("DefaultAnim" in WeaponTable) ? WeaponTable.DefaultAnim : "" })
+					hWeapon = SpawnEntityFromTableSafe("prop_dynamic", { model = WeaponTable.Model, angles = "0 90 0", defaultanim = ("DefaultAnim" in WeaponTable) ? WeaponTable.DefaultAnim : "" })
 					hWeapon.SetSkin(bBlueTeam ? 1 : 0)
 					TankExtPacked.SetParentArray([hWeapon], self, i == 1 ? "weapon_r" : "weapon_l")
 				}

@@ -43,7 +43,7 @@ TankExtPacked.NewTankType("sentrytank", {
 		local bModelHasAttachment = self.LookupAttachment("building_attachment") != 0
 		local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
 		if(self.GetModelName() == SENTRYTANK_MODEL) self.SetSkin(bBlueTeam ? 0 : 1)
-		local hSentry = SpawnEntityFromTable("obj_sentrygun",
+		local hSentry = SpawnEntityFromTableSafe("obj_sentrygun",
 		{
 			origin         = bModelHasAttachment ? "0 0 2" : "-34 0 158"
 			angles         = self.GetAbsAngles()
@@ -68,14 +68,14 @@ TankExtPacked.NewTankType("sentrytank", {
 		}
 
 		local sUniqueName = UniqueString()
-		local hTouch = SpawnEntityFromTable("dispenser_touch_trigger", { targetname = sUniqueName, spawnflags = 1 })
+		local hTouch = SpawnEntityFromTableSafe("dispenser_touch_trigger", { targetname = sUniqueName, spawnflags = 1 })
 		hTouch.SetSize(Vector(-512, -512, -128), Vector(512, 512, 384))
 		hTouch.SetSolid(SOLID_BBOX)
-		local hDisp = SpawnEntityFromTable("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "0 8 0", angles = "0 90 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
+		local hDisp = SpawnEntityFromTableSafe("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "0 8 0", angles = "0 90 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
 		EmitSoundEx({ entity = hDisp, sound_name = "misc/null.wav", filter_type = RECIPIENT_FILTER_GLOBAL, flags = SND_STOP | SND_IGNORE_NAME })
 		TankExtPacked.SetParentArray([hDisp], self, "smoke_attachment")
 
-		local hTouchReal = SpawnEntityFromTable("trigger_multiple", { spawnflags = 1 })
+		local hTouchReal = SpawnEntityFromTableSafe("trigger_multiple", { spawnflags = 1 })
 		TankExtPacked.SetParentArray([hTouch, hTouchReal], self)
 		SetPropEntity(hTouch, "m_pParent", null)
 		SetPropEntity(hTouchReal, "m_pParent", null)

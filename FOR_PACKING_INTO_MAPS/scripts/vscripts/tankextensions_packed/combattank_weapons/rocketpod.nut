@@ -28,7 +28,7 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 	Model = COMBATTANK_ROCKETPOD_MODEL
 	function OnSpawn()
 	{
-		local hWeapon = SpawnEntityFromTable("tf_point_weapon_mimic", {
+		local hWeapon = SpawnEntityFromTableSafe("tf_point_weapon_mimic", {
 			angles        = QAngle(0, -2, 0)
 			damage        = COMBATTANK_ROCKETPOD_ROCKET_DAMAGE
 			modeloverride = COMBATTANK_ROCKETPOD_ROCKET
@@ -81,7 +81,7 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 				for(local hRocket; hRocket = FindByClassnameWithin(hRocket, "tf_projectile_rocket", hWeapon.GetOrigin(), 64);)
 				{
 					if(hRocket.GetOwner() != hWeapon || hRocket.GetEFlags() & EFL_NO_MEGAPHYSCANNON_RAGDOLL) continue
-					TankExtPacked.MarkForPurge(hRocket)
+					MarkForPurge(hRocket)
 
 					local iTeamNum = hTank.GetTeam()
 					hRocket.SetSize(Vector(), Vector())
@@ -123,7 +123,7 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 					if(sTrail != "rockettrail")
 					{
 						hRocket.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
-						local hTrail = TankExtPacked.CreateByClassnameSafe("trigger_particle")
+						local hTrail = CreateByClassnameSafe("trigger_particle")
 						hTrail.KeyValueFromString("particle_name", sTrail)
 						hTrail.KeyValueFromString("attachment_name", "trail")
 						hTrail.KeyValueFromInt("attachment_type", 4)

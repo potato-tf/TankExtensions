@@ -36,14 +36,14 @@ TankExt.PrecacheSound(TARGETANK_SND_CHARGE)
 TankExt.NewTankType("targetank", {
 	function OnSpawn()
 	{
-		local hTargeModel = TankExt.SpawnEntityFromTableFast("prop_dynamic", {
+		local hTargeModel = SpawnEntityFromTableSafe("prop_dynamic", {
 			model      = TARGETANK_MODEL_TARGE
 			origin     = "90 28 84"
 			angles     = "-29.3 194.9 76.8"
 			modelscale = 2.5
 			skin       = 1
 		})
-		local hTrail = SpawnEntityFromTable("env_spritetrail", {
+		local hTrail = SpawnEntityFromTableSafe("env_spritetrail", {
 			origin     = "-72 0 96"
 			spritename = self.GetTeam() == TF_TEAM_BLUE ? "effects/beam001_blu.vmt" : "effects/beam001_red.vmt"
 			startwidth = 128

@@ -44,9 +44,9 @@ TankExtPacked.NewTankType("frontlinecart*", {
 	{
 		local bFinalSkin = self.GetSkin() == 1
 		local bBlueTeam  = self.GetTeam() == TF_TEAM_BLUE
-		local hModel     = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", { angles = "0 180 0", defaultanim = "idle", model = FRONTLINECART_MODEL, skin = bBlueTeam ? bFinalSkin ? 2 : 0 : bFinalSkin ? 3 : 1 })
-		local hFakeBomb  = TankExtPacked.SpawnEntityFromTableFast("prop_dynamic", { origin = "-8 0 -16", modelscale = 0.5, model = "models/bots/boss_bot/bomb_mechanism.mdl", startdisabled = 1 })
-		local hWeapon    = SpawnEntityFromTable("tf_point_weapon_mimic", {
+		local hModel     = SpawnEntityFromTableSafe("prop_dynamic", { angles = "0 180 0", defaultanim = "idle", model = FRONTLINECART_MODEL, skin = bBlueTeam ? bFinalSkin ? 2 : 0 : bFinalSkin ? 3 : 1 })
+		local hFakeBomb  = SpawnEntityFromTableSafe("prop_dynamic", { origin = "-8 0 -16", modelscale = 0.5, model = "models/bots/boss_bot/bomb_mechanism.mdl", startdisabled = 1 })
+		local hWeapon    = SpawnEntityFromTableSafe("tf_point_weapon_mimic", {
 			angles     = QAngle(0, 90, 0)
 			modelscale = 1
 		})
@@ -56,10 +56,10 @@ TankExtPacked.NewTankType("frontlinecart*", {
 		TankExtPacked.DispatchParticleEffectOn(hModel, "taunt_heavy_table_steam", "exhaust_smoke")
 
 		local sUniqueName = UniqueString()
-		local hTouch = SpawnEntityFromTable("dispenser_touch_trigger", { targetname = sUniqueName, spawnflags = 1 })
+		local hTouch = SpawnEntityFromTableSafe("dispenser_touch_trigger", { targetname = sUniqueName, spawnflags = 1 })
 		hTouch.SetSize(Vector(-224, -224, 0), Vector(224, 224, 96))
 		hTouch.SetSolid(SOLID_BBOX)
-		local hDisp = SpawnEntityFromTable("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "12.5 19 -1", angles = "-90 0 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
+		local hDisp = SpawnEntityFromTableSafe("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "12.5 19 -1", angles = "-90 0 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
 		EmitSoundEx({ entity = hDisp, sound_name = "misc/null.wav", filter_type = RECIPIENT_FILTER_GLOBAL, flags = SND_STOP | SND_IGNORE_NAME })
 		TankExtPacked.SetParentArray([hTouch], self)
 		SetPropEntity(hTouch, "m_pParent", null)
@@ -88,7 +88,7 @@ TankExtPacked.NewTankType("frontlinecart*", {
 
 		local MakeOutlinedModel = function(sModel, flModelScale, vecOrigin)
 		{
-			local hEnt = CreateByClassname("obj_teleporter")
+			local hEnt = CreateByClassnameSafe("obj_teleporter")
 			hEnt.SetAbsOrigin(vecOrigin)
 			hEnt.SetAbsAngles(QAngle(180))
 			hEnt.DispatchSpawn()
@@ -126,7 +126,7 @@ TankExtPacked.NewTankType("frontlinecart*", {
 			local iType = bCloseRange ? iProjectileTypeClose : iProjectileType
 			local ApplyToProjectile = function(hEnt)
 			{
-				TankExtPacked.MarkForPurge(hEnt)
+				MarkForPurge(hEnt)
 				hEnt.SetSolid(SOLID_BSP)
 				hEnt.SetTeam(iTeamNum)
 				hEnt.SetOwner(self)
@@ -242,7 +242,7 @@ TankExtPacked.NewTankType("frontlinecart*", {
 					case PROJECTILE_MILK   : sClassname = "tf_projectile_jar_milk"; break
 					case PROJECTILE_GAS    : sClassname = "tf_projectile_jar_gas"; break
 				}
-				local hEnt = CreateByClassname(sClassname)
+				local hEnt = CreateByClassnameSafe(sClassname)
 				hEnt.SetAbsOrigin(hWeapon.GetOrigin())
 				hEnt.SetAbsAngles(hWeapon.GetAbsAngles())
 				hEnt.DispatchSpawn()

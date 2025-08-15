@@ -41,7 +41,7 @@ function LoopInitialize()
 }
 function Respawn()
 {
-	local hPath = TankExt.SpawnEntityFromTableSafe("path_track", {
+	local hPath = SpawnEntityFromTableSafe("path_track", {
 		origin     = OriginArray[1]
 		targetname = format("%s_2", sPathName)
 	})

@@ -21,9 +21,9 @@ TankExt.NewTankType("stickytank", {
 	function OnSpawn()
 	{
 		local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
-		local hModel    = TankExt.SpawnEntityFromTableFast("prop_dynamic", { origin = "-46 0 127.75", angles = "-55 0 0", model = STICKYTANK_TURRET_MODEL, skin = bBlueTeam ? 1 : 0 })
+		local hModel    = SpawnEntityFromTableSafe("prop_dynamic", { origin = "-46 0 127.75", angles = "-55 0 0", model = STICKYTANK_TURRET_MODEL, skin = bBlueTeam ? 1 : 0 })
 		TankExt.SetParentArray([hModel], self)
-		local hMimic1   = SpawnEntityFromTable("tf_point_weapon_mimic", {
+		local hMimic1   = SpawnEntityFromTableSafe("tf_point_weapon_mimic", {
 			damage        = STICKYTANK_PROJECTILE_DAMAGE
 			modelscale    = 1
 			modeloverride = STICKYTANK_PROJECTILE_MODEL
@@ -34,7 +34,7 @@ TankExt.NewTankType("stickytank", {
 			spreadangle   = STICKYTANK_PROJECTILE_SPREAD
 		})
 		TankExt.SetParentArray([hMimic1], hModel, "muzzle_l")
-		local hMimic2   = SpawnEntityFromTable("tf_point_weapon_mimic", {
+		local hMimic2   = SpawnEntityFromTableSafe("tf_point_weapon_mimic", {
 			damage        = STICKYTANK_PROJECTILE_DAMAGE
 			modelscale    = 1
 			modeloverride = STICKYTANK_PROJECTILE_MODEL
@@ -109,10 +109,8 @@ TankExt.NewTankType("stickytank", {
 				TankExt.DelayFunction(self, this, 2.0, function() { ShootStickies(2, true) })
 				TankExt.DelayFunction(self, this, 2.5, function() { ShootStickies(3, true) })
 				TankExt.DelayFunction(self, this, 3.0, function() { ShootStickies(6, true) })
-				TankExt.DelayFunction(self, this, 6.5, function() {
-					hMimic1.AcceptInput("DetonateStickies", null, null, null)
-					hMimic2.AcceptInput("DetonateStickies", null, null, null)
-				})
+				EntFireByHandle(hMimic1, "DetonateStickies", null, 6.5, null, null)
+				EntFireByHandle(hMimic2, "DetonateStickies", null, 6.5, null, null)
 			}
 		}
 	}

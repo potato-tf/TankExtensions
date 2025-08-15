@@ -64,11 +64,11 @@ TankExt.NewTankType("helicopter*", {
 
 		local bCrit     = sTankName.find("_crit") ? true : false
 		local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
-		local hModel    = TankExt.SpawnEntityFromTableFast("prop_dynamic", { model = HELICOPTER_MODEL, defaultanim = "Hover_idle", skin = (bBlueTeam ? 1 : 0) })
+		local hModel    = SpawnEntityFromTableSafe("prop_dynamic", { model = HELICOPTER_MODEL, defaultanim = "Hover_idle", skin = (bBlueTeam ? 1 : 0) })
 		hModel.AcceptInput("SetAnimation", "Lift_to_hover", null, null)
 		TankExt.SetParentArray([hModel], self)
 
-		local hTurret = CreateByClassname("obj_teleporter")
+		local hTurret = CreateByClassnameSafe("obj_teleporter")
 		hTurret.SetAbsOrigin(Vector(6, 0, 102))
 		hTurret.SetAbsAngles(QAngle(0, 0, -180))
 		hTurret.DispatchSpawn()
@@ -81,7 +81,7 @@ TankExt.NewTankType("helicopter*", {
 		hTurret.AcceptInput("Color", bBlueTeam ? "220 240 250" : "150 150 150", null, null)
 		SetPropBool(hTurret, "m_bGlowEnabled", true)
 
-		local hMimicRocket = SpawnEntityFromTable("tf_point_weapon_mimic", {
+		local hMimicRocket = SpawnEntityFromTableSafe("tf_point_weapon_mimic", {
 			origin        = "70 0 40"
 			damage        = HELICOPTER_ROCKET_DAMAGE
 			modeloverride = HELICOPTER_ROCKET_MODEL
@@ -91,7 +91,7 @@ TankExt.NewTankType("helicopter*", {
 			splashradius  = HELICOPTER_ROCKET_SPLASH
 			weapontype    = 0
 		})
-		local hMimicSticky = SpawnEntityFromTable("tf_point_weapon_mimic", {
+		local hMimicSticky = SpawnEntityFromTableSafe("tf_point_weapon_mimic", {
 			origin        = "70 0 40"
 			damage        = HELICOPTER_STICKY_DAMAGE
 			modeloverride = HELICOPTER_STICKY_MODEL
@@ -104,7 +104,7 @@ TankExt.NewTankType("helicopter*", {
 		})
 
 		PrecacheScriptSound("SawMill.BladeImpact")
-		local hHurt = SpawnEntityFromTable("trigger_multiple", {
+		local hHurt = SpawnEntityFromTableSafe("trigger_multiple", {
 			origin        = "-40 0 144"
 			startdisabled = 1
 			spawnflags    = 1
@@ -280,7 +280,7 @@ TankExt.NewTankType("helicopter*", {
 							local vecVelocity   = angGoal.Forward() * 128
 
 							DispatchParticleEffect("rocketbackblast", vecFakeOrigin, vecVelocity)
-							hBomb <- CreateByClassname("obj_teleporter")
+							hBomb <- CreateByClassnameSafe("obj_teleporter")
 							hBomb.SetAbsOrigin(vecFakeOrigin)
 							hBomb.SetAbsAngles(QAngle(angGoal.z, angGoal.y + 90, angGoal.x))
 							hBomb.KeyValueFromFloat("modelscale", 0.3)
@@ -292,7 +292,7 @@ TankExt.NewTankType("helicopter*", {
 							hBomb.SetTeam(self.GetTeam() == TF_TEAM_BLUE ? TF_TEAM_BLUE : TF_TEAM_RED)
 							SetPropBool(hBomb, "m_bGlowEnabled", true)
 
-							local hEdict = SpawnEntityFromTable("info_target", { spawnflags = 0x01 })
+							local hEdict = SpawnEntityFromTableSafe("info_target", { spawnflags = 0x01 })
 							hEdict.AddEFlags(EFL_IN_SKYBOX | EFL_FORCE_CHECK_TRANSMIT)
 							hEdict.AcceptInput("SetParent", "!activator", hBomb, null)
 
@@ -330,7 +330,7 @@ TankExt.NewTankType("helicopter*", {
 							for(local hRocket; hRocket = FindByClassnameWithin(hRocket, "tf_projectile_rocket", hMimicRocket.GetOrigin(), 1);)
 								if(hRocket.GetOwner() == hMimicRocket)
 								{
-									TankExt.MarkForPurge(hRocket)
+									MarkForPurge(hRocket)
 									hRocket.SetSize(Vector(), Vector())
 									hRocket.SetSolid(SOLID_BSP)
 									hRocket.SetSequence(1)
@@ -364,7 +364,7 @@ TankExt.NewTankType("helicopter*", {
 									if(HELICOPTER_ROCKET_PARTICLE_TRAIL != "rockettrail")
 									{
 										hRocket.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
-										local hTrail = TankExt.CreateByClassnameSafe("trigger_particle")
+										local hTrail = CreateByClassnameSafe("trigger_particle")
 										hTrail.KeyValueFromString("particle_name", HELICOPTER_ROCKET_PARTICLE_TRAIL)
 										hTrail.KeyValueFromString("attachment_name", "trail")
 										hTrail.KeyValueFromInt("attachment_type", 4)
