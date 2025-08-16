@@ -1,15 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////////////////
-// example tank name : "combattank|rocketpod|minigun"
-// add _red to combattank for a red teamed tank
-// second argument, rocketpod, places it on the tank's left side
-// third argument, minigun, places it on the tank's right side
-// intended to be put onto a LOOPING path
-////////////////////////////////////////////////////////////////////////////////////////////
-// look at scripts inside of the combattank_weapons folder for weapon names
-////////////////////////////////////////////////////////////////////////////////////////////
-// popfile example can be found at https://testing.potato.tf/tf/scripts/population/mvm_slick_v4_combattank.pop
-////////////////////////////////////////////////////////////////////////////////////////////
-
 local COMBATTANK_VALUES_TABLE = {
 	COMBATTANK_SND_ROTATE           = ")plats/tram_move.wav"
 	COMBATTANK_SND_UBER             = "player/invulnerable_on.wav"
@@ -18,6 +6,8 @@ local COMBATTANK_VALUES_TABLE = {
 	COMBATTANK_POSE_YAW             = 2
 	COMBATTANK_POSE_PITCH           = 1
 	COMBATTANK_MODEL                = "models/bots/boss_bot/combat_tank_mk2/mk2_combat_tank_chassis.mdl"
+	COMBATTANK_MODEL_UBERED_TRACK_L = "models/bots/boss_bot/ubertank/tank_uber_track_l.mdl"
+	COMBATTANK_MODEL_UBERED_TRACK_R = "models/bots/boss_bot/ubertank/tank_uber_track_r.mdl"
 	COMBATTANK_TRACK_L_RED          = "models/bots/boss_bot/tankred_track_l.mdl"
 	COMBATTANK_TRACK_R_RED          = "models/bots/boss_bot/tankred_track_r.mdl"
 	COMBATTANK_MAX_RANGE            = 1800
@@ -29,6 +19,8 @@ foreach(k,v in COMBATTANK_VALUES_TABLE)
 PrecacheModel(COMBATTANK_MODEL)
 PrecacheModel(COMBATTANK_TRACK_L_RED)
 PrecacheModel(COMBATTANK_TRACK_R_RED)
+PrecacheModel(COMBATTANK_MODEL_UBERED_TRACK_L)
+PrecacheModel(COMBATTANK_MODEL_UBERED_TRACK_R)
 TankExtPacked.PrecacheSound(COMBATTANK_SND_ROTATE)
 TankExtPacked.PrecacheSound(COMBATTANK_SND_UBER)
 TankExtPacked.PrecacheSound(COMBATTANK_SND_UBER_OFF)
@@ -147,6 +139,16 @@ TankExtPacked.NewTankType("combattank*", {
 			}
 			else ClientPrint(null, HUD_PRINTTALK, format("\x07FFFF00CombatTank weapon \"%s\" does not exist, weapon is not loaded or does not exist", sParams[i]))
 
+		local hTrackL, hTrackR
+		for(local hChild = self.FirstMoveChild(); hChild; hChild = hChild.NextMovePeer())
+		{
+			local sChildModel = hChild.GetModelName().tolower()
+			if(sChildModel.find("track_l"))
+				hTrackL = hChild
+			else if(sChildModel.find("track_r"))
+				hTrackR = hChild
+		}
+
 		local LastSkins   = {}
 		local bUberFizzle = false
 		bUbered <- false
@@ -160,7 +162,6 @@ TankExtPacked.NewTankType("combattank*", {
 						sound_name  = COMBATTANK_SND_UBER
 						filter_type = RECIPIENT_FILTER_GLOBAL
 					})
-					SetPropInt(self, "m_takedamage", DAMAGE_NO)
 					LastSkins.clear()
 					LastSkins[self] <- self.GetSkin()
 					self.SetSkin(bBlueTeam ? 5 : 4)
@@ -170,6 +171,13 @@ TankExtPacked.NewTankType("combattank*", {
 							LastSkins[hChild] <- hChild.GetSkin()
 							hChild.SetSkin(bBlueTeam ? 3 : 2)
 						}
+
+					SetPropIntArray(hTrackL, "m_nModelIndexOverrides", GetModelIndex(COMBATTANK_MODEL_UBERED_TRACK_L), 0)
+					SetPropIntArray(hTrackL, "m_nModelIndexOverrides", GetModelIndex(COMBATTANK_MODEL_UBERED_TRACK_L), 3)
+					SetPropIntArray(hTrackR, "m_nModelIndexOverrides", GetModelIndex(COMBATTANK_MODEL_UBERED_TRACK_R), 0)
+					SetPropIntArray(hTrackR, "m_nModelIndexOverrides", GetModelIndex(COMBATTANK_MODEL_UBERED_TRACK_R), 3)
+					hTrackL.SetSkin(bBlueTeam ? 1 : 0)
+					hTrackR.SetSkin(bBlueTeam ? 1 : 0)
 				}
 				else
 				{
@@ -182,13 +190,19 @@ TankExtPacked.NewTankType("combattank*", {
 					{
 						bUbered     = false
 						bUberFizzle = false
-						SetPropInt(self, "m_takedamage", DAMAGE_NO)
 						foreach(hEnt, iSkin in LastSkins)
 							if(hEnt.IsValid())
 							{
 								hEnt.SetSkin(iSkin)
 								hEnt.AcceptInput("Color", "255 255 255", null, null)
 							}
+
+						SetPropIntArray(hTrackL, "m_nModelIndexOverrides", GetPropInt(hTrackL, "m_nModelIndex"), 0)
+						SetPropIntArray(hTrackL, "m_nModelIndexOverrides", GetPropInt(hTrackL, "m_nModelIndex"), 3)
+						SetPropIntArray(hTrackR, "m_nModelIndexOverrides", GetPropInt(hTrackR, "m_nModelIndex"), 0)
+						SetPropIntArray(hTrackR, "m_nModelIndexOverrides", GetPropInt(hTrackR, "m_nModelIndex"), 3)
+						hTrackL.SetSkin(0)
+						hTrackR.SetSkin(0)
 					})
 				}
 		}

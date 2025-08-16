@@ -562,6 +562,19 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				TanksThisTick.clear()
 			})
 		}
+		else if(params.sound == "Announcer.MVM_Tank_Alert_Halfway_Multiple")
+		{
+			local iTanks = 0
+			for(local hTank; hTank = FindByClassname(hTank, "tank_boss");)
+				if(hTank != hThinkEnt)
+				{
+					iTanks++
+					if(iTanks > 1)
+						return // already playing the right sound
+				}
+
+			EntFireByHandle(hGameRules, "PlayVO", "Announcer.MVM_Tank_Alert_Halfway", -1, null, null)
+		}
 	}
 
 	ValueOverrides  = {}
@@ -678,6 +691,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					"EngineLoopSound"        : null
 					"Model"                  : null
 					"NoDestructionModel"     : "tointeger"
+					"NoGravity"              : "tointeger"
 					"NoScreenShake"          : "tointeger"
 					"PingSound"              : null
 					"ReplaceModelCollisions" : "tointeger"
@@ -815,13 +829,13 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			}
 		}
 
-		if(Check("DisableChildModels") && TankTable.DisableChildModels == 1)
+		if(Check("DisableChildModels") && TankTable.DisableChildModels)
 			DisableModels(3), Add("DisableChildModels")
 
-		if(Check("DisableTracks") && TankTable.DisableTracks == 1)
+		if(Check("DisableTracks") && TankTable.DisableTracks)
 			DisableModels(1), Add("DisableTracks")
 
-		if(Check("DisableBomb") && TankTable.DisableBomb == 1)
+		if(Check("DisableBomb") && TankTable.DisableBomb)
 			DisableModels(2), Add("DisableBomb")
 
 		if(Check("Color"))
@@ -834,21 +848,21 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			EntFireByHandle(hTank, "RunScriptCode", "SetPropBool(self, `m_bGlowEnabled`, true)", 0.066, null, null)
 		}
 
-		if(Check("DisableOutline") && TankTable.DisableOutline == 1)
+		if(Check("DisableOutline") && TankTable.DisableOutline)
 		{
 			Add("DisableOutline")
 			SetPropBool(hTank, "m_bGlowEnabled", false)
 			EntFireByHandle(hTank, "RunScriptCode", "SetPropBool(self, `m_bGlowEnabled`, false)", 0.066, null, null)
 		}
 
-		if(Check("DisableSmokestack") && TankTable.DisableSmokestack == 1)
+		if(Check("DisableSmokestack") && TankTable.DisableSmokestack)
 		{
 			Add("DisableSmokestack")
 			hTank_scope.DisableSmokestackThink <- function() { self.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null) }
 			TankExtPacked.AddThinkToEnt(hTank, "DisableSmokestackThink")
 		}
 
-		if(Check("NoScreenShake") && TankTable.NoScreenShake == 1)
+		if(Check("NoScreenShake") && TankTable.NoScreenShake)
 		{
 			Add("NoScreenShake")
 			hTank_scope.NoScreenShakeThink <- function() { ScreenShake(self.GetOrigin(), 2.0, 5.0, 1.0, 500.0, SHAKE_STOP, true) }
@@ -915,7 +929,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		if(Check("Scale"))
 			SetPropFloat(hTank, "m_flModelScale", TankTable.Scale), Add("Scale")
 
-		if(Check("NoDestructionModel") && TankTable.NoDestructionModel == 1)
+		if(Check("NoDestructionModel") && TankTable.NoDestructionModel)
 		{
 			Add("NoDestructionModel")
 			hTank_scope.MultiOnDeath.append(function()
@@ -934,12 +948,12 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			})
 		}
 
-		if(Check("NoGravity") && TankTable.NoGravity == 1)
+		if(Check("NoGravity") && TankTable.NoGravity)
 		{
 			Add("NoGravity")
 			hTank.SetAbsAngles(QAngle(0, hTank.GetAbsAngles().y, 0))
 			local vecFakeOrigin = hTank.GetOrigin()
-			local hGoal         = GetPropEntity(hPath, "m_pnext")
+			local hGoal         = TankExtPacked.GetNextPath(hPath)
 			local Players       = []
 
 			for(local i = 1; i <= MAX_CLIENTS; i++)
@@ -964,7 +978,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 						if(flDistSqr < flSpeedDelta * flSpeedDelta)
 						{
 							vecFakeOrigin = vecGoal
-							hGoal         = GetPropEntity(hGoal, "m_pnext")
+							hGoal         = TankExtPacked.GetNextPath(hGoal)
 						}
 						else
 						{
@@ -993,14 +1007,14 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				{
 					vecFakeOrigin = self.GetOrigin()
 					if((vecFakeOrigin - hGoal.GetOrigin()).Length2D() < 20.0)
-						hGoal = GetPropEntity(hGoal, "m_pnext")
+						hGoal = TankExtPacked.GetNextPath(hGoal)
 				}
 				self.AcceptInput("SetStepHeight", bNoGravity || !(self.GetFlags() & FL_ONGROUND) ? "18" : "100", null, null)
 			}
 			TankExtPacked.AddThinkToEnt(hTank, "NoGravityThink")
 		}
 
-		if(Check("ReplaceModelCollisions") && TankTable.ReplaceModelCollisions == 1)
+		if(Check("ReplaceModelCollisions") && TankTable.ReplaceModelCollisions)
 		{
 			Add("ReplaceModelCollisions")
 			hTank_scope.bReplaceModelCollisions <- true
@@ -1325,6 +1339,14 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				if(sScope == sName)
 					return Table
 		return null
+	}
+	function GetNextPath(hPath)
+	{
+		local iSpawnflags = GetPropInt(hPath, "m_spawnflags")
+		if(GetPropEntity(hPath, "m_paltpath") && iSpawnflags & 32768 && !(iSpawnflags & 4)) // SF_PATH_ALTERNATE, SF_PATH_ALTREVERSE
+			return GetPropEntity(hPath, "m_paltpath")
+		else
+			return GetPropEntity(hPath, "m_pnext")
 	}
 	function NormalizeAngle(target)
 	{

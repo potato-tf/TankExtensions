@@ -17,7 +17,7 @@ local HELICOPTER_VALUES_TABLE = {
 
 	HELICOPTER_STICKY_SND_FIRE       = ")weapons/stickybomblauncher_shoot.wav"
 	HELICOPTER_STICKY_SND_FIRE_CRIT  = ")weapons/stickybomblauncher_shoot_crit.wav"
-	HELICOPTER_STICKY_MODEL          = "models/weapons/w_models/w_stickybomb.mdl"
+	HELICOPTER_STICKY_MODEL          = "models/weapons/w_models/w_stickybomb_d.mdl"
 	HELICOPTER_STICKY_SPREAD         = 30
 	HELICOPTER_STICKY_SPLASH_RADIUS  = 189
 	HELICOPTER_STICKY_SPEED_MIN      = 100
