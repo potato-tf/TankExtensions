@@ -1,7 +1,13 @@
+local SENTRY_FLAG_INVULN        = 2
+local SENTRY_FLAG_UPGRADABLE    = 4
+local SENTRY_FLAG_INFINITE_AMMO = 8
+local SENTRY_FLAG_MINI_SIGSEGV  = 64
+
 local TANKDOZER_VALUES_TABLE = {
 	TANKDOZER_SND_SENTRY_SAPPED     = "Building_Sentry.Damage"
 	TANKDOZER_SENTRY_HEALTH         = 6000
 	TANKDOZER_SENTRY_DEFAULTUPGRADE = 1
+	TANKDOZER_SENTRY_FLAGS          = SENTRY_FLAG_INFINITE_AMMO
 	TANKDOZER_MODEL                 = "models/bots/boss_bot/killdozer/killdozer_base_armour.mdl"
 	TANKDOZER_MODEL_L               = "models/bots/boss_bot/killdozer/killdozer_extra_armour_l.mdl"
 	TANKDOZER_MODEL_R               = "models/bots/boss_bot/killdozer/killdozer_extra_armour_r.mdl"
@@ -164,7 +170,7 @@ TankExtPacked.NewTankType("tankdozer*", {
 				origin         = "-43 0 176"
 				angles         = self.GetAbsAngles()
 				defaultupgrade = TANKDOZER_SENTRY_DEFAULTUPGRADE
-				spawnflags     = 8
+				spawnflags     = TANKDOZER_SENTRY_FLAGS
 				teamnum        = self.GetTeam()
 			})
 			hSentry.SetLocalAngles(QAngle())
