@@ -40,11 +40,11 @@ local BANNER_BACKUP = 1 << 3
 		local hAttacker  = params.attacker
 		local hVictim    = params.const_entity
 		local hInflictor = params.inflictor
-		if(hAttacker && hVictim)
+		if(hAttacker && hVictim && hVictim.IsAlive() && hAttacker.GetTeam() != hVictim.GetTeam())
 		{
 			local BannerCheck = function(hEnt, iBannerType)
 			{
-				if(hEnt.GetClassname() == "tank_boss" && hAttacker.GetTeam() != hVictim.GetTeam())
+				if(hEnt.GetClassname() == "tank_boss")
 				{
 					local BannerScope = TankExt.GetMultiScopeTable(hEnt.GetScriptScope(), "bannertank")
 					if(BannerScope && !BannerScope.bNoSelfEffect && BannerScope.iActiveBanners & iBannerType)
@@ -54,11 +54,16 @@ local BANNER_BACKUP = 1 << 3
 				}
 			}
 			if(BannerCheck(hAttacker, BANNER_BUFF) && !(params.damage_type & DMG_CRITICAL)) params.crit_type = CRIT_MINI
-			if(hVictim.IsPlayer() && BannerCheck(hAttacker, BANNER_CONCH)) // cannot get the tank entity in player_hurt
+			if(hVictim.IsPlayer() && BannerCheck(hAttacker, BANNER_CONCH))
 			{
 				local flAmount = params.damage * BANNERTANK_CONCH_SELF_HEAL_MULT
 				if(params.damage_type & DMG_CRITICAL) flAmount * 3
 				else if(params.crit_type == CRIT_MINI) flAmount * 1.35
+				flAmount *= BANNERTANK_CONCH_SELF_HEAL_MULT
+
+				local iMaxHealth = hVictim.GetMaxHealth()
+				if(flAmount > iMaxHealth) flAmount = iMaxHealth
+
 				hAttacker.AcceptInput("AddHealth", format("%f", flAmount), null, null)
 				hAttacker.TakeDamage(0, DMG_GENERIC, First()) // refresh healthbar, attacker needs to not be the same team as the tank
 				DispatchParticleEffect(hAttacker.GetTeam() == TF_TEAM_BLUE ? "healthgained_blu_giant" : "healthgained_red_giant", hAttacker.GetOrigin() + hAttacker.GetUpVector() * hAttacker.GetBoundingMaxs().z, Vector(1))
@@ -187,7 +192,6 @@ TankExt.NewTankType("bannertank*", {
 			{
 				if(iActiveBanners & BANNER_BUFF && iRemove & BANNER_BUFF)
 				{
-					printl((GetPropInt(hPackBuff, "m_clrRender") >> 24) & 0xFF)
 					hBannerBuff.AcceptInput("Disable", null, null, null)
 					SetPropInt(hPackBuff, "m_nRenderFX", kRenderFxFadeFast)
 					TankExt.DelayFunction(self, this, 0.15, function() { hPackBuff.AcceptInput("Disable", null, null, null) })

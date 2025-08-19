@@ -491,6 +491,43 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		RevertPaths.clear()
 	}
 
+	PlayerArray = []
+	function OnGameEvent_player_activate(params)
+	{
+		local hPlayer = GetPlayerFromUserID(params.userid)
+		PlayerArray.append(hPlayer)
+		PlayerArray.sort(function(hCurrent, hNext)
+		{
+			local iCurrent = hCurrent.entindex()
+			local iNext    = hNext.entindex()
+			if(iCurrent > iNext)
+				return 1
+			else if(iCurrent < iNext)
+				return -1
+			return 0
+		})
+	}
+	function OnGameEvent_player_disconnect(params)
+	{
+		local hPlayer = GetPlayerFromUserID(params.userid)
+		local iIndex  = PlayerArray.find(hPlayer)
+		if(iIndex != null)
+			PlayerArray.remove(iIndex)
+	}
+	function CollectPlayers(TeamArray, bAlive)
+	{
+		return PlayerArray.filter(function(i, hPlayer)
+		{
+			if(TeamArray && TeamArray.find(hPlayer.GetTeam()) == null)
+				return false
+
+			if(bAlive && !hPlayer.IsAlive())
+				return false
+
+			return true
+		})
+	}
+
 	ActiveTanks          = {}
 	TanksThisTick        = {}
 	bTankSpawnedThisWave = false
@@ -1046,9 +1083,22 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 			if(!("MultiScope" in hTank_scope))
 			{
+				local bDeploying = false
 				hTank_scope.MultiScope <- {}
 				hTank_scope.MultiScopeThink <- function()
 				{
+					if(!bDeploying && self.GetSequenceName(self.GetSequence()) == "deploy")
+					{
+						bDeploying = true
+						if("MultiScope" in this)
+							foreach(sName, Table in MultiScope)
+								if("OnStartDeploy" in Table)
+								{
+									Table.self <- self
+									Table.OnStartDeploy()
+								}
+					}
+
 					local flTime      = Time()
 					local vecOrigin   = self.GetOrigin()
 					local angRotation = self.GetAbsAngles()
@@ -1064,6 +1114,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 							Table.iTeamNum    <- iTeamNum
 							Table.iHealth     <- iHealth
 							Table.iMaxHealth  <- iMaxHealth
+							Table.bDeploying  <- bDeploying
 							Table.Think()
 						}
 				}
@@ -1090,6 +1141,12 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			{
 				if(!(sTableName in hTank_scope.MultiScope)) MakeScope()
 				hTank_scope.MultiScope[sTableName].OnDeath <- TankTable.OnDeath
+			}
+
+			if("OnStartDeploy" in TankTable)
+			{
+				if(!(sTableName in hTank_scope.MultiScope)) MakeScope()
+				hTank_scope.MultiScope[sTableName].OnStartDeploy <- TankTable.OnStartDeploy
 			}
 		}
 	}
@@ -1442,342 +1499,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		!hPlayer.InCond(TF_COND_STEALTHED_BLINK) &&
 		!hPlayer.InCond(TF_COND_BLEEDING)
 	}
-	function PathMaker(hPlayer)
-	{
-		Convars.SetValue("sig_etc_path_track_is_server_entity", 0)
-		local ExistsInScope = @(scope, string) string in scope && (typeof(scope[string]) == "instance" || typeof(scope[string]) == "null" ? (scope[string] != null && scope[string].IsValid()) : true)
-		hPlayer.ValidateScriptScope()
-		local hPlayer_scope = hPlayer.GetScriptScope()
-
-		local flTimeNext   = 0
-		local iGridSize    = 64
-		local iButtonsLast = 0
-		local iPrintMode   = 0
-		local sndPlace     = "buttons/blip1.wav"
-		local sndRemove    = "buttons/button15.wav"
-		local sndChange    = "buttons/button16.wav"
-		local sndComplete1 = "buttons/button18.wav"
-		local sndComplete2 = "buttons/button9.wav"
-		PrecacheSound(sndPlace)
-		PrecacheSound(sndRemove)
-		PrecacheSound(sndChange)
-		PrecacheSound(sndComplete1)
-		PrecacheSound(sndComplete2)
-
-		if(ExistsInScope(hPlayer_scope, "PathArray"))
-			foreach(array in hPlayer_scope.PathArray)
-				if(array[1].IsValid())
-					array[1].Kill()
-		hPlayer_scope.PathArray <- []
-
-		if(ExistsInScope(hPlayer_scope, "hGlow")) hPlayer_scope.hGlow.Kill()
-		hPlayer_scope.hGlow <- null
-
-		if(ExistsInScope(hPlayer_scope, "hPathVisual")) hPlayer_scope.hPathVisual.Kill()
-		hPlayer_scope.hPathVisual <- null
-
-		if(ExistsInScope(hPlayer_scope, "hPathBeam")) hPlayer_scope.hPathBeam.Kill()
-		hPlayer_scope.hPathBeam <- null
-
-		if(ExistsInScope(hPlayer_scope, "hPathTrackVisual")) hPlayer_scope.hPathTrackVisual.Kill()
-		hPlayer_scope.hPathTrackVisual <- null
-
-		if(ExistsInScope(hPlayer_scope, "hPathHatchVisual")) hPlayer_scope.hPathHatchVisual.Kill()
-		hPlayer_scope.hPathHatchVisual <- null
-
-		if(ExistsInScope(hPlayer_scope, "hText")) hPlayer_scope.hText.Kill()
-		hPlayer_scope.hText <- null
-
-
-		hPlayer_scope.PathMakerThink <- function()
-		{
-			local iButtons         = GetPropInt(self, "m_nButtons")
-			local iButtonsChanged  = iButtonsLast ^ iButtons
-			local iButtonsPressed  = iButtonsChanged & iButtons
-			local iButtonsReleased = iButtonsChanged & (~iButtons)
-			iButtonsLast = iButtons
-			local vecEye = self.EyePosition()
-			local angEye = self.EyeAngles()
-
-			local vecTarget = (vecEye + angEye.Forward() * 128) * (1.0 / iGridSize)
-			local GridMath = @(value) floor(value + 0.5) * iGridSize
-			vecTarget.x = GridMath(vecTarget.x)
-			vecTarget.y = GridMath(vecTarget.y)
-			vecTarget.z = GridMath(vecTarget.z)
-
-			local hLastPath
-			local PathArrayLength = PathArray.len()
-			if(PathArrayLength > 0) hLastPath = PathArray.top()[1]
-			local hNearestPathTrack = FindByClassnameNearest("path_track", vecTarget, 1024)
-
-			self.AddCustomAttribute("no_attack", 1, 0.1)
-
-			if(ExistsInScope(this, "hText"))
-			{
-				local sPlaceText = format("Grid Size : %i\nReload : Cycle Grid Size\nMouse1 : Add Path\nMouse2 : Undo Path\nReload + Crouch : Print Path", iGridSize)
-				local sPrintText = format("[Export Method]\nReload : Rafmod\nMouse1 : TankExtPacked\nMouse2 : PopExt+\nCrouch : Cancel", iGridSize)
-				hText.KeyValueFromString("message", iPrintMode > 0 ? sPrintText : sPlaceText)
-				EntFireByHandle(hText, "Display", null, -1, self, null)
-			}
-			else
-				hText = SpawnEntityFromTableSafe("game_text", {
-					targetname = "pathmakertext"
-					message    = "test"
-					channel    = 0
-					color      = "255 255 255"
-					holdtime   = 0.3
-					x          = -1
-					y          = 0.7
-				})
-
-			if(iPrintMode > 0)
-			{
-				if(iPrintMode > 1)
-				{
-					EmitSoundEx({
-						sound_name  = sndComplete2
-						entity      = self
-						filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
-					})
-					ClientPrint(self, HUD_PRINTCENTER, "Path printed to console")
-
-					local TextArray = []
-					switch(iPrintMode)
-					{
-						case 2:
-							TextArray.append("tank_path = [")
-							foreach(k, array in PathArray)
-								TextArray.append(format("\tVector(%i, %i, %i)    // tank_path_%i", array[0].x, array[0].y, array[0].z, k + 1))
-							TextArray.append("]")
-							break
-						case 3:
-							TextArray.append("\"ExtraTankPath\" : [\n\t[")
-							foreach(k, array in PathArray)
-								TextArray.append(format("\t\t\"%i %i %i\"    // extratankpath1_%i", array[0].x, array[0].y, array[0].z, k + 1))
-							TextArray.append("\t]\n]")
-							break
-						case 4:
-							TextArray.append("ExtraTankPath\n{\n\tName \"tank_path\"")
-							foreach(k, array in PathArray)
-								TextArray.append(format("\tNode \"%i %i %i\"    // tank_path_%i", array[0].x, array[0].y, array[0].z, k + 1))
-							TextArray.append("}")
-							break
-					}
-					local flDelay = 0
-					foreach(sText in TextArray)
-					{
-						local sPrint = sText
-						TankExtPacked.DelayFunction(null, null, flDelay += 0.03, function() { ClientPrint(null, HUD_PRINTCONSOLE, sPrint) })
-					}
-
-					if(ExistsInScope(this, "hGlow")) hGlow.Kill()
-					if(ExistsInScope(this, "hPathVisual")) hPathVisual.Kill()
-					if(ExistsInScope(this, "hPathBeam")) hPathBeam.Kill()
-					if(ExistsInScope(this, "hPathTrackVisual")) hPathTrackVisual.Kill()
-					if(ExistsInScope(this, "hPathHatchVisual")) hPathHatchVisual.Kill()
-					if(ExistsInScope(this, "hText")) hText.Kill()
-					if(ExistsInScope(this, "PathArray"))
-						foreach(array in PathArray)
-							if(array[1].IsValid())
-								array[1].Kill()
-
-					delete PathMakerThink
-					Convars.SetValue("sig_etc_path_track_is_server_entity", 1)
-				}
-
-				if(iButtonsPressed & IN_ATTACK)
-					iPrintMode = 2
-				if(iButtonsPressed & IN_ATTACK2)
-					iPrintMode = 3
-				if(iButtonsPressed & IN_RELOAD)
-					iPrintMode = 4
-				if(iButtonsPressed & IN_DUCK)
-					iPrintMode = 0
-
-				return -1
-			}
-
-			if(iButtonsPressed & IN_RELOAD && iButtons & IN_DUCK)
-			{
-				EmitSoundEx({
-					sound_name  = sndComplete1
-					entity      = self
-					filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
-				})
-				iPrintMode = 1
-				return -1
-			}
-			if(iButtonsPressed & IN_ATTACK)
-			{
-				EmitSoundEx({
-					sound_name = sndPlace
-					entity = self
-					filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
-				})
-				local hPath = SpawnEntityFromTableSafe("prop_dynamic", {
-					origin         = vecTarget
-					targetname     = "pathmakerpath"
-					model          = "models/editor/axis_helper_thick.mdl"
-					disableshadows = 1
-				})
-				PathArray.append([vecTarget, hPath])
-			}
-			if(iButtonsPressed & IN_ATTACK2 && PathArrayLength > 0)
-			{
-				EmitSoundEx({
-					sound_name  = sndRemove
-					entity      = self
-					filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
-				})
-				local PathArrayEnd = PathArray.pop()
-				PathArrayEnd[1].Destroy()
-			}
-			if(iButtonsPressed & IN_RELOAD)
-			{
-				EmitSoundEx({
-					sound_name  = sndChange
-					entity      = self
-					filter_type = RECIPIENT_FILTER_SINGLE_PLAYER
-				})
-				switch(iGridSize)
-				{
-					case 8:
-						iGridSize = 16
-						break
-					case 16:
-						iGridSize = 32
-						break
-					case 32:
-						iGridSize = 64
-						break
-					case 64:
-						iGridSize = 128
-						break
-					case 128:
-						iGridSize = 8
-				}
-			}
-
-			if(ExistsInScope(this, "hPathVisual"))
-				hPathVisual.SetAbsOrigin(vecTarget)
-			else
-				hPathVisual = SpawnEntityFromTableSafe("prop_dynamic", {
-					model          = "models/editor/axis_helper_thick.mdl"
-					disableshadows = 1
-					rendermode     = 1
-					renderfx       = 4
-					renderamt      = 127
-				})
-
-			if(ExistsInScope(this, "hPathBeam"))
-			{
-				local Trace = {
-					start  = vecTarget
-					end    = vecTarget + Vector(0, 0, -8192)
-					mask   = MASK_SOLID
-					ignore = self
-				}
-				TraceLineEx(Trace)
-				hPathBeam.SetLocalOrigin(Trace.endpos)
-			}
-			else
-			{
-				hPathBeam = SpawnEntityFromTableSafe("env_beam", {
-					lightningstart = "bignet"
-					lightningend   = "bignet"
-					boltwidth      = 1
-					texture        = "sprites/laserbeam.vmt"
-					rendercolor    = "50 50 50"
-					spawnflags     = 1
-				})
-				SetPropEntityArray(hPathBeam, "m_hAttachEntity", hPathBeam, 0)
-				SetPropEntityArray(hPathBeam, "m_hAttachEntity", hPathVisual, 1)
-			}
-
-			if(ExistsInScope(this, "hPathHatchVisual"))
-			{
-				if(PathArray.len() > 0)
-				{
-					local vecLastPath   = PathArray.top()[0]
-					local vecHatch      = FindByClassname(null, "func_capturezone").GetCenter()
-					local vecLastPathXY = Vector(vecLastPath.x, vecLastPath.y, 0)
-					local vecHatchXY    = Vector(vecHatch.x, vecHatch.y, 0)
-					local vecDirection  = vecLastPathXY - vecHatchXY
-					vecDirection.Norm()
-					hPathHatchVisual.SetAbsOrigin(Vector(vecHatch.x, vecHatch.y, vecTarget.z) + vecDirection * 176)
-					hPathHatchVisual.SetForwardVector(vecDirection * -1)
-				}
-			}
-			else
-				hPathHatchVisual = SpawnEntityFromTableSafe("prop_dynamic", {
-					model          = "models/editor/cone_helper.mdl"
-					rendercolor    = "255 0 255"
-					disableshadows = 1
-				})
-
-			if(ExistsInScope(this, "hPathTrackVisual"))
-			{
-				if(hNearestPathTrack)
-				{
-					local vecPathTrack     = hNearestPathTrack.GetOrigin()
-					local vecPathTrackNext = GetPropEntity(hNearestPathTrack, "m_pnext")
-					local vecDirection     = vecPathTrackNext ? GetPropEntity(hNearestPathTrack, "m_pnext").GetOrigin() - vecPathTrack : Vector(0, 0, -1)
-					vecDirection.Norm()
-					hPathTrackVisual.SetAbsOrigin(vecPathTrack)
-					hPathTrackVisual.SetForwardVector(vecDirection)
-					EntFireByHandle(hPathTrackVisual.FirstMoveChild(), "SetText", hNearestPathTrack.GetName(), -1, null, null)
-				}
-			}
-			else
-			{
-				hPathTrackVisual = SpawnEntityFromTableSafe("prop_dynamic", {
-					model          = "models/editor/cone_helper.mdl"
-					disableshadows = 1
-				})
-				local hWorldText = SpawnEntityFromTableSafe("point_worldtext", {
-					origin      = Vector(0, 0, 12)
-					color       = "0 255 255 255"
-					font        = 3
-					orientation = 1
-					textsize    = 6
-				})
-				TankExtPacked.SetParentArray([hWorldText], hPathTrackVisual)
-			}
-
-			if(ExistsInScope(this, "hGlow"))
-				SetPropEntity(hGlow, "m_hTarget", hLastPath)
-			else
-				hGlow = SpawnEntityFromTableSafe("tf_glow", {
-					glowcolor  = "255 255 0 255"
-					target     = "bignet"
-				})
-
-			local flTime = Time()
-			if(flTime >= flTimeNext)
-			{
-				flTimeNext = flTime + 0.5
-				local PathArrayMax = PathArray.len() - 1
-				foreach(i, array in PathArray)
-				{
-					if(i == PathArrayMax) break
-					local hPathNext = PathArray[i + 1][1]
-					local vecDirection = hPathNext.GetOrigin() - array[0]
-					vecDirection.Norm()
-					local hParticle = SpawnEntityFromTableSafe("info_particle_system", {
-						origin       = array[0]
-						effect_name  = "spell_lightningball_hit_zap_blue"
-						start_active = 1
-					})
-					hParticle.SetForwardVector(vecDirection)
-					SetPropEntityArray(hParticle, "m_hControlPointEnts", hPathNext, 0)
-					EntFireByHandle(hParticle, "Kill", null, 0.066, null, null)
-				}
-			}
-
-			return -1
-		}
-		TankExtPacked.AddThinkToEnt(hPlayer, "PathMakerThink")
-	}
 	function AddThinkToEnt(hEntity, sFunction)
 	{
 		local AddThink = @(ent, func) "_AddThinkToEnt" in ROOT ? ROOT._AddThinkToEnt(ent, func) : ROOT.AddThinkToEnt(ent, func)
@@ -1888,6 +1609,13 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	}
 }
 __CollectGameEventCallbacks(TankExtPacked)
+
+for(local i = 1; i <= MAX_CLIENTS; i++)
+{
+	local hPlayer = PlayerInstanceFromIndex(i)
+	if(hPlayer)
+		TankExtPacked.PlayerArray.append(hPlayer)
+}
 
 local hThinkEnt = CreateByClassnameSafe("logic_relay")
 hThinkEnt.ValidateScriptScope()

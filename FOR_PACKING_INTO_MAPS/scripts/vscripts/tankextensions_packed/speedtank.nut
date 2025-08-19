@@ -101,12 +101,15 @@ TankExtPacked.NewTankType("speedtank*", {
 				}
 			}
 
-			if(self.GetSequenceName(self.GetSequence()) == "deploy")
-			{
-				bDeploying = true
-			}
-			else foreach(hTrack in hTracks)
+			foreach(hTrack in hTracks)
 				hTrack.SetPlaybackRate(GetPropFloat(self, "m_speed") / 80.0)
+		}
+		function OnStartDeploy()
+		{
+			bDeploying = true
+			hParticle1.AcceptInput("Stop", null, null, null)
+			hParticle2.AcceptInput("Stop", null, null, null)
+			hParticle3.AcceptInput("Stop", null, null, null)
 		}
 	}
 })

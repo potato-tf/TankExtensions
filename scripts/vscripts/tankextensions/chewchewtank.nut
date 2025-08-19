@@ -40,15 +40,18 @@ PrecacheModel(CHEWCHEWTANK_MODEL_WHEELS)
 __CollectGameEventCallbacks(ChewChewTankEvents)
 
 TankExt.NewTankType("chewchewtank", {
-	DisableChildModels = 1
-	DisableSmokestack  = 1
-	NoDestructionModel = 1
-	EngineLoopSound    = ")ambient/machines/train_freight_loop2.wav"
-	Model              = {
+	DisableChildModels     = 1
+	DisableSmokestack      = 1
+	NoDestructionModel     = 1
+	ReplaceModelCollisions = 1
+	EngineLoopSound        = ")ambient/machines/train_freight_loop2.wav"
+	Model = {
 		Visual = "models/empty.mdl"
 	}
 	function OnSpawn()
 	{
+		self.SetSize(Vector(-110, -50, 0), Vector(114, 50, 150))
+
 		local hTrack = null
 		local hBomb  = null
 		for(local hChild = self.FirstMoveChild(); hChild; hChild = hChild.NextMovePeer())
@@ -64,18 +67,18 @@ TankExt.NewTankType("chewchewtank", {
 			spawnflags   = 64
 			OnStartTouch = "!selfRunScriptCodeChomp(activator)-1-1"
 		})
-		hChomp.SetSize(Vector(-40, -52, -66), Vector(40, 52, 66))
+		hChomp.SetSize(Vector(-40, -48, -66), Vector(40, 48, 66))
 		hChomp.SetSolid(SOLID_BBOX)
 		hChomp.ValidateScriptScope()
 
-		local hTank      = self
-		local iDeploySeq = self.LookupSequence("deploy")
+		local hTank     = self
+		local ChewScope = this
 		hChomp.GetScriptScope().Chomp <- function(hEnt)
 		{
 			if((hEnt.IsPlayer() && !hEnt.IsMiniBoss() && (CHEWCHEWTANK_FRIENDLY_FIRE || hEnt.GetTeam() != hTank.GetTeam())) || HasProp(hEnt, "m_iObjectType"))
 			{
 				hModel.AcceptInput("SetAnimation", "chomp", null, null)
-				EntFireByHandle(hModel, "SetAnimation", hTank.GetSequence() == iDeploySeq ? "idle" : "move", 0.33, null, null)
+				EntFireByHandle(hModel, "SetAnimation", ChewScope.bDeploying ? "idle" : "move", 0.33, null, null)
 				hEnt.TakeDamageEx(hTank, hTank, null, Vector(), Vector(), CHEWCHEWTANK_DAMAGE, DMG_VEHICLE)
 				CHEWCHEWTANK_FUNCTION_CHOMP_SOUND()
 			}
@@ -84,7 +87,6 @@ TankExt.NewTankType("chewchewtank", {
 		TankExt.SetParentArray([hModel, hWheels, hParticle, hFakeBomb, hChomp], self)
 		SetPropEntity(hChomp, "m_pParent", null)
 
-		local bDeploying = false
 		function Think()
 		{
 			// now i know this looks bad but theres no other reliable way to detect buildings
@@ -93,13 +95,11 @@ TankExt.NewTankType("chewchewtank", {
 
 			// sync wheels with tank speed
 			hWheels.SetPlaybackRate(hTrack.GetPlaybackRate() * 0.83)
-
-			if(!bDeploying && self.GetSequence() == iDeploySeq)
-			{
-				bDeploying = true
-				hFakeBomb.AcceptInput("SetAnimation", "deploy", null, null)
-				hModel.AcceptInput("SetAnimation", "idle", null, null)
-			}
+		}
+		function OnStartDeploy()
+		{
+			hFakeBomb.AcceptInput("SetAnimation", "deploy", null, null)
+			hModel.AcceptInput("SetAnimation", "idle", null, null)
 		}
 	}
 })

@@ -258,9 +258,7 @@ TankExtPacked.NewTankType("frontlinecart*", {
 		local flAngleNW = 22.5
 		local flAngleW  = 45 + 22.5
 
-		local iDeploySeq = self.LookupSequence("deploy")
 		local flTimeFire = Time() + 2
-		local bDeploying = false
 		function Think()
 		{
 			EmitSoundEx({
@@ -271,14 +269,6 @@ TankExtPacked.NewTankType("frontlinecart*", {
 				flags       = SND_CHANGE_PITCH | SND_IGNORE_NAME
 			})
 
-			if(!bDeploying && self.GetSequence() == iDeploySeq)
-			{
-				bDeploying = true
-				hModel.AcceptInput("SetAnimation", "reload", null, null)
-				hFakeBomb.AcceptInput("Enable", null, null, null)
-				hFakeBomb.AcceptInput("SetAnimation", "deploy", null, null)
-				EntFireByHandle(hModel, "SetPlaybackRate", "0", 0.5, null, null)
-			}
 			if(bDeploying) return
 
 			local hTarget
@@ -316,6 +306,13 @@ TankExtPacked.NewTankType("frontlinecart*", {
 				TankExtPacked.DelayFunction(self, this, 0.5 * FRONTLINECART_FIRE_RATE_BONUS, function() { Shoot(bCloseRange) } )
 				flTimeFire = flTime + 1.6 * FRONTLINECART_FIRE_RATE_BONUS
 			}
+		}
+		function OnStartDeploy()
+		{
+			hModel.AcceptInput("SetAnimation", "reload", null, null)
+			hFakeBomb.AcceptInput("Enable", null, null, null)
+			hFakeBomb.AcceptInput("SetAnimation", "deploy", null, null)
+			EntFireByHandle(hModel, "SetPlaybackRate", "0", 0.5, null, null)
 		}
 	}
 })

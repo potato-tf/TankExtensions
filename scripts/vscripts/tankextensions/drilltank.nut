@@ -107,7 +107,6 @@ TankExt.NewTankType("drilltank", {
 			}
 		}
 
-		local bDeploying      = false
 		local flTimeDrillLast = 0
 		function Think()
 		{
@@ -131,27 +130,24 @@ TankExt.NewTankType("drilltank", {
 					}
 					else delete hTouching[hPlayer]
 			}
-
-			if(!bDeploying && self.GetSequenceName(self.GetSequence()) == "deploy")
-			{
-				bDeploying = true
-				hModel.AcceptInput("SetAnimation", "drill_deploy", null, null)
-				hDrillHurt.Kill()
-				hTouching.clear()
-				EmitSoundEx({
-					sound_name  = DRILLTANK_SOUND_SPIN
-					entity      = self
-					filter_type = RECIPIENT_FILTER_GLOBAL
-					flags       = SND_STOP
-				})
-				EmitSoundEx({
-					sound_name  = ")physics/metal/canister_scrape_smooth_loop1.wav"
-					entity      = self
-					filter_type = RECIPIENT_FILTER_GLOBAL
-					flags       = SND_STOP
-				})
-			}
-
+		}
+		function OnStartDeploy()
+		{
+			hModel.AcceptInput("SetAnimation", "drill_deploy", null, null)
+			hDrillHurt.Kill()
+			hTouching.clear()
+			EmitSoundEx({
+				sound_name  = DRILLTANK_SOUND_SPIN
+				entity      = self
+				filter_type = RECIPIENT_FILTER_GLOBAL
+				flags       = SND_STOP
+			})
+			EmitSoundEx({
+				sound_name  = ")physics/metal/canister_scrape_smooth_loop1.wav"
+				entity      = self
+				filter_type = RECIPIENT_FILTER_GLOBAL
+				flags       = SND_STOP
+			})
 		}
 	}
 	function OnDeath()

@@ -70,7 +70,6 @@ TankExtPacked.NewTankType("blimp*", {
 		local flPropDegL   = 0.0
 		local flPropDegR   = 0.0
 		local flPropSpeed  = 20.0
-		local bDeploying   = false
 		local bFoundWorld  = false
 		function Think()
 		{
@@ -113,21 +112,6 @@ TankExtPacked.NewTankType("blimp*", {
 				self.SetPoseParameter(iPropPoseR, flPropDegR)
 				vecPropLastL = vecPropL
 				vecPropLastR = vecPropR
-
-				if(self.GetSequenceName(self.GetSequence()) == "deploy")
-				{
-					bDeploying  = true
-					vecBombLast = self.GetAttachmentOrigin(iBombAttachment)
-					TankExtPacked.DelayFunction(self, this, 7.5, function() // prevents the sound that plays when the bomb fits through the hole
-					{
-						self.StopSound("MVM.TankDeploy")
-					})
-					if(bParticles)
-					{
-						hParticle3.AcceptInput("Stop", null, null, null)
-						hParticle4.AcceptInput("Stop", null, null, null)
-					}
-				}
 			}
 			else if(!bFoundWorld)
 			{
@@ -147,6 +131,19 @@ TankExtPacked.NewTankType("blimp*", {
 					})
 				}
 				vecBombLast = vecBomb
+			}
+		}
+		function OnStartDeploy()
+		{
+			vecBombLast = self.GetAttachmentOrigin(iBombAttachment)
+			TankExtPacked.DelayFunction(self, this, 7.5, function() // prevents the sound that plays when the bomb fits through the hole
+			{
+				self.StopSound("MVM.TankDeploy")
+			})
+			if(bParticles)
+			{
+				hParticle3.AcceptInput("Stop", null, null, null)
+				hParticle4.AcceptInput("Stop", null, null, null)
 			}
 		}
 	}

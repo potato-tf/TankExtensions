@@ -35,8 +35,8 @@ TankExtPacked.NewTankType("jumptank", {
 		local bPreparing      = false
 		local bJumping        = false
 		local bFalling        = false
-		local bDeploying      = false
 
+		local JumpScope = this
 		local function Jump()
 		{
 			if(bPreparing) return
@@ -58,7 +58,7 @@ TankExtPacked.NewTankType("jumptank", {
 					entity      = self
 					filter_type = RECIPIENT_FILTER_GLOBAL
 				})
-				TankExtPacked.DelayFunction(self, this, 0.75, function()
+				TankExtPacked.DelayFunction(self, JumpScope, 0.75, function()
 				{
 					local vecOrigin = self.GetOrigin()
 					bJumping        = true
@@ -86,16 +86,6 @@ TankExtPacked.NewTankType("jumptank", {
 
 		function Think()
 		{
-			if(!bDeploying && self.GetSequenceName(self.GetSequence()) == "deploy")
-			{
-				bDeploying = true
-				if(JUMPTANK_USE_SPECIAL_DEPLOY) TankExtPacked.DelayFunction(self, this, 3.5, Jump)
-				else if(bJumping)
-				{
-					vecFakeVelocity.x = 0
-					vecFakeVelocity.y = 0
-				}
-			}
 			if(!bPreparing && !bDeploying && JUMPTANK_JUMP_COOLDOWN >= 0 && flTime >= flTimeNext) Jump()
 			if(bJumping)
 			{
@@ -226,6 +216,16 @@ TankExtPacked.NewTankType("jumptank", {
 								else hPlayer.SetAbsOrigin(vecPlayer + vecDisplace)
 						}
 				}
+			}
+		}
+		function OnStartDeploy()
+		{
+			bDeploying = true
+			if(JUMPTANK_USE_SPECIAL_DEPLOY) TankExtPacked.DelayFunction(self, this, 3.5, Jump)
+			else if(bJumping)
+			{
+				vecFakeVelocity.x = 0
+				vecFakeVelocity.y = 0
 			}
 		}
 	}

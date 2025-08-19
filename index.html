@@ -181,7 +181,7 @@
 		<div class="info">
 			<div class="header" id="Usage_For_Mappers"><img class="center" alt="Usage For Mappers" src="images/usageformappers.png"></div>
 			<p>If you plan to pack these scripts into your map so its missions can use custom tanks then pack the <b><a href="https://github.com/potato-tf/TankExtensions/blob/main/FOR_PACKING_INTO_MAPS/">MAP SPECIFIC SCRIPTS</a></b> instead of packing the main scripts. This is done so if the map were to be used on other servers that use a more updated version of TankExtensions then there would be no conflicts between the server's file and the map's file (packed map scripts always override server scripts).</p>
-			<p>With the map scripts packed in you will want to place a logic_script entity somewhere in your map with your own <code>.nut</code> file that loads the main script and tank scripts.</p>
+			<p>With the map scripts packed in you will want to make your own script file that includes the main and tank scripts. Use a logic_script entity to load up your created script file. <b>Do not</b> use this entity to load the tank scripts directly or else the tank scripts have a high chance of breaking. The example below shows an example of the contents that can go into your created script file.</p>
 			<div class="codeblock"><pre><span class="vsc-green">// Example script file path "scripts/vscripts/mymapname.nut"
 // logic_script's "Entity Scripts" should be set to that new script's name ("mymapname")
 
@@ -641,8 +641,8 @@
 				<td></td>
 				<td></td>
 				<td>
-					<p>An "armored" tank with 4 breakable sides and a big level 2 sentry ontop. The breakables have 2000 health each and the sentry has 9000 health. Players can get stuck inside of the tanks armor then crushed if they get too close. Sappers destroy themselves after 10 seconds when placed but deal extra damage to the sentry (500 health across 10 seconds.)</p>
-					<p class="credits">Concept from <a href="https://steamcommunity.com/profiles/76561198000559913">Sntr</a>'s <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=1797845264">Rust Valley</a></p>
+					<p>An armored tank with a 6000hp level 2 sentry ontop, can only be damaged by shooting the non-armored areas. Players will be crushed by the tanks scoop when they come in contact with it. Sappers destroy themselves after 10 seconds when placed but deal extra damage to the sentry. (500 health across 10 seconds)</p>
+					<p class="credits">Concept from <a href="https://steamcommunity.com/profiles/76561198000559913">Sntr</a>'s <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=1797845264">Rust Valley</a><br>Tank armor model by <a href="https://steamcommunity.com/profiles/76561198070293827">Charlie</a></p></p>
 				</td>
 			</tr>
 			<tr>

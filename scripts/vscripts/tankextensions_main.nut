@@ -492,6 +492,43 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		RevertPaths.clear()
 	}
 
+	PlayerArray = []
+	function OnGameEvent_player_activate(params)
+	{
+		local hPlayer = GetPlayerFromUserID(params.userid)
+		PlayerArray.append(hPlayer)
+		PlayerArray.sort(function(hCurrent, hNext)
+		{
+			local iCurrent = hCurrent.entindex()
+			local iNext    = hNext.entindex()
+			if(iCurrent > iNext)
+				return 1
+			else if(iCurrent < iNext)
+				return -1
+			return 0
+		})
+	}
+	function OnGameEvent_player_disconnect(params)
+	{
+		local hPlayer = GetPlayerFromUserID(params.userid)
+		local iIndex  = PlayerArray.find(hPlayer)
+		if(iIndex != null)
+			PlayerArray.remove(iIndex)
+	}
+	function CollectPlayers(TeamArray, bAlive)
+	{
+		return PlayerArray.filter(function(i, hPlayer)
+		{
+			if(TeamArray && TeamArray.find(hPlayer.GetTeam()) == null)
+				return false
+
+			if(bAlive && !hPlayer.IsAlive())
+				return false
+
+			return true
+		})
+	}
+
 	ActiveTanks          = {}
 	TanksThisTick        = {}
 	bTankSpawnedThisWave = false
@@ -1059,9 +1096,22 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 			if(!("MultiScope" in hTank_scope))
 			{
+				local bDeploying = false
 				hTank_scope.MultiScope <- {}
 				hTank_scope.MultiScopeThink <- function()
 				{
+					if(!bDeploying && self.GetSequenceName(self.GetSequence()) == "deploy")
+					{
+						bDeploying = true
+						if("MultiScope" in this)
+							foreach(sName, Table in MultiScope)
+								if("OnStartDeploy" in Table)
+								{
+									Table.self <- self
+									Table.OnStartDeploy()
+								}
+					}
+
 					local flTime      = Time()
 					local vecOrigin   = self.GetOrigin()
 					local angRotation = self.GetAbsAngles()
@@ -1077,6 +1127,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 							Table.iTeamNum    <- iTeamNum
 							Table.iHealth     <- iHealth
 							Table.iMaxHealth  <- iMaxHealth
+							Table.bDeploying  <- bDeploying
 							Table.Think()
 						}
 				}
@@ -1103,6 +1154,12 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			{
 				if(!(sTableName in hTank_scope.MultiScope)) MakeScope()
 				hTank_scope.MultiScope[sTableName].OnDeath <- TankTable.OnDeath
+			}
+
+			if("OnStartDeploy" in TankTable)
+			{
+				if(!(sTableName in hTank_scope.MultiScope)) MakeScope()
+				hTank_scope.MultiScope[sTableName].OnStartDeploy <- TankTable.OnStartDeploy
 			}
 		}
 	}
@@ -1913,6 +1970,13 @@ if("TankExtPacked" in ROOT)
 		TankExt.TankScriptsWild[k] <- v
 
 	TankExtPacked = TankExt
+}
+
+for(local i = 1; i <= MAX_CLIENTS; i++)
+{
+	local hPlayer = PlayerInstanceFromIndex(i)
+	if(hPlayer)
+		TankExt.PlayerArray.append(hPlayer)
 }
 
 local hThinkEnt = CreateByClassnameSafe("logic_relay")
