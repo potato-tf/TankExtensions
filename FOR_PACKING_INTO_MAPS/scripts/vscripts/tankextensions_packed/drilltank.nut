@@ -67,6 +67,7 @@ TankExtPacked.NewTankType("drilltank", {
 				{
 					EmitSoundEx({
 						sound_name  = DRILLTANK_SOUND_SPIN
+						sound_level = 80
 						pitch       = 80
 						entity      = hTank
 						filter_type = RECIPIENT_FILTER_GLOBAL
@@ -91,6 +92,7 @@ TankExtPacked.NewTankType("drilltank", {
 				{
 					EmitSoundEx({
 						sound_name  = DRILLTANK_SOUND_SPIN
+						sound_level = 80
 						pitch       = 90
 						entity      = hTank
 						filter_type = RECIPIENT_FILTER_GLOBAL
