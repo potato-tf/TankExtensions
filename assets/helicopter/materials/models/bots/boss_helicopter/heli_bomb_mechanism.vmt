@@ -1,0 +1,26 @@
+"VertexlitGeneric"
+{
+	"$baseTexture" "models/bots/boss_helicopter/heli_bomb_mechanism"
+	"$bumpmap"	"models/bots/boss_helicopter/heli_bomb_mechanism_normal"
+
+	"$phong"                "1"
+	"$phongexponent"        "15"
+	"$phongboost"           "2.5"
+	"$phongfresnelranges"	"[.25 1 4]"
+	//"$basemapalphaphongmask"	"1"
+	//"$phongexponenttexture" "models/bots/boss_blimp/blimp_all_exp"
+
+	//"$blendtintbybasealpha"   "1"
+	//"$blendtintcoloroverbase" "1"
+	"$blendtintbybasealpha"	"1"
+
+	//"$rimlight"         "1"
+	"$rimlightexponent" "4"
+	"$rimlightboost"    ".8"
+	"$rimmask"          "1"
+
+
+	Proxies
+	{
+	}
+}

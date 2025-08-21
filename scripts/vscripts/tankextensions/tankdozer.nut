@@ -69,24 +69,26 @@ PrecacheModel(PROPCOLLISION_BARREL)
 					start  = vecShot
 				}
 
-				local hInflictor  = params.inflictor
-				local bProjectile = false
-				if(hInflictor == hAttacker)
+				local hInflictor = params.inflictor
+				if(hInflictor)
 				{
-					local vecTowards = vecShot - hAttacker.EyePosition()
-					vecTowards.Norm()
-					Trace.end   = vecShot + vecTowards * 256
-				}
-				else if(startswith(hInflictor.GetClassname(), "tf_projectile"))
-				{
-					bProjectile = true
-					local vecTowards = hInflictor.GetAbsVelocity()
-					vecTowards.Norm()
-					Trace.end = vecShot + vecTowards * 256
-				}
-				else if(hInflictor.GetClassname() == "tf_weapon_flamethrower")
-				{
-					Trace.start = GetPropEntity(hInflictor, "m_hFlameManager").GetOrigin()
+					if(hInflictor == hAttacker)
+					{
+						local vecTowards = vecShot - hAttacker.EyePosition()
+						vecTowards.Norm()
+						Trace.end = vecShot + vecTowards * 256
+					}
+					else if(startswith(hInflictor.GetClassname(), "tf_projectile"))
+					{
+						local vecTowards = hInflictor.GetAbsVelocity()
+						if(vecTowards.LengthSqr() == 0) vecTowards = hInflictor.GetPhysVelocity()
+						vecTowards.Norm()
+						Trace.end = vecShot + vecTowards * 256
+					}
+					else if(hInflictor.GetClassname() == "tf_weapon_flamethrower")
+					{
+						Trace.start = GetPropEntity(hInflictor, "m_hFlameManager").GetOrigin()
+					}
 				}
 
 				local flDamage = params.damage

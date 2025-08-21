@@ -1,30 +1,29 @@
 local HELICOPTER_VALUES_TABLE = {
-	HELICOPTER_MODEL        = "models/props_frontline/helicopter_windows.mdl"
-	HELICOPTER_TURRET_MODEL = "models/props_frontline/tank_turret.mdl"
+	HELICOPTER_MODEL        = "models/bots/boss_helicopter/boss_helicopter.mdl"
 	HELICOPTER_SOUND_ENGINE = "^npc/attack_helicopter/aheli_rotor_loop1.wav"
 	HELICOPTER_MAX_RANGE    = 2000
 
-	HELICOPTER_ROCKET_SND_FIRE        = "Weapon_Airstrike.AltFire"
-	HELICOPTER_ROCKET_SND_FIRE_CRIT   = "Weapon_Airstrike.CritFire"
+	HELICOPTER_ROCKET_SND_FIRE        = "MVM.GiantSoldierRocketShoot"
+	HELICOPTER_ROCKET_SND_FIRE_CRIT   = "MVM.GiantSoldierRocketShootCrit"
 	HELICOPTER_ROCKET_SPLASH          = 146
 	HELICOPTER_ROCKET_SPEED           = 600
-	HELICOPTER_ROCKET_DAMAGE          = 100
-	HELICOPTER_ROCKET_MODEL           = "models/weapons/w_models/w_rocket_airstrike/w_rocket_airstrike.mdl"
-	HELICOPTER_ROCKET_HOMING_POWER    = 0.05
+	HELICOPTER_ROCKET_DAMAGE          = 75
+	HELICOPTER_ROCKET_MODEL           = "models/weapons/w_models/w_rocket.mdl"
+	HELICOPTER_ROCKET_HOMING_POWER    = 0.06
 	HELICOPTER_ROCKET_HOMING_DURATION = 0.75
-	HELICOPTER_ROCKET_COOLDOWN        = 1
-	HELICOPTER_ROCKET_PARTICLE_TRAIL  = "rockettrail_airstrike"
+	HELICOPTER_ROCKET_COOLDOWN        = 0.8
+	HELICOPTER_ROCKET_PARTICLE_TRAIL  = "rockettrail"
 
 	HELICOPTER_STICKY_SND_FIRE       = ")weapons/stickybomblauncher_shoot.wav"
 	HELICOPTER_STICKY_SND_FIRE_CRIT  = ")weapons/stickybomblauncher_shoot_crit.wav"
 	HELICOPTER_STICKY_MODEL          = "models/weapons/w_models/w_stickybomb_d.mdl"
-	HELICOPTER_STICKY_SPREAD         = 30
+	HELICOPTER_STICKY_SPREAD         = 35
 	HELICOPTER_STICKY_SPLASH_RADIUS  = 189
 	HELICOPTER_STICKY_SPEED_MIN      = 100
 	HELICOPTER_STICKY_SPEED_MAX      = 1000
 	HELICOPTER_STICKY_DAMAGE         = 100
 	HELICOPTER_STICKY_COOLDOWN       = 15
-	HELICOPTER_STICKY_SHOT_AMOUNT    = 16
+	HELICOPTER_STICKY_SHOT_AMOUNT    = 12
 	HELICOPTER_STICKY_DETONATE_DELAY = 5
 }
 foreach(k,v in HELICOPTER_VALUES_TABLE)
@@ -32,7 +31,6 @@ foreach(k,v in HELICOPTER_VALUES_TABLE)
 		ROOT[k] <- v
 
 PrecacheModel(HELICOPTER_MODEL)
-PrecacheModel(HELICOPTER_TURRET_MODEL)
 PrecacheModel(HELICOPTER_ROCKET_MODEL)
 PrecacheModel(HELICOPTER_STICKY_MODEL)
 TankExtPacked.PrecacheSound(HELICOPTER_SOUND_ENGINE)
@@ -41,14 +39,24 @@ TankExtPacked.PrecacheSound(HELICOPTER_ROCKET_SND_FIRE_CRIT)
 TankExtPacked.PrecacheSound(HELICOPTER_STICKY_SND_FIRE)
 TankExtPacked.PrecacheSound(HELICOPTER_STICKY_SND_FIRE_CRIT)
 
+PrecacheScriptSound("SawMill.BladeImpact")
+PrecacheSound("weapons/dumpster_rocket_reload.wav")
+PrecacheSound("doors/door_metal_large_open1.wav")
+PrecacheSound("physics/metal/metal_solid_strain4.wav")
+PrecacheSound("physics/metal/metal_box_strain2.wav")
+PrecacheSound("physics/metal/metal_box_impact_soft3.wav")
+PrecacheSound("physics/metal/metal_grate_impact_soft3.wav")
+PrecacheSound("doors/door_squeek1.wav")
+PrecacheSound("items/ammocrate_close.wav")
+
 TankExtPacked.NewTankType("helicopter*", {
 	DisableChildModels = 1
 	DisableSmokestack  = 1
+	NoScreenShake      = 1
 	EngineLoopSound    = "misc/null.wav"
 	PingSound          = "misc/null.wav"
 	NoDestructionModel = 1
 	NoGravity          = 1
-	Scale              = 0.75
 	Model              = {
 		Visual = "models/empty.mdl"
 	}
@@ -62,27 +70,28 @@ TankExtPacked.NewTankType("helicopter*", {
 			filter_type = RECIPIENT_FILTER_GLOBAL
 		})
 
-		local bCrit     = sTankName.find("_crit") ? true : false
-		local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
-		local hModel    = SpawnEntityFromTableSafe("prop_dynamic", { model = HELICOPTER_MODEL, defaultanim = "Hover_idle", skin = (bBlueTeam ? 1 : 0) })
-		hModel.AcceptInput("SetAnimation", "Lift_to_hover", null, null)
+		local bParticles = sTankName.find("_customparticles") ? true : false
+		local bCrit      = sTankName.find("_crit") ? true : false
+		local bBlueTeam  = self.GetTeam() == TF_TEAM_BLUE
+		local bFinalSkin = self.GetSkin() == 1
+
+		local hModel = CreateByClassnameSafe("funCBaseFlex")
+		hModel.SetModel(HELICOPTER_MODEL)
+		hModel.SetPlaybackRate(1.0)
+		hModel.SetTeam(bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED)
+		hModel.DispatchSpawn()
+		hModel.SetSkin(bFinalSkin ? 4 : 0)
+		hModel.SetSequence(hModel.LookupSequence("takeoff"))
 		TankExtPacked.SetParentArray([hModel], self)
 
-		local hTurret = CreateByClassnameSafe("obj_teleporter")
-		hTurret.SetAbsOrigin(Vector(6, 0, 102))
-		hTurret.SetAbsAngles(QAngle(0, 0, -180))
-		hTurret.DispatchSpawn()
-		hTurret.SetModelScale(0.5, 0)
-		hTurret.SetModel(HELICOPTER_TURRET_MODEL)
-		hTurret.AddEFlags(EFL_NO_THINK_FUNCTION)
-		hTurret.SetSolid(SOLID_NONE)
-		hTurret.SetTeam(bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED)
-		hTurret.SetSkin(bBlueTeam ? 2 : 0)
-		hTurret.AcceptInput("Color", bBlueTeam ? "220 240 250" : "150 150 150", null, null)
-		SetPropBool(hTurret, "m_bGlowEnabled", true)
+		local sParams = split(sTankName, "|")
+		if(sParams.len() >= 2)
+		{
+			SetPropInt(hModel, "m_iTextureFrameIndex", 2)
+			hModel.AcceptInput("Color", sParams[1], null, null)
+		}
 
 		local hMimicRocket = SpawnEntityFromTableSafe("tf_point_weapon_mimic", {
-			origin        = "70 0 40"
 			damage        = HELICOPTER_ROCKET_DAMAGE
 			modeloverride = HELICOPTER_ROCKET_MODEL
 			modelscale    = 1
@@ -91,8 +100,7 @@ TankExtPacked.NewTankType("helicopter*", {
 			splashradius  = HELICOPTER_ROCKET_SPLASH
 			weapontype    = 0
 		})
-		local hMimicSticky = SpawnEntityFromTableSafe("tf_point_weapon_mimic", {
-			origin        = "70 0 40"
+		local StickyKeyValues = {
 			damage        = HELICOPTER_STICKY_DAMAGE
 			modeloverride = HELICOPTER_STICKY_MODEL
 			modelscale    = 1
@@ -101,19 +109,34 @@ TankExtPacked.NewTankType("helicopter*", {
 			splashradius  = HELICOPTER_STICKY_SPLASH_RADIUS
 			spreadangle   = HELICOPTER_STICKY_SPREAD
 			weapontype    = 3
-		})
+		}
+		local hMimicSticky1 = SpawnEntityFromTableSafe("tf_point_weapon_mimic", StickyKeyValues)
+		local hMimicSticky2 = SpawnEntityFromTableSafe("tf_point_weapon_mimic", StickyKeyValues)
 
-		PrecacheScriptSound("SawMill.BladeImpact")
 		local hHurt = SpawnEntityFromTableSafe("trigger_multiple", {
-			origin        = "-40 0 144"
+			origin        = "-16 0 184"
 			startdisabled = 1
 			spawnflags    = 1
-			OnStartTouch  = "bignetRunScriptCodeactivator.TakeDamageEx(caller, caller.GetMoveParent(), null, Vector(), Vector(), 1000, DMG_CRUSH); caller.EmitSound(`SawMill.BladeImpact`)0-1"
 		})
-		hHurt.SetSize(Vector(-160, -160, -8), Vector(160, 160, 8))
+		hHurt.SetSize(Vector(-224, -224, -8), Vector(224, 224, 8))
 		hHurt.SetSolid(SOLID_BBOX)
 		hHurt.KeyValueFromString("classname", "helicopter")
-		TankExtPacked.SetParentArray([hTurret, hMimicRocket, hMimicSticky, hHurt], hModel)
+		TankExtPacked.SetParentArray([hMimicSticky1], hModel, "muzzle_l")
+		TankExtPacked.SetParentArray([hMimicSticky2], hModel, "muzzle_r")
+		TankExtPacked.SetParentArray([hMimicRocket], hModel, "muzzle_mid")
+		TankExtPacked.SetParentArray([hHurt], hModel)
+
+		hHurt.ValidateScriptScope()
+		local hTank = self
+		hHurt.GetScriptScope().StartTouch <- function()
+		{
+			local hGameRules = FindByClassname(null, "tf_gamerules")
+			SetPropBool(hGameRules, "m_bPlayingMannVsMachine", false)
+			activator.TakeDamageEx(self, hTank, null, Vector(), Vector(), 1000, DMG_CRUSH | DMG_BLAST)
+			SetPropBool(hGameRules, "m_bPlayingMannVsMachine", true)
+			self.EmitSound("SawMill.BladeImpact")
+		}
+		hHurt.ConnectOutput("OnStartTouch", "StartTouch")
 
 		local flSpeed = GetPropFloat(self, "m_speed")
 		SetPropFloat(self, "m_speed", 0.0)
@@ -129,10 +152,12 @@ TankExtPacked.NewTankType("helicopter*", {
 			ignore = self
 		}
 		TraceLineEx(Trace)
-		if(Trace.hit) self.SetAbsOrigin(Trace.endpos)
+		self.SetAbsOrigin(Trace.endpos)
 
-		local flTimeToLaunch = Time() + 5.4
+		local flTimeToLaunch = Time() + 4.23
+		local flTimeToActive = Time() + 5.83
 		local bLaunched      = false
+		local bActive        = false
 
 		local vecOriginLast = self.GetOrigin()
 		local angCurrent    = QAngle()
@@ -143,37 +168,112 @@ TankExtPacked.NewTankType("helicopter*", {
 		local flTimeSticky = 0
 		hStickies <- []
 
+		local hParticle
+		if(bParticles)
+		{
+			TankExtPacked.DelayFunction(self, this, 1, function()
+			{
+				hParticle = SpawnEntityFromTableSafe("info_particle_system", {
+					origin       = Trace.endpos
+					effect_name  = "mvm_helicopter_floor_wind_dust_parent"
+					start_active = 1
+				})
+			})
+			TankExtPacked.DispatchParticleEffectOn(hModel, "mvm_helicopter_exhaust_parent", "exhaust_l")
+			TankExtPacked.DispatchParticleEffectOn(hModel, "mvm_helicopter_exhaust_parent", "exhaust_r")
+		}
+
+		local vecBombLast     = Vector()
+		local iBombAttachment = hModel.LookupAttachment("bomb_pos")
+		local bFoundWorld     = false
+
+		local sModelLast     = "models/bots/boss_bot/boss_tank.mdl"
+		local iDamageBody    = hModel.FindBodygroupByName("damage")
+		local iRotorMainPose = hModel.LookupPoseParameter("rotor_spin_main")
+		local iRotorTailPose = hModel.LookupPoseParameter("rotor_spin_tail")
+		local iRotorMainDeg  = 0
+		local iRotorTailDeg  = 0
 		function Think()
 		{
-			if(!bLaunched)
+			hModel.StudioFrameAdvance()
+
+			local sModel = self.GetModelName()
+			if(sModel != sModelLast)
 			{
-				local flLaunchPercent = (5.4 - flTimeToLaunch + flTime) / 5.4
-				hTurret.SetLocalOrigin(Vector(pow(flLaunchPercent, 8) * 32 - 26, 0, 102)) // omega lazy
+				sModelLast = sModel
+				if(sModel == "models/bots/boss_bot/boss_tank.mdl")
+				{
+					hModel.SetBodygroup(iDamageBody, 0)
+					hModel.SetSkin(bFinalSkin ? 4 : 0)
+				}
+				else if(sModel == "models/bots/boss_bot/boss_tank_damage1.mdl")
+				{
+					hModel.SetBodygroup(iDamageBody, 1)
+					hModel.SetSkin(bFinalSkin ? 5 : 1)
+				}
+				else if(sModel == "models/bots/boss_bot/boss_tank_damage2.mdl")
+				{
+					hModel.SetBodygroup(iDamageBody, 2)
+					hModel.SetSkin(bFinalSkin ? 6 : 2)
+				}
+				else if(sModel == "models/bots/boss_bot/boss_tank_damage3.mdl")
+				{
+					hModel.SetBodygroup(iDamageBody, 3)
+					hModel.SetSkin(bFinalSkin ? 7 : 3)
+				}
+			}
+
+			if(!bActive)
+			{
+				local flLaunchPercent = (5.83 - flTimeToActive + flTime) / 5.83
 				EmitSoundEx({
 					sound_name  = HELICOPTER_SOUND_ENGINE
+					sound_level = 150
 					pitch       = 100 * flLaunchPercent
 					channel     = CHAN_STATIC
 					entity      = self
 					filter_type = RECIPIENT_FILTER_GLOBAL
 					flags       = SND_CHANGE_PITCH
 				})
-				if(flTime >= flTimeToLaunch)
+
+				if(!bLaunched && flTime >= flTimeToLaunch)
 				{
 					bLaunched = true
-					hModel.AcceptInput("SetAnimation", "Hover_idle", null, null)
 					hHurt.AcceptInput("Enable", null, null, null)
 					SetPropFloat(self, "m_speed", flSpeed)
 					hTank_scope.bNoGravity = true
 
 					local angRotation = self.GetAbsAngles()
-					angCurrent = angRotation
+					angCurrent   = angRotation
 					flYawCurrent = angRotation.y
+
+					if(bParticles)
+					{
+						TankExtPacked.DispatchParticleEffectOn(hModel, "mvm_helicopter_propeller_wind_rings_parent", "rotor_main")
+						TankExtPacked.DispatchParticleEffectOn(hModel, "mvm_helicopter_propeller_wind_rings_back_parent", "rotor_tail")
+
+						TankExtPacked.DispatchParticleEffectOn(hModel, "mvm_helicopter_propeller_tips_parent", "rotor_main_tip_0")
+						TankExtPacked.DispatchParticleEffectOn(hModel, "mvm_helicopter_propeller_tips_parent", "rotor_main_tip_1")
+						TankExtPacked.DispatchParticleEffectOn(hModel, "mvm_helicopter_propeller_tips_parent", "rotor_main_tip_2")
+						TankExtPacked.DispatchParticleEffectOn(hModel, "mvm_helicopter_propeller_tips_parent", "rotor_main_tip_3")
+						TankExtPacked.DispatchParticleEffectOn(hModel, "mvm_helicopter_propeller_tips_back_parent", "rotor_tail_tip_0")
+						TankExtPacked.DispatchParticleEffectOn(hModel, "mvm_helicopter_propeller_tips_back_parent", "rotor_tail_tip_1")
+						TankExtPacked.DispatchParticleEffectOn(hModel, "mvm_helicopter_propeller_tips_back_parent", "rotor_tail_tip_2")
+					}
+				}
+				if(flTime >= flTimeToActive)
+				{
+					bActive = true
+					hModel.ResetSequence(hModel.LookupSequence("idle"))
+					if(bParticles)
+						hParticle.Kill()
 
 					flTimeRocket = flTime + HELICOPTER_ROCKET_COOLDOWN
 					flTimeSticky = flTime + HELICOPTER_STICKY_COOLDOWN
 				}
 			}
-			else
+
+			if(bLaunched)
 			{
 				local vecOrigin     = self.GetOrigin()
 				local vecVelocity   = (vecOrigin - vecOriginLast) * (1 / FrameTime())
@@ -247,162 +347,166 @@ TankExtPacked.NewTankType("helicopter*", {
 					if(hTarget) break
 				}
 
-				local flYawGoal = hTarget && !bDeploying ? TankExtPacked.VectorAngles(vecTarget - vecOrigin).y : angCurrent.y
+				local flYawGoal = hTarget && (!bDeploying && bActive) ? TankExtPacked.VectorAngles(vecTarget - vecOrigin).y : angCurrent.y
 				if(flYawCurrent != flYawGoal) flYawCurrent = RotateYaw(flYawCurrent, flYawGoal)
 				hModel.SetLocalAngles(QAngle(0, flYawCurrent - angCurrent.y, 0))
 
-				if(!bDeploying && hTarget)
+				if(bActive)
 				{
-					if(flTime >= flTimeRocket)
+					hModel.SetPoseParameter(iRotorMainPose, iRotorMainDeg += 15.75)
+					hModel.SetPoseParameter(iRotorTailPose, iRotorTailDeg += 20.25)
+					if(!bDeploying && hTarget)
 					{
-						flTimeRocket = flTime + HELICOPTER_ROCKET_COOLDOWN
-						hMimicRocket.AcceptInput("FireOnce", null, null, null)
-						EmitSoundEx({
-							sound_name  = bCrit ? HELICOPTER_ROCKET_SND_FIRE_CRIT : HELICOPTER_ROCKET_SND_FIRE
-							sound_level = 90
-							entity      = self
-							filter_type = RECIPIENT_FILTER_GLOBAL
-						})
-
-						for(local hRocket; hRocket = FindByClassnameWithin(hRocket, "tf_projectile_rocket", hMimicRocket.GetOrigin(), 1);)
-							if(hRocket.GetOwner() == hMimicRocket)
-							{
-								MarkForPurge(hRocket)
-								hRocket.SetSize(Vector(), Vector())
-								hRocket.SetSolid(SOLID_BSP)
-								hRocket.SetSequence(1)
-								hRocket.SetSkin(iTeamNum == TF_TEAM_BLUE ? 1 : 0)
-								hRocket.SetTeam(iTeamNum)
-								hRocket.SetOwner(self)
-								if(bCrit) SetPropBool(hRocket, "m_bCritical", true)
-
-								hRocket.ValidateScriptScope()
-								local hRocket_scope = hRocket.GetScriptScope()
-								local bSolid = false
-								local hTank = self
-								hRocket_scope.RocketThink <- function()
-								{
-									if(!self.IsValid()) return
-									local vecOrigin = self.GetOrigin()
-									if(!bSolid && (!hTank.IsValid() || !TankExtPacked.IntersectionBoxBox(vecOrigin, self.GetBoundingMins(), self.GetBoundingMaxs(), hTank.GetOrigin(), hTank.GetBoundingMins(), hTank.GetBoundingMaxs())))
-										{ bSolid = true; self.SetSolid(SOLID_BBOX) }
-									HomingThink()
-									return -1
-								}
-								hRocket_scope.HomingParams <- {
-									Target      = hTarget
-									TurnPower   = HELICOPTER_ROCKET_HOMING_POWER
-									AimTime     = HELICOPTER_ROCKET_HOMING_DURATION
-									MaxAimError = -1
-								}
-								IncludeScript("tankextensions_packed/misc/homingrocket", hRocket_scope)
-								TankExtPacked.AddThinkToEnt(hRocket, "RocketThink")
-
-								if(HELICOPTER_ROCKET_PARTICLE_TRAIL != "rockettrail")
-								{
-									hRocket.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
-									local hTrail = CreateByClassnameSafe("trigger_particle")
-									hTrail.KeyValueFromString("particle_name", HELICOPTER_ROCKET_PARTICLE_TRAIL)
-									hTrail.KeyValueFromString("attachment_name", "trail")
-									hTrail.KeyValueFromInt("attachment_type", 4)
-									hTrail.KeyValueFromInt("spawnflags", 64)
-									hTrail.DispatchSpawn()
-									hTrail.AcceptInput("StartTouch", null, hRocket, hRocket)
-									if(bCrit)
-									{
-										hTrail.KeyValueFromString("particle_name", iTeamNum == TF_TEAM_BLUE ? "critical_rocket_blue" : "critical_rocket_red")
-										hTrail.AcceptInput("StartTouch", null, hRocket, hRocket)
-									}
-									hTrail.Kill()
-								}
-							}
-					}
-					if(flTime >= flTimeSticky)
-					{
-						flTimeSticky = flTime + HELICOPTER_STICKY_COOLDOWN
-						hMimicSticky.AcceptInput("FireMultiple", format("%i", HELICOPTER_STICKY_SHOT_AMOUNT), null, null)
-						TankExtPacked.DelayFunction(self, this, HELICOPTER_STICKY_DETONATE_DELAY, function()
+						if(flTime >= flTimeRocket)
 						{
-							hMimicSticky.AcceptInput("DetonateStickies", null, null, null)
-						})
-						EmitSoundEx({
-							sound_name  = bCrit ? HELICOPTER_STICKY_SND_FIRE_CRIT : HELICOPTER_STICKY_SND_FIRE
-							sound_level = 90
-							pitch       = 95
-							entity      = self
-							filter_type = RECIPIENT_FILTER_GLOBAL
-						})
-						for(local hSticky; hSticky = FindByClassnameWithin(hSticky, "tf_projectile_pipe", hMimicSticky.GetOrigin(), 1);)
-							if(!GetPropEntity(hSticky, "m_hThrower"))
+							flTimeRocket = flTime + HELICOPTER_ROCKET_COOLDOWN
+							hMimicRocket.AcceptInput("FireOnce", null, null, null)
+							EmitSoundEx({
+								sound_name  = bCrit ? HELICOPTER_ROCKET_SND_FIRE_CRIT : HELICOPTER_ROCKET_SND_FIRE
+								sound_level = 90
+								entity      = self
+								filter_type = RECIPIENT_FILTER_GLOBAL
+							})
+
+							for(local hRocket; hRocket = FindByClassnameWithin(hRocket, "tf_projectile_rocket", hMimicRocket.GetOrigin(), 1);)
+								if(hRocket.GetOwner() == hMimicRocket)
+								{
+									MarkForPurge(hRocket)
+									hRocket.SetSize(Vector(), Vector())
+									hRocket.SetSolid(SOLID_BSP)
+									hRocket.SetSequence(1)
+									hRocket.SetSkin(iTeamNum == TF_TEAM_BLUE ? 1 : 0)
+									hRocket.SetTeam(iTeamNum)
+									hRocket.SetOwner(self)
+									if(bCrit) SetPropBool(hRocket, "m_bCritical", true)
+
+									hRocket.ValidateScriptScope()
+									local hRocket_scope = hRocket.GetScriptScope()
+									local bSolid = false
+									local hTank = self
+									hRocket_scope.RocketThink <- function()
+									{
+										if(!self.IsValid()) return
+										local vecOrigin = self.GetOrigin()
+										if(!bSolid && (!hTank.IsValid() || !TankExtPacked.IntersectionBoxBox(vecOrigin, self.GetBoundingMins(), self.GetBoundingMaxs(), hTank.GetOrigin(), hTank.GetBoundingMins(), hTank.GetBoundingMaxs())))
+											{ bSolid = true; self.SetSolid(SOLID_BBOX) }
+										HomingThink()
+										return -1
+									}
+									hRocket_scope.HomingParams <- {
+										Target      = hTarget
+										TurnPower   = HELICOPTER_ROCKET_HOMING_POWER
+										AimTime     = HELICOPTER_ROCKET_HOMING_DURATION
+										MaxAimError = -1
+									}
+									IncludeScript("tankextensions_packed/misc/homingrocket", hRocket_scope)
+									TankExtPacked.AddThinkToEnt(hRocket, "RocketThink")
+
+									if(HELICOPTER_ROCKET_PARTICLE_TRAIL != "rockettrail")
+									{
+										hRocket.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
+										local hTrail = CreateByClassnameSafe("trigger_particle")
+										hTrail.KeyValueFromString("particle_name", HELICOPTER_ROCKET_PARTICLE_TRAIL)
+										hTrail.KeyValueFromString("attachment_name", "trail")
+										hTrail.KeyValueFromInt("attachment_type", 4)
+										hTrail.KeyValueFromInt("spawnflags", 64)
+										hTrail.DispatchSpawn()
+										hTrail.AcceptInput("StartTouch", null, hRocket, hRocket)
+										if(bCrit)
+										{
+											hTrail.KeyValueFromString("particle_name", iTeamNum == TF_TEAM_BLUE ? "critical_rocket_blue" : "critical_rocket_red")
+											hTrail.AcceptInput("StartTouch", null, hRocket, hRocket)
+										}
+										hTrail.Kill()
+									}
+								}
+						}
+						if(flTime >= flTimeSticky)
+						{
+							flTimeSticky = flTime + HELICOPTER_STICKY_COOLDOWN
+							EmitSoundEx({
+								sound_name  = bCrit ? HELICOPTER_STICKY_SND_FIRE_CRIT : HELICOPTER_STICKY_SND_FIRE
+								sound_level = 110
+								pitch       = 97
+								entity      = self
+								filter_type = RECIPIENT_FILTER_GLOBAL
+							})
+							foreach(hMimicSticky in [hMimicSticky1, hMimicSticky2])
 							{
-								SetPropEntity(hSticky, "m_hThrower", self)
-								hSticky.SetOwner(self)
-								hSticky.SetTeam(iTeamNum)
-								hSticky.SetSkin(iTeamNum == TF_TEAM_BLUE ? 1 : 0)
-								if(bCrit) SetPropBool(hSticky, "m_bCritical", true)
-								hStickies.append(hSticky)
+								hMimicSticky.AcceptInput("FireMultiple", format("%i", HELICOPTER_STICKY_SHOT_AMOUNT), null, null)
+								EntFireByHandle(hMimicSticky, "DetonateStickies", null, HELICOPTER_STICKY_DETONATE_DELAY, null, null)
+								for(local hSticky; hSticky = FindByClassnameWithin(hSticky, "tf_projectile_pipe", hMimicSticky.GetOrigin(), 1);)
+									if(!GetPropEntity(hSticky, "m_hThrower"))
+									{
+										SetPropEntity(hSticky, "m_hThrower", self)
+										hSticky.SetOwner(self)
+										hSticky.SetTeam(iTeamNum)
+										hSticky.SetSkin(iTeamNum == TF_TEAM_BLUE ? 1 : 0)
+										if(bCrit) SetPropBool(hSticky, "m_bCritical", true)
+										hStickies.append(hSticky)
+									}
 							}
+						}
 					}
 				}
+			}
+
+			if(bDeploying && !bFoundWorld)
+			{
+				self.SetCycle(0.0)
+
+				local vecBomb = hModel.GetAttachmentOrigin(iBombAttachment)
+				local Trace = {
+					start = vecBombLast
+					end   = vecBomb
+					mask  = CONTENTS_SOLID | CONTENTS_WINDOW | CONTENTS_MOVEABLE
+				}
+				TraceLineEx(Trace)
+				if(Trace.hit)
+				{
+					bFoundWorld = true
+					self.EmitSound("weapons/dumpster_rocket_reload.wav")
+					TankExtPacked.DelayFunction(self, this, 0.5, function()
+					{
+						self.SetCycle(1.0) // ends deploy sequence
+						hModel.SetCycle(1.0)
+					})
+				}
+				vecBombLast = vecBomb
 			}
 		}
 		function OnStartDeploy()
 		{
 			self.StopSound("MVM.TankDeploy")
+			hModel.ResetSequence(hModel.LookupSequence("deploy"))
+			hModel.SetCycle(0.0)
+			vecBombLast = hModel.GetAttachmentOrigin(iBombAttachment)
 
-			PrecacheSound("ambient/alarms/doomsday_lift_alarm.wav")
-			PrecacheSound("weapons/stickybomblauncher_charge_up.wav")
-			PrecacheSound("mvm/giant_demoman/giant_demoman_grenade_shoot.wav")
-			PrecacheSound("misc/grenade_jump_fall_01.wav")
-
-			self.EmitSound("ambient/alarms/doomsday_lift_alarm.wav")
-			EmitSoundEx({
-				sound_name  = "weapons/stickybomblauncher_charge_up.wav"
-				pitch       = 80
-				filter_type = RECIPIENT_FILTER_GLOBAL
-				entity      = self
-			})
-			TankExtPacked.DelayFunction(self, this, 5, function()
+			self.EmitSound("doors/door_metal_large_open1.wav")
+			TankExtPacked.DelayFunction(self, this, 1.1, function()
 			{
-				self.EmitSound("mvm/giant_demoman/giant_demoman_grenade_shoot.wav")
-
-				local vecFakeOrigin = self.GetOrigin() + angGoal.Forward() * 70 + angGoal.Up() * 38
-				local vecVelocity   = angGoal.Forward() * 128
-
-				DispatchParticleEffect("rocketbackblast", vecFakeOrigin, vecVelocity)
-				hBomb <- CreateByClassnameSafe("obj_teleporter")
-				hBomb.SetAbsOrigin(vecFakeOrigin)
-				hBomb.SetAbsAngles(QAngle(angGoal.z, angGoal.y + 90, angGoal.x))
-				hBomb.KeyValueFromFloat("modelscale", 0.3)
-				hBomb.DispatchSpawn()
-				hBomb.SetModelScale(1, 0.25)
-				hBomb.SetModel("models/props_td/atom_bomb.mdl")
-				hBomb.AddEFlags(EFL_NO_THINK_FUNCTION)
-				hBomb.SetSolid(SOLID_NONE)
-				hBomb.SetTeam(self.GetTeam() == TF_TEAM_BLUE ? TF_TEAM_BLUE : TF_TEAM_RED)
-				SetPropBool(hBomb, "m_bGlowEnabled", true)
-
-				local hEdict = SpawnEntityFromTableSafe("info_target", { spawnflags = 0x01 })
-				hEdict.AddEFlags(EFL_IN_SKYBOX | EFL_FORCE_CHECK_TRANSMIT)
-				hEdict.AcceptInput("SetParent", "!activator", hBomb, null)
-
-				hBomb.ValidateScriptScope()
-				hBomb.GetScriptScope().Think <- function()
-				{
-					if(!self.IsValid()) return
-					local flFrameTime = FrameTime()
-					self.SetAbsOrigin(vecFakeOrigin += vecVelocity * flFrameTime)
-					local angRotation = TankExtPacked.VectorAngles(vecVelocity)
-					self.SetAbsAngles(QAngle(angRotation.z, angRotation.y + 90, angRotation.x))
-					vecVelocity.x *= 0.98
-					vecVelocity.y *= 0.98
-					vecVelocity.z -= 190 * flFrameTime
-					return -1
-				}
-				AddThinkToEnt(hBomb, "Think")
+				self.EmitSound("physics/metal/metal_solid_strain4.wav")
 			})
-			TankExtPacked.DelayFunction(self, this, 5.8, function() { self.EmitSound("misc/grenade_jump_fall_01.wav") })
-			TankExtPacked.DelayFunction(self, this, 8.167, function() { hBomb.Kill() })
+			TankExtPacked.DelayFunction(self, this, 2.4, function()
+			{
+				self.EmitSound("physics/metal/metal_box_strain2.wav")
+			})
+			TankExtPacked.DelayFunction(self, this, 3.93, function()
+			{
+				self.EmitSound("physics/metal/metal_box_impact_soft3.wav")
+			})
+			TankExtPacked.DelayFunction(self, this, 4.3, function()
+			{
+				self.EmitSound("physics/metal/metal_grate_impact_soft3.wav")
+			})
+			TankExtPacked.DelayFunction(self, this, 5.7, function()
+			{
+				self.EmitSound("doors/door_squeek1.wav")
+			})
+			TankExtPacked.DelayFunction(self, this, 6.6, function()
+			{
+				self.EmitSound("items/ammocrate_close.wav")
+			})
 		}
 	}
 	function OnDeath()
@@ -413,7 +517,6 @@ TankExtPacked.NewTankType("helicopter*", {
 			filter_type = RECIPIENT_FILTER_GLOBAL
 			flags       = SND_STOP | SND_IGNORE_NAME
 		})
-		if("hBomb" in this && hBomb.IsValid()) hBomb.Kill()
 		foreach(hSticky in hStickies)
 			if(hSticky.IsValid())
 				hSticky.Kill()

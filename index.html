@@ -181,7 +181,7 @@
 		<div class="info">
 			<div class="header" id="Usage_For_Mappers"><img class="center" alt="Usage For Mappers" src="images/usageformappers.png"></div>
 			<p>If you plan to pack these scripts into your map so its missions can use custom tanks then pack the <b><a href="https://github.com/potato-tf/TankExtensions/blob/main/FOR_PACKING_INTO_MAPS/">MAP SPECIFIC SCRIPTS</a></b> instead of packing the main scripts. This is done so if the map were to be used on other servers that use a more updated version of TankExtensions then there would be no conflicts between the server's file and the map's file (packed map scripts always override server scripts).</p>
-			<p>With the map scripts packed in you will want to make your own script file that includes the main and tank scripts. Use a logic_script entity to load up your created script file. <b>Do not</b> use this entity to load the tank scripts directly or else the tank scripts have a high chance of breaking. The example below shows an example of the contents that can go into your created script file.</p>
+			<p>With the map scripts packed in you will want to make <b>your own script file</b> that loads the main script and tank scripts. Use a logic_script entity to load up your created script file. <b>Do not</b> use this entity to load the tank scripts directly or else the tank scripts will not function. The example below shows what the contents of your created script file could look like.</p>
 			<div class="codeblock"><pre><span class="vsc-green">// Example script file path "scripts/vscripts/mymapname.nut"
 // logic_script's "Entity Scripts" should be set to that new script's name ("mymapname")
 
@@ -503,12 +503,15 @@
 				</td>
 				<td>
 					<code>_crit</code>
+					<code>_customparticles</code>
+				</td>
+				<td class="parameter">
+					<p><code>color</code></p>
 				</td>
 				<td></td>
-				<td></td>
 				<td>
-					<p>Traverses the sky (like a blimp), aims and shoots rockets at enemies (like a combattank), shoots a burst of stickies at enemies (like a stickytank), and can deploy the bomb (like a tank). The <code>_crit</code> suffix makes all projectiles crit.</p>
-					<p class="credits">Inspired by <a href="https://steamcommunity.com/profiles/76561198835403557">Royal</a>'s <a href="https://wiki.teamfortress.com/wiki/Operation_Galvanized_Gauntlet">Dover 2</a> mission<br>Models from the <a href="https://frontline.tf2maps.net">Frontline Supply Drop</a></p>
+					<p>Traverses the sky (like a blimp), aims and shoots rockets at enemies (like a combattank), shoots a burst of stickies at enemies (like a stickytank), and can deploy the bomb (like a tank). The <code>_crit</code> suffix makes all projectiles crit and the <code>_customparticles</code> suffix will use fancy particle effects if the map is packed with the <a href="https://github.com/potato-tf/TankExtensions/blob/main/assets/helicopter/particles/mvm_helicopter.pcf">provided particle file</a>.</p>
+					<p class="credits">Inspired by <a href="https://steamcommunity.com/profiles/76561198835403557">Royal</a>'s <a href="https://wiki.teamfortress.com/wiki/Operation_Galvanized_Gauntlet">Dover 2</a> mission<br>Helicopter model by <a href="https://steamcommunity.com/profiles/76561198058809573">Glitch</a>, <a href="https://steamcommunity.com/profiles/76561198031708070">ZoraKirby</a>, and canpake<br>Particles by <a href="https://steamcommunity.com/profiles/76561198066916585">Cheesypuff</a></p>
 				</td>
 			</tr>
 			<tr>

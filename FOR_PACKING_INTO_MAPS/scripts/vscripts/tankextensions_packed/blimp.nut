@@ -15,6 +15,8 @@ PrecacheModel(BLIMP_MODEL_DAMAGE2)
 PrecacheModel(BLIMP_MODEL_DAMAGE3)
 TankExtPacked.PrecacheSound(BLIMP_SOUND_ENGINE)
 
+PrecacheSound("weapons/dumpster_rocket_reload.wav")
+
 TankExtPacked.NewTankType("blimp*", {
 	Model = {
 		Default = BLIMP_MODEL
@@ -125,6 +127,7 @@ TankExtPacked.NewTankType("blimp*", {
 				if(Trace.hit)
 				{
 					bFoundWorld = true
+					self.EmitSound("weapons/dumpster_rocket_reload.wav")
 					TankExtPacked.DelayFunction(self, this, 0.35, function()
 					{
 						self.SetCycle(1.0) // ends deploy sequence

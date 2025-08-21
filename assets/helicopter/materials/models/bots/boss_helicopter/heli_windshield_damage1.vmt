@@ -1,0 +1,134 @@
+"VertexlitGeneric"
+{
+	//"$baseTexture" "models/effects/black"
+
+	//"$additive" "1"
+
+	"$basetexture"	"models/bots/boss_helicopter/heli_windshield_damage1"
+
+	"$phong"                "1"
+	"$phongexponent"        "80"
+	"$phongboost"           "2"
+	"$phongfresnelranges"	"[.25 1 4]"
+	"$basemapalphaphongmask"	"1"
+
+	"$detail"	"models/bots/boss_helicopter/heli_windshield_flicker1"
+	"$detailblendfactor"	"0.6"
+	"$detailblendmode"	"0"
+
+
+
+	"$lightwarptexture"	"models/lightwarps/softened_weapon_lightwarp"
+
+	"$envmap" "cubemaps/cubemap_specular002"
+	"$basemapalphaenvmapmask"	"1"
+	"$envmaptint"	"[0.1 0.15 0.25]"
+	"$envmapmult"	"[0.4 0.5 0.3]"
+
+	//"$rimlight"         "1"
+	"$rimlightexponent" "4"
+	"$rimlightboost"    ".8"
+	"$rimmask"          "1"
+
+	"$selfillum"	"1"
+	"$selfillummult"	"7"
+	"$selfillumtint"	"0.3"
+
+	"$luminator"	"[0.299 0.587 0.114]"
+	"$grayscale"	"1.0"
+	"$colortemp"	"[1.0 1.0 1.0]"
+	"$colorR"	"0.0"
+	"$colorG"	"0.0"
+	"$colorB"	"0.0"
+	"$one"	"1"
+	"$zero" "0"
+	"$targetluminance"	"0.3"
+	"$luminatedcolor"	"[1.0 1.0 1.0]"
+	"$luminancemult"	"1.0"
+	"$luminatedfactor"	"0.9"
+	"$colorfactor"	"0.1"
+	"$timeoffset"	"0.0"
+
+	"$min"	"0.0"
+	"$max"	"0.0"
+	"$mathtemp"	"0.0"
+	"$color_red"   "{380 106 80}"
+	"$color_blue"  "{ 60 204 280}"
+	"$color_tmp"   "[0 0 0]"
+	"$color_white" "[0 0 0]"
+
+	"Proxies"
+	{
+//------------------------------------default color/tinted color selector
+
+		// $color_white is 0 for values 0 or 1, 1 for values not 0 or 1
+		ToggleTexture
+		{
+			toggleTextureVar         $basetexture
+			toggleTextureFrameNumVar $color_white
+			toggleShouldWrap         0
+		}
+		// $frame is 0 for red, 1 for blue
+		TeamTexture
+		{
+			resultVar $frame
+		}
+		Multiply
+		{
+			srcVar1   $frame
+			srcVar2   $color_blue
+			resultVar $color_tmp
+		}
+		SelectFirstIfNonZero
+		{
+			srcVar1   $color_tmp
+			srcVar2   $color_red
+			resultVar $color_tmp
+		}
+		SelectFirstIfNonZero
+		{
+			srcVar1   $color_white
+			srcVar2   $color_tmp
+			resultVar $color2
+		}
+		Equals
+		{
+			srcVar1   $zero
+			resultVar $frame
+		}
+
+//----------------------------------------------------self illum tint calculator
+		"EntityRandom"
+		{
+			"scale"	"10"
+			"resultvar"	"$timeoffset"
+		}
+		"Clamp"
+		{
+			"min" "0.01"
+			"max" "0.3"
+			"srcVar1"	"$color2"
+			"resultVar"	"$colortemp"
+		}
+		"Multiply"
+		{
+			"srcVar1"	"$colortemp"
+			"srcVar2"	"$selfillummult"
+			"resultVar"	"$selfillumtint"
+		}
+		"Multiply"
+		{
+			"srcVar1"	"$color2"
+			"srcVar2"	"$envmapmult"
+			"resultVar"	"$envmaptint"
+		}
+		"AnimatedTexture"
+		{
+			"animatedtexturevar"		"$detail"
+			"animatedtextureframenumvar"		"$detailframe"
+			"animatedtextureframerate"		"10"
+		}
+
+	}
+
+}

@@ -1,0 +1,99 @@
+"VertexlitGeneric"
+{
+	"$baseTexture" "models/bots/boss_helicopter/heli_lights"
+	"$bumpmap" "models/effects/flat_normal" 
+	"$phong"                "1"
+	"$phongexponent"        "20"
+	"$phongboost"           "5"
+	"$phongfresnelranges"	"[.25 1 4]"
+	"$lightwarptexture" "models/weapons/c_models/c_ambassador/c_ambassador_lightwarp"
+	//"$phongexponenttexture" "models/bots/boss_blimp/blimp_all_exp"
+
+	//"$blendtintbybasealpha"   "1"
+	//"$blendtintcoloroverbase" "1"
+
+	//"$rimlight"         "1"
+	"$rimlightexponent" "4"
+	"$rimlightboost"    ".8"
+	"$rimmask"          "1"
+
+	"$selfillum"	"1"
+	"$selfillumfresnel"	"1"
+	"$selfillumfresnelminmaxexp"	"[0 30 1]"
+
+	"$luminator"	"[0.299 0.587 0.114]"
+	"$grayscale"	"1.0"
+	"$colortemp"	"[1.0 1.0 1.0]"
+	"$colorR"	"0.0"
+	"$colorG"	"0.0"
+	"$colorB"	"0.0"
+	"$one"	"1"
+	"$zero" "0"
+	"$targetluminance"	"0.3"
+	"$luminatedcolor"	"[1.0 1.0 1.0]"
+	"$luminancemult"	"1.0"
+	"$luminatedfactor"	"0.9"
+	"$colorfactor"	"0.1"
+	"$timeoffset"	"0.0"
+	"$min"	"0.0"
+	"$max"	"0.0"
+
+	"$color_red"   "{179 50 42}"
+	"$color_blue"  "{ 60 204 280}"
+	"$color_tmp"   "[0 0 0]"
+	"$color_white" "[0 0 0]"
+	"$test"	"[1 1 0 1 0 1 1 1 0 1 0 0 1 0 1]"
+	
+
+	"Proxies"
+	{
+
+//------------------------------------default color/tinted color selector
+
+		// $color_white is 0 for values 0 or 1, 1 for values not 0 or 1
+		ToggleTexture
+		{
+			toggleTextureVar         $basetexture
+			toggleTextureFrameNumVar $color_white
+			toggleShouldWrap         0
+		}
+		// $frame is 0 for red, 1 for blue
+		TeamTexture
+		{
+			resultVar $frame
+		}
+		Multiply
+		{
+			srcVar1   $frame
+			srcVar2   $color_blue
+			resultVar $color_tmp
+		}
+		SelectFirstIfNonZero
+		{
+			srcVar1   $color_tmp
+			srcVar2   $color_red
+			resultVar $color_tmp
+		}
+		SelectFirstIfNonZero
+		{
+			srcVar1   $color_white
+			srcVar2   $color_tmp
+			resultVar $color2
+		}
+		Equals
+		{
+			srcVar1   $zero
+			resultVar $frame
+		}
+
+//----------------------------------------------------self illum tint calculator
+		"Clamp"
+		{
+			"min" "0.01"
+			"max" "0.5"
+			"srcVar1"	"$color2"
+			"resultVar"	"$selfillumtint"
+		}
+	}
+
+}
