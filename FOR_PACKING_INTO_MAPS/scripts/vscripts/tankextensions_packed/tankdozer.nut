@@ -108,7 +108,7 @@ PrecacheModel(PROPCOLLISION_BARREL)
 							{
 								params.damage = 0
 							}
-							else if(sClassname == "worldspawn" && Trace.end != vecCenter)
+							else if(sClassname == "worldspawn" && (Trace.end - vecCenter).LengthSqr() != 0)
 							{
 								Trace.end = vecCenter
 								TraceRecursive()
@@ -122,7 +122,7 @@ PrecacheModel(PROPCOLLISION_BARREL)
 							}
 						}
 					}
-					else if(Trace.end != vecCenter)
+					else if((Trace.end - vecCenter).LengthSqr() != 0)
 					{
 						Trace.end = vecCenter
 						TraceRecursive()
