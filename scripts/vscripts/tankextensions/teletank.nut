@@ -7,6 +7,10 @@ local TELETANK_VALUES_TABLE = {
 	TELETANK_MODEL_TRACK_R      = "models/bots/boss_bot/tank_track_R_building.mdl"
 	TELETANK_MODEL_BOMB         = "models/bots/boss_bot/bomb_mechanism_building.mdl"
 	TELETANK_UBER_DURATION_MULT = 0.2
+
+	TELETANK_DISPENSER_HEALING = false
+	TELETANK_DISPENSER_MINS    = Vector(-512, -512, -128)
+	TELETANK_DISPENSER_MAXS    = Vector(512, 512, 384)
 }
 foreach(k,v in TELETANK_VALUES_TABLE)
 	if(!(k in TankExt.ValueOverrides))
@@ -123,43 +127,46 @@ TankExt.NewTankType("teletank", {
 		TankExt.DispatchParticleEffectOn(hTeleporter, bBlueTeam ? "teleporter_arms_circle_blue" : "teleporter_arms_circle_red", "arm_attach_R")
 		TankExt.SetParentArray([hTeleporter], self, bModelHasAttachment ? "building_attachment" : null)
 
-		local sUniqueName = UniqueString()
-		local hTouch = SpawnEntityFromTableSafe("dispenser_touch_trigger", { targetname = sUniqueName, spawnflags = 1 })
-		hTouch.SetSize(Vector(-512, -512, -128), Vector(512, 512, 384))
-		hTouch.SetSolid(SOLID_BBOX)
-		local hDisp = SpawnEntityFromTableSafe("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "0 8 0", angles = "0 90 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
-		EmitSoundEx({ entity = hDisp, sound_name = "misc/null.wav", filter_type = RECIPIENT_FILTER_GLOBAL, flags = SND_STOP | SND_IGNORE_NAME })
-		TankExt.SetParentArray([hDisp], self, "smoke_attachment")
+		if(TELETANK_DISPENSER_HEALING)
+		{
+			local sUniqueName = UniqueString()
+			local hTouch = SpawnEntityFromTableSafe("dispenser_touch_trigger", { targetname = sUniqueName, spawnflags = 1 })
+			hTouch.SetSize(TELETANK_DISPENSER_MINS, TELETANK_DISPENSER_MAXS)
+			hTouch.SetSolid(SOLID_BBOX)
+			local hDisp = SpawnEntityFromTableSafe("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "0 8 0", angles = "0 90 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
+			EmitSoundEx({ entity = hDisp, sound_name = "misc/null.wav", filter_type = RECIPIENT_FILTER_GLOBAL, flags = SND_STOP | SND_IGNORE_NAME })
+			TankExt.SetParentArray([hDisp], self, "smoke_attachment")
 
-		local hTouchReal = SpawnEntityFromTableSafe("trigger_multiple", { spawnflags = 1 })
-		TankExt.SetParentArray([hTouch, hTouchReal], self)
-		SetPropEntity(hTouch, "m_pParent", null)
-		SetPropEntity(hTouchReal, "m_pParent", null)
-		hTouchReal.SetSize(Vector(-512, -512, -128), Vector(512, 512, 384))
-		hTouchReal.SetSolid(SOLID_BBOX)
-		local PlayersTouching = []
-		hTouchReal.ValidateScriptScope()
-		hTouchReal.ConnectOutput("OnStartTouch", "StartTouch")
-		hTouchReal.ConnectOutput("OnEndTouch", "EndTouch")
-		local hTouchReal_scope = hTouchReal.GetScriptScope()
-		hTouchReal_scope.StartTouch <- function()
-		{
-			if(hDisp.GetTeam() == activator.GetTeam())
-				PlayersTouching.append(activator)
+			local hTouchReal = SpawnEntityFromTableSafe("trigger_multiple", { spawnflags = 1 })
+			TankExt.SetParentArray([hTouch, hTouchReal], self)
+			SetPropEntity(hTouch, "m_pParent", null)
+			SetPropEntity(hTouchReal, "m_pParent", null)
+			hTouchReal.SetSize(TELETANK_DISPENSER_MINS, TELETANK_DISPENSER_MAXS)
+			hTouchReal.SetSolid(SOLID_BBOX)
+			local PlayersTouching = []
+			hTouchReal.ValidateScriptScope()
+			hTouchReal.ConnectOutput("OnStartTouch", "StartTouch")
+			hTouchReal.ConnectOutput("OnEndTouch", "EndTouch")
+			local hTouchReal_scope = hTouchReal.GetScriptScope()
+			hTouchReal_scope.StartTouch <- function()
+			{
+				if(hDisp.GetTeam() == activator.GetTeam())
+					PlayersTouching.append(activator)
+			}
+			hTouchReal_scope.EndTouch <- function()
+			{
+				local index = PlayersTouching.find(activator)
+				if(index != null)
+					PlayersTouching.remove(index)
+			}
+			hTouchReal_scope.Think <- function()
+			{
+				foreach(hPlayer in PlayersTouching)
+					if(hPlayer.IsValid())
+						hPlayer.AddCondEx(TF_COND_RADIUSHEAL, 0.2, null)
+				return 0.1
+			}
+			AddThinkToEnt(hTouchReal, "Think")
 		}
-		hTouchReal_scope.EndTouch <- function()
-		{
-			local index = PlayersTouching.find(activator)
-			if(index != null)
-				PlayersTouching.remove(index)
-		}
-		hTouchReal_scope.Think <- function()
-		{
-			foreach(hPlayer in PlayersTouching)
-				if(hPlayer.IsValid())
-					hPlayer.AddCondEx(TF_COND_RADIUSHEAL, 0.2, null)
-			return 0.1
-		}
-		AddThinkToEnt(hTouchReal, "Think")
 	}
 })
