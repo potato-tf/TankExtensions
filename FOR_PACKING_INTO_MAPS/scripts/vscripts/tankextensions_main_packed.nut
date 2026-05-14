@@ -1651,5 +1651,6 @@ hThinkEnt_scope.TankExtPackedThink <- TankExtPackedThink
 TankExtPacked.AddThinkToEnt(hThinkEnt, "TankExtPackedThink")
 TankExtPacked.hThinkEnt = hThinkEnt
 
+hThinkEnt.SetAbsOrigin(Vector(99999))
 SetPropString(hThinkEnt, "m_iClassname", "tank_boss") // this makes teamplay_broadcast_audio always get called when a tank spawns
 SetPropString(hThinkEnt, "m_iName", "tankext_thinkent")
