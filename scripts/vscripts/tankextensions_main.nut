@@ -1,3 +1,5 @@
+// Last Updated : May 14 2026
+
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
 ::MAX_CLIENTS <- MaxClients().tointeger()
@@ -10,17 +12,10 @@ if(!("ConstantNamingConvention" in ROOT))
 			ROOT[k]  <- v != null ? v : 0
 		}
 
-foreach(k, v in ::NetProps.getclass())
-	if(k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::NetProps[k].bindenv(::NetProps)
-
-foreach(k, v in ::Entities.getclass())
-	if(k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::Entities[k].bindenv(::Entities)
-
-foreach(k, v in ::EntityOutputs.getclass())
-	if(k != "IsValid" && !(k in ROOT))
-		ROOT[k] <- ::EntityOutputs[k].bindenv(::EntityOutputs)
+foreach(sClass in ["NetProps", "Entities", "EntityOutputs"])
+	foreach(name, method in ROOT[sClass].getclass())
+		if(name != "IsValid" && !(name in ROOT))
+			ROOT[name] <- method.bindenv(ROOT[sClass])
 
 local UNOFFICIAL_CONSTANTS = {
 	DONT_BLEED         = -1
@@ -418,14 +413,17 @@ foreach(k,v in UNOFFICIAL_CONSTANTS)
 		ROOT[k] <- v
 	}
 
-::MarkForPurge <- @(hEnt) SetPropBool(hEnt, "m_bForcePurgeFixedupStrings", true)
-::CreateByClassnameSafe <- function(sClassname)
+function ROOT::MarkForPurge(hEnt)
+{
+	SetPropBool(hEnt, "m_bForcePurgeFixedupStrings", true)
+}
+function ROOT::CreateByClassnameSafe(sClassname)
 {
 	local hEnt = CreateByClassname(sClassname)
 	MarkForPurge(hEnt)
 	return hEnt
 }
-::SpawnEntityFromTableSafe <- function(sClassname, KeyValues)
+function ROOT::SpawnEntityFromTableSafe(sClassname, KeyValues)
 {
 	local hEnt = SpawnEntityFromTable(sClassname, KeyValues)
 	MarkForPurge(hEnt)
@@ -534,7 +532,20 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	bTankSpawnedThisWave = false
 	function OnGameEvent_teamplay_broadcast_audio(params)
 	{
-		if(params.sound == "Announcer.MVM_Tank_Alert_Multiple")
+		if(params.sound == "Announcer.MVM_Tank_Alert_Halfway_Multiple")
+		{
+			local iTanks = 0
+			for(local hTank; hTank = FindByClassname(hTank, "tank_boss");)
+				if(hTank != hThinkEnt)
+				{
+					iTanks++
+					if(iTanks > 1)
+						return // already playing the right sound
+				}
+
+			EntFireByHandle(hGameRules, "PlayVO", "Announcer.MVM_Tank_Alert_Halfway", -1, null, null)
+		}
+		else
 		{
 			for(local hTank; hTank = FindByClassname(hTank, "tank_boss");)
 				if(hTank != hThinkEnt)
@@ -584,34 +595,22 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					}
 				}
 
-			TankExt.DelayFunction(null, this, -1, function()
-			{
-				local iTanks = TanksThisTick.len()
-				if(iTanks == 0)
-					return
-
-				if(iTanks == 1)
-					if(bTankSpawnedThisWave)
-						hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Another", null, null)
-					else
-						hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Spawn", null, null)
-
-				bTankSpawnedThisWave = true
-				TanksThisTick.clear()
-			})
-		}
-		else if(params.sound == "Announcer.MVM_Tank_Alert_Halfway_Multiple")
-		{
-			local iTanks = 0
-			for(local hTank; hTank = FindByClassname(hTank, "tank_boss");)
-				if(hTank != hThinkEnt)
+			if(params.sound == "Announcer.MVM_Tank_Alert_Multiple")
+				TankExt.DelayFunction(null, this, -1, function()
 				{
-					iTanks++
-					if(iTanks > 1)
-						return // already playing the right sound
-				}
+					local iTanks = TanksThisTick.len()
+					if(iTanks == 0)
+						return
 
-			EntFireByHandle(hGameRules, "PlayVO", "Announcer.MVM_Tank_Alert_Halfway", -1, null, null)
+					if(iTanks == 1)
+						if(bTankSpawnedThisWave)
+							hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Another", null, null)
+						else
+							hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Spawn", null, null)
+
+					bTankSpawnedThisWave = true
+					TanksThisTick.clear()
+				})
 		}
 	}
 
@@ -746,6 +745,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					"PingSound"              : null
 					"ReplaceModelCollisions" : "tointeger"
 					"Scale"                  : "tofloat"
+					"TargetName"             : null
 					"TeamNum"                : "tointeger"
 				}
 				foreach(sName, sType in ValidKeyValues)
@@ -832,13 +832,31 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			{
 				bVisual = true
 				iModelIndex = PrecacheModel(TankTable.Model.Visual)
-				SetPropIntArray(hTank, "m_nModelIndexOverrides", iModelIndex, 0)
-				SetPropIntArray(hTank, "m_nModelIndexOverrides", iModelIndex, 3)
+				for(local i = 0; i <= 3; i++)
+					SetPropIntArray(hTank, "m_nModelIndexOverrides", iModelIndex, i)
+			}
+
+			local ChildModels = []
+			for(local hChild = hTank.FirstMoveChild(); hChild; hChild = hChild.NextMovePeer())
+			{
+				local sChildModel = hChild.GetModelName().tolower()
+				if(sChildModel.find("track_l") || sChildModel.find("track_r") || sChildModel.find("bomb_mechanism"))
+				{
+					ChildModels.append(hChild)
+					for(local i = 0; i <= 3; i++)
+						SetPropIntArray(hChild, "m_nModelIndexOverrides", 0, i)
+				}
 			}
 
 			hTank_scope.sModelLast <- hTank.GetModelName()
 			hTank_scope.ModelThink <- function()
 			{
+				for(local i = 0; i <= 3; i++)
+					SetPropIntArray(self, "m_nModelIndexOverrides", iModelIndex, i)
+				foreach(hChild in ChildModels)
+					for(local i = 0; i <= 3; i++)
+						SetPropIntArray(hChild, "m_nModelIndexOverrides", 0, i)
+
 				local sModel = self.GetModelName()
 				if(sModel != sModelLast)
 				{
@@ -857,11 +875,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 						TankExt.SetTankModel(hTank, { Tank = sNewModel })
 						sModel = sNewModel
-					}
-					if(bVisual)
-					{
-						SetPropIntArray(hTank, "m_nModelIndexOverrides", iModelIndex, 0)
-						SetPropIntArray(hTank, "m_nModelIndexOverrides", iModelIndex, 3)
 					}
 				}
 				sModelLast = sModel
@@ -1069,6 +1082,9 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			Add("ReplaceModelCollisions")
 			hTank_scope.bReplaceModelCollisions <- true
 		}
+
+		if(Check("TargetName"))
+			SetPropString(hTank, "m_iName", TankTable.TargetName), Add("TargetName")
 	}
 	function ApplyTankTableByName(hTank, hPath, sTankName)
 	{
@@ -1262,7 +1278,8 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			local sSequence   = hEntity.GetSequenceName(hEntity.GetSequence())
 			hEntity.SetModel(sModel)
 			SetPropInt(hEntity, "m_nModelIndex", iModelIndex)
-			SetPropIntArray(hEntity, "m_nModelIndexOverrides", iModelIndex, 0)
+			for(local i = 0; i <= 3; i++)
+				SetPropIntArray(hEntity, "m_nModelIndexOverrides", 0, i)
 			hEntity.SetSequence(hEntity.LookupSequence(sSequence))
 			if(bSmokeStack)
 			{
@@ -1291,7 +1308,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		if("Tank" in Model && Model.Tank)
 		{
 			ApplyModel(hTank, Model.Tank)
-			SetPropIntArray(hTank, "m_nModelIndexOverrides", GetPropIntArray(hTank, "m_nModelIndexOverrides", 0), 3)
 		}
 		for(local hChild = hTank.FirstMoveChild(); hChild; hChild = hChild.NextMovePeer())
 		{
@@ -1302,8 +1318,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				ApplyModel(hChild, Model.RightTrack)
 			else if("Bomb" in Model && Model.Bomb && sChildModel.find("bomb_mechanism"))
 				ApplyModel(hChild, Model.Bomb)
-
-			SetPropIntArray(hChild, "m_nModelIndexOverrides", GetPropIntArray(hChild, "m_nModelIndexOverrides", 0), 3)
 		}
 	}
 	function SetTankColor(hTank, sColor)
@@ -1389,6 +1403,12 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			hChild.SetLocalAngles(angRotation)
 		}
 	}
+	function ClearStringFromPool(sString)
+	{
+		local hDummy = CreateByClassnameSafe("info_target")
+		hDummy.KeyValueFromString("targetname", sString)
+		hDummy.Destroy()
+	}
 	function DelayFunction(hTarget, Scope, flDelay, func)
 	{
 		local sFuncName = UniqueString()
@@ -1401,6 +1421,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				func.call(Scope || { self = hTarget })
 		}
 		EntFireByHandle(hThinkEnt, "CallScriptFunction", sFuncName, flDelay, null, null)
+		ClearStringFromPool(sFuncName)
 	}
 	function GetMultiScopeTable(Scope, sName)
 	{
@@ -1856,16 +1877,17 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			local hTank = hEntity
 			hTank.ValidateScriptScope()
 			local hTank_scope = hTank.GetScriptScope()
-			if(!("MultiThink" in hTank_scope))
+			if(!("TankExtTankThink" in hTank_scope))
 			{
 				hTank_scope.ThinkTable <- {}
-				hTank_scope.MultiThink <- function()
+				local function TankExtTankThink()
 				{
 					foreach(sName, func in ThinkTable)
 						func()
 					return -1
 				}
-				AddThink(hTank, "MultiThink")
+				hTank_scope.TankExtTankThink <- TankExtTankThink
+				AddThink(hTank, "TankExtTankThink")
 			}
 
 			if(sFunction == null)
@@ -1979,18 +2001,20 @@ for(local i = 1; i <= MAX_CLIENTS; i++)
 		TankExt.PlayerArray.append(hPlayer)
 }
 
-local hThinkEnt = CreateByClassnameSafe("logic_relay")
+local hThinkEnt = CreateByClassnameSafe("logic_script")
 hThinkEnt.ValidateScriptScope()
 local hThinkEnt_scope = hThinkEnt.GetScriptScope()
-hThinkEnt_scope.Think <- function()
+local function TankExtThink()
 {
 	EntFireByHandle(self, "RunScriptCode", "TankExt.ThinkEntEndOfTick()", -1, null, null) // not using SetDestroyCallback to avoid conflicts
 	return -1
 }
-TankExt.AddThinkToEnt(hThinkEnt, "Think")
+hThinkEnt_scope.TankExtThink <- TankExtThink
+TankExt.AddThinkToEnt(hThinkEnt, "TankExtThink")
 TankExt.hThinkEnt = hThinkEnt
 
 SetPropString(hThinkEnt, "m_iClassname", "tank_boss") // this makes teamplay_broadcast_audio always get called when a tank spawns
+SetPropString(hThinkEnt, "m_iName", "tankext_thinkent")
 
 local TankExtLegacy = {
 	TankScriptsLegacy = {}
