@@ -103,14 +103,15 @@ TankExt.NewTankType("sentrytank", {
 				if(index != null)
 					PlayersTouching.remove(index)
 			}
-			hTouchReal_scope.Think <- function()
+			local function RadiusHealThink()
 			{
 				foreach(hPlayer in PlayersTouching)
 					if(hPlayer.IsValid())
 						hPlayer.AddCondEx(TF_COND_RADIUSHEAL, 0.2, null)
 				return 0.1
 			}
-			AddThinkToEnt(hTouchReal, "Think")
+			hTouchReal_scope.RadiusHealThink <- RadiusHealThink
+			AddThinkToEnt(hTouchReal, "RadiusHealThink")
 		}
 	}
 })

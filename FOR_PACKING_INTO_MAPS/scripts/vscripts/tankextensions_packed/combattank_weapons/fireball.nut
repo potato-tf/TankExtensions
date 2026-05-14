@@ -112,7 +112,7 @@ TankExtPacked.CombatTankWeapons["fireball"] <- {
 
 		local BrushModel = First().GetModelName() // doesnt cause issues?
 
-		function Think()
+		function CombatTankWeaponThink()
 		{
 			if(!(self && self.IsValid())) return
 
@@ -195,6 +195,6 @@ TankExtPacked.CombatTankWeapons["fireball"] <- {
 			}
 			return -1
 		}
-		TankExtPacked.AddThinkToEnt(self, "Think")
+		TankExtPacked.AddThinkToEnt(self, "CombatTankWeaponThink")
 	}
 }

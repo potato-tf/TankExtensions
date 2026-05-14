@@ -142,7 +142,7 @@ TankExt.CombatTankWeapons["railgun"] <- {
 			hBeamShock.ValidateScriptScope()
 			local flWidth = 16
 			local iAlpha  = 255
-			hBeamShock.GetScriptScope().Think <- function()
+			local function BeamFXThink()
 			{
 				if(iAlpha <= 0)
 				{
@@ -163,11 +163,12 @@ TankExt.CombatTankWeapons["railgun"] <- {
 				flWidth *= 0.95
 				return -1
 			}
-			AddThinkToEnt(hBeamShock, "Think")
+			hBeamShock.GetScriptScope().BeamFXThink <- BeamFXThink
+			AddThinkToEnt(hBeamShock, "BeamFXThink")
 			SetPropVector(hCasingShooter, "m_angGibRotation", TankExt.VectorAngles(hCasingShooter.GetRightVector()) + Vector())
 			EntFireByHandle(hCasingShooter, "Shoot", null, 0.1, null, null)
 		}
-		function Think()
+		function CombatTankWeaponThink()
 		{
 			if(!(self && self.IsValid())) return
 			self.StudioFrameAdvance()
@@ -221,6 +222,6 @@ TankExt.CombatTankWeapons["railgun"] <- {
 
 			return -1
 		}
-		TankExt.AddThinkToEnt(self, "Think")
+		TankExt.AddThinkToEnt(self, "CombatTankWeaponThink")
 	}
 }

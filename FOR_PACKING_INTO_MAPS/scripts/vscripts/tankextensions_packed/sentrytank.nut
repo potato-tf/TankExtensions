@@ -14,6 +14,10 @@ local SENTRYTANK_VALUES_TABLE = {
 	SENTRYTANK_SENTRY_HEALTH         = 4000
 	SENTRYTANK_SENTRY_DEFAULTUPGRADE = 2
 	SENTRYTANK_SENTRY_FLAGS          = SENTRY_FLAG_INFINITE_AMMO
+
+	SENTRYTANK_DISPENSER_HEALING = false
+	SENTRYTANK_DISPENSER_MINS    = Vector(-512, -512, -128)
+	SENTRYTANK_DISPENSER_MAXS    = Vector(512, 512, 384)
 }
 foreach(k,v in SENTRYTANK_VALUES_TABLE)
 	if(!(k in TankExtPacked.ValueOverrides))
@@ -67,43 +71,47 @@ TankExtPacked.NewTankType("sentrytank", {
 					}
 		}
 
-		local sUniqueName = UniqueString()
-		local hTouch = SpawnEntityFromTableSafe("dispenser_touch_trigger", { targetname = sUniqueName, spawnflags = 1 })
-		hTouch.SetSize(Vector(-512, -512, -128), Vector(512, 512, 384))
-		hTouch.SetSolid(SOLID_BBOX)
-		local hDisp = SpawnEntityFromTableSafe("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "0 8 0", angles = "0 90 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
-		EmitSoundEx({ entity = hDisp, sound_name = "misc/null.wav", filter_type = RECIPIENT_FILTER_GLOBAL, flags = SND_STOP | SND_IGNORE_NAME })
-		TankExtPacked.SetParentArray([hDisp], self, "smoke_attachment")
+		if(SENTRYTANK_DISPENSER_HEALING)
+		{
+			local sUniqueName = UniqueString()
+			local hTouch = SpawnEntityFromTableSafe("dispenser_touch_trigger", { targetname = sUniqueName, spawnflags = 1 })
+			hTouch.SetSize(SENTRYTANK_DISPENSER_MINS, SENTRYTANK_DISPENSER_MAXS)
+			hTouch.SetSolid(SOLID_BBOX)
+			local hDisp = SpawnEntityFromTableSafe("mapobj_cart_dispenser", { touch_trigger = sUniqueName, origin = "0 8 0", angles = "0 90 0", defaultupgrade = 2, spawnflags = 4, teamnum = bBlueTeam ? TF_TEAM_BLUE : TF_TEAM_RED })
+			EmitSoundEx({ entity = hDisp, sound_name = "misc/null.wav", filter_type = RECIPIENT_FILTER_GLOBAL, flags = SND_STOP | SND_IGNORE_NAME })
+			TankExtPacked.SetParentArray([hDisp], self, "smoke_attachment")
 
-		local hTouchReal = SpawnEntityFromTableSafe("trigger_multiple", { spawnflags = 1 })
-		TankExtPacked.SetParentArray([hTouch, hTouchReal], self)
-		SetPropEntity(hTouch, "m_pParent", null)
-		SetPropEntity(hTouchReal, "m_pParent", null)
-		hTouchReal.SetSize(Vector(-512, -512, -128), Vector(512, 512, 384))
-		hTouchReal.SetSolid(SOLID_BBOX)
-		local PlayersTouching = []
-		hTouchReal.ValidateScriptScope()
-		hTouchReal.ConnectOutput("OnStartTouch", "StartTouch")
-		hTouchReal.ConnectOutput("OnEndTouch", "EndTouch")
-		local hTouchReal_scope = hTouchReal.GetScriptScope()
-		hTouchReal_scope.StartTouch <- function()
-		{
-			if(hDisp.GetTeam() == activator.GetTeam())
-				PlayersTouching.append(activator)
+			local hTouchReal = SpawnEntityFromTableSafe("trigger_multiple", { spawnflags = 1 })
+			TankExtPacked.SetParentArray([hTouch, hTouchReal], self)
+			SetPropEntity(hTouch, "m_pParent", null)
+			SetPropEntity(hTouchReal, "m_pParent", null)
+			hTouchReal.SetSize(SENTRYTANK_DISPENSER_MINS, SENTRYTANK_DISPENSER_MAXS)
+			hTouchReal.SetSolid(SOLID_BBOX)
+			local PlayersTouching = []
+			hTouchReal.ValidateScriptScope()
+			hTouchReal.ConnectOutput("OnStartTouch", "StartTouch")
+			hTouchReal.ConnectOutput("OnEndTouch", "EndTouch")
+			local hTouchReal_scope = hTouchReal.GetScriptScope()
+			hTouchReal_scope.StartTouch <- function()
+			{
+				if(hDisp.GetTeam() == activator.GetTeam())
+					PlayersTouching.append(activator)
+			}
+			hTouchReal_scope.EndTouch <- function()
+			{
+				local index = PlayersTouching.find(activator)
+				if(index != null)
+					PlayersTouching.remove(index)
+			}
+			local function RadiusHealThink()
+			{
+				foreach(hPlayer in PlayersTouching)
+					if(hPlayer.IsValid())
+						hPlayer.AddCondEx(TF_COND_RADIUSHEAL, 0.2, null)
+				return 0.1
+			}
+			hTouchReal_scope.RadiusHealThink <- RadiusHealThink
+			AddThinkToEnt(hTouchReal, "RadiusHealThink")
 		}
-		hTouchReal_scope.EndTouch <- function()
-		{
-			local index = PlayersTouching.find(activator)
-			if(index != null)
-				PlayersTouching.remove(index)
-		}
-		hTouchReal_scope.Think <- function()
-		{
-			foreach(hPlayer in PlayersTouching)
-				if(hPlayer.IsValid())
-					hPlayer.AddCondEx(TF_COND_RADIUSHEAL, 0.2, null)
-			return 0.1
-		}
-		AddThinkToEnt(hTouchReal, "Think")
 	}
 })

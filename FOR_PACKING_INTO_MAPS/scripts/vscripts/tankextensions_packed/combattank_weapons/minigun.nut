@@ -42,7 +42,7 @@ TankExtPacked.CombatTankWeapons["minigun"] <- {
 		local iState       = 0
 		local iBarrel      = 0
 
-		function Think()
+		function CombatTankWeaponThink()
 		{
 			if(!(self && self.IsValid())) return
 			local flTime = Time()
@@ -192,6 +192,6 @@ TankExtPacked.CombatTankWeapons["minigun"] <- {
 			if(iState != 3) SoundStop(COMBATTANK_MINIGUN_SND_FIRE)
 			return -1
 		}
-		TankExtPacked.AddThinkToEnt(self, "Think")
+		TankExtPacked.AddThinkToEnt(self, "CombatTankWeaponThink")
 	}
 }

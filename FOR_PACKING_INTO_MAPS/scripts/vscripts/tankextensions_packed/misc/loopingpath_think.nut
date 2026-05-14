@@ -3,7 +3,7 @@ local vecPathCurrent = null
 local iLoopCurrent   = 1
 local bInitalized    = false
 
-function PathThink()
+function LoopingPathThink()
 {
 	if(hTank && hTank.IsValid())
 	{
@@ -52,7 +52,7 @@ function Respawn()
 	hPath_scope.sPathName    <- sPathName
 	hPath_scope.iArrayLength <- iArrayLength
 	hPath_scope.iLoopStart   <- iLoopStart
-	TankExtPacked.AddThinkToEnt(hPath, "PathThink")
+	TankExtPacked.AddThinkToEnt(hPath, "LoopingPathThink")
 
 	TankExtPacked.SetPathConnection(FindByName(null, format("%s_1", sPathName)), hPath)
 	TankExtPacked.SetPathConnection(hPath, FindByName(null, format("%s_3", sPathName)))

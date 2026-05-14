@@ -657,7 +657,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			hPath_scope.sPathName    <- sPathName
 			hPath_scope.iArrayLength <- iArrayLength
 			hPath_scope.iLoopStart   <- iLoopStart
-			TankExt.AddThinkToEnt(hPath2, "PathThink")
+			TankExt.AddThinkToEnt(hPath2, "LoopingPathThink")
 		}
 	}
 	function CreatePaths(PathTable)
@@ -1580,7 +1580,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		hPlayer_scope.hText <- null
 
 
-		hPlayer_scope.PathMakerThink <- function()
+		local function PathMakerThink()
 		{
 			local iButtons         = GetPropInt(self, "m_nButtons")
 			local iButtonsChanged  = iButtonsLast ^ iButtons
@@ -1867,6 +1867,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 			return -1
 		}
+		hPlayer_scope.PathMakerThink <- PathMakerThink
 		TankExt.AddThinkToEnt(hPlayer, "PathMakerThink")
 	}
 	function AddThinkToEnt(hEntity, sFunction)

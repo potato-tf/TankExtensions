@@ -172,7 +172,7 @@ TankExtPacked.NewTankType("frontlinecart*", {
 				local hTank  = self
 				local iType  = iType
 				local bSolid = false
-				hEnt_scope.Think <- function()
+				local function FrontlineProjectileThink()
 				{
 					if(!self.IsValid()) return
 					local vecOrigin = self.GetOrigin()
@@ -188,7 +188,8 @@ TankExtPacked.NewTankType("frontlinecart*", {
 						bDeflected = true
 					return -1
 				}
-				TankExtPacked.AddThinkToEnt(hEnt, "Think")
+				hEnt_scope.FrontlineProjectileThink <- FrontlineProjectileThink
+				TankExtPacked.AddThinkToEnt(hEnt, "FrontlineProjectileThink")
 			}
 
 			local Sound = @(sSound) EmitSoundEx({

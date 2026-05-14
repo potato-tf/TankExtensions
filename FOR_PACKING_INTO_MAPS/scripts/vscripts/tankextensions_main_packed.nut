@@ -656,7 +656,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			hPath_scope.sPathName    <- sPathName
 			hPath_scope.iArrayLength <- iArrayLength
 			hPath_scope.iLoopStart   <- iLoopStart
-			TankExtPacked.AddThinkToEnt(hPath2, "PathThink")
+			TankExtPacked.AddThinkToEnt(hPath2, "LoopingPathThink")
 		}
 	}
 	function CreatePaths(PathTable)

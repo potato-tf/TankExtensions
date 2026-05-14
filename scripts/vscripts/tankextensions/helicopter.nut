@@ -384,7 +384,7 @@ TankExt.NewTankType("helicopter*", {
 									local hRocket_scope = hRocket.GetScriptScope()
 									local bSolid = false
 									local hTank = self
-									hRocket_scope.RocketThink <- function()
+									local function RocketLogicThink()
 									{
 										if(!self.IsValid()) return
 										local vecOrigin = self.GetOrigin()
@@ -393,6 +393,7 @@ TankExt.NewTankType("helicopter*", {
 										HomingThink()
 										return -1
 									}
+									hRocket_scope.RocketLogicThink <- RocketLogicThink
 									hRocket_scope.HomingParams <- {
 										Target      = hTarget
 										TurnPower   = HELICOPTER_ROCKET_HOMING_POWER
@@ -400,7 +401,7 @@ TankExt.NewTankType("helicopter*", {
 										MaxAimError = -1
 									}
 									IncludeScript("tankextensions/misc/homingrocket", hRocket_scope)
-									TankExt.AddThinkToEnt(hRocket, "RocketThink")
+									TankExt.AddThinkToEnt(hRocket, "RocketLogicThink")
 
 									if(HELICOPTER_ROCKET_PARTICLE_TRAIL != "rockettrail")
 									{

@@ -191,7 +191,7 @@ TankExt.NewTankType("tankdozer*", {
 			local iHealthLast    = 0
 			local flNextDamage   = 0
 			hSentry.ValidateScriptScope()
-			hSentry.GetScriptScope().SentryThink <- function()
+			local function SentrySapperThink()
 			{
 				if(!self.IsValid()) return
 				local bHasSapper = GetPropBool(self, "m_bHasSapper")
@@ -218,7 +218,8 @@ TankExt.NewTankType("tankdozer*", {
 				bHasSapperLast = bHasSapper
 				return -1
 			}
-			TankExt.AddThinkToEnt(hSentry, "SentryThink")
+			hSentry.GetScriptScope().SentrySapperThink <- SentrySapperThink
+			TankExt.AddThinkToEnt(hSentry, "SentrySapperThink")
 			TankExt.SetParentArray([hSentry], self)
 		}
 

@@ -45,7 +45,7 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 		local bClosed    = true
 		bHoming <- false
 
-		function Think()
+		function CombatTankWeaponThink()
 		{
 			if(!(self && self.IsValid())) return
 			local flTime       = Time()
@@ -96,7 +96,7 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 					local bSolid = false
 					local hRocket_scope = hRocket.GetScriptScope()
 					hRocket_scope.hTank <- hTank
-					hRocket_scope.RocketThink <- function()
+					local function RocketLogicThink()
 					{
 						if(!self.IsValid()) return
 						local vecOrigin = self.GetOrigin()
@@ -105,6 +105,7 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 						if("HomingThink" in this) HomingThink()
 						return -1
 					}
+					hRocket_scope.RocketLogicThink <- RocketLogicThink
 					if(bHoming)
 					{
 						hRocket.SetModel(COMBATTANK_ROCKETPOD_ROCKET_HOMING)
@@ -117,7 +118,7 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 						}
 						IncludeScript("tankextensions_packed/misc/homingrocket", hRocket_scope)
 					}
-					TankExtPacked.AddThinkToEnt(hRocket, "RocketThink")
+					TankExtPacked.AddThinkToEnt(hRocket, "RocketLogicThink")
 
 					local sTrail = bHoming ? COMBATTANK_ROCKETPOD_PARTICLE_TRAIL_HOMING : COMBATTANK_ROCKETPOD_PARTICLE_TRAIL
 					if(sTrail != "rockettrail")
@@ -160,7 +161,7 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 			}
 			return -1
 		}
-		TankExtPacked.AddThinkToEnt(self, "Think")
+		TankExtPacked.AddThinkToEnt(self, "CombatTankWeaponThink")
 	}
 }
 
