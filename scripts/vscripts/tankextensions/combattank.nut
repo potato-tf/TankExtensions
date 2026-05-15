@@ -246,8 +246,24 @@ TankExt.NewTankType("combattank*", {
 						local vecEntCenter = hEnt.GetCenter()
 						local bHasEyes     = "EyePosition" in hEnt
 						local vecEntEye    = bHasEyes ? hEnt.EyePosition() : vecEntCenter
-						local bCenterTrace = TraceLine(vecEntCenter, vecMount, self) == 1
-						local bEyeTrace    = bHasEyes ? TraceLine(vecEntEye, vecMount, self) == 1 : bCenterTrace
+
+						local Trace = {
+							start  = vecMount
+							end    = vecEntCenter
+							mask   = MASK_SHOT_HULL | CONTENTS_GRATE
+							ignore = self
+							enthit = null
+						}
+						TraceLineEx(Trace)
+						local bCenterTrace = Trace.enthit == hEnt
+						local bEyeTrace    = bCenterTrace
+						if(bHasEyes)
+						{
+							Trace.end = vecEntEye
+							TraceLineEx(Trace)
+							bEyeTrace = Trace.enthit == hEnt
+						}
+
 						if
 						(
 							bEyeTrace &&

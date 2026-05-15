@@ -132,6 +132,7 @@ TankExt.NewTankType("helicopter*", {
 		{
 			local hGameRules = FindByClassname(null, "tf_gamerules")
 			SetPropBool(hGameRules, "m_bPlayingMannVsMachine", false)
+			activator.SetHealth(0)
 			activator.TakeDamageEx(self, hTank, null, Vector(), Vector(), 1000, DMG_CRUSH | DMG_BLAST)
 			SetPropBool(hGameRules, "m_bPlayingMannVsMachine", true)
 			self.EmitSound("SawMill.BladeImpact")
@@ -329,7 +330,17 @@ TankExt.NewTankType("helicopter*", {
 					{
 						local vecEntCenter = hEnt.GetCenter()
 						local vecEntTrace  = "EyePosition" in hEnt ? hEnt.EyePosition() : vecEntCenter
-						local bTrace       = TraceLine(vecEntTrace, vecOrigin, self) == 1
+
+						local Trace = {
+							start  = vecOrigin
+							end    = vecEntTrace
+							mask   = MASK_SHOT_HULL | CONTENTS_GRATE
+							ignore = self
+							enthit = null
+						}
+						TraceLineEx(Trace)
+						local bTrace = Trace.enthit == hEnt
+
 						if
 						(
 							bTrace &&
