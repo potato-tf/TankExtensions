@@ -374,7 +374,6 @@ TankExtPacked.NewTankType("helicopter*", {
 									MarkForPurge(hRocket)
 									hRocket.SetSize(Vector(), Vector())
 									hRocket.SetSolid(SOLID_BSP)
-									hRocket.SetSequence(1)
 									hRocket.SetSkin(iTeamNum == TF_TEAM_BLUE ? 1 : 0)
 									hRocket.SetTeam(iTeamNum)
 									hRocket.SetOwner(self)
