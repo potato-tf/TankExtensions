@@ -1,5 +1,6 @@
 local VACTANK_VALUES_TABLE = {
 	VACTANK_MODEL             = "models/props_tumb/mvm/tank_shield.mdl"
+	VACBLIMP_MODEL            = "models/props_mvm/blimp_shield_v2.mdl"
 	VACTANK_SND_DEPLOY        = "player/invuln_on_vaccinator.wav"
 	VACTANK_SND_RESIST        = ")player/resistance_medium1.wav"
 	VACTANK_RESIST_MULT       = 0
@@ -10,17 +11,19 @@ foreach(k,v in VACTANK_VALUES_TABLE)
 		ROOT[k] <- v
 
 PrecacheModel(VACTANK_MODEL)
+PrecacheModel(VACBLIMP_MODEL)
 TankExt.PrecacheSound(VACTANK_SND_DEPLOY)
 
 ::VacTankEvents <- {
 	OnGameEvent_recalculate_holidays = function(_) { if(GetRoundState() == 3) delete ::VacTankEvents }
 	OnScriptHook_OnTakeDamage = function(params)
 	{
-		local hVictim = params.const_entity
+		local hVictim   = params.const_entity
 		local hAttacker = params.attacker
 		if(hVictim && hAttacker && hVictim.GetClassname() == "tank_boss" && hAttacker.GetTeam() != hVictim.GetTeam())
 		{
-			local VacScope = TankExt.GetMultiScopeTable(hVictim.GetScriptScope(), "vactank")
+			local hVictim_scope = hVictim.GetScriptScope()
+			local VacScope      = TankExt.GetMultiScopeTable(hVictim_scope, "vactank") || TankExt.GetMultiScopeTable(hVictim_scope, "vacblimp")
 			if(VacScope && params.damage_type & VacScope.iDamageFilter)
 			{
 				params.damage *= VACTANK_RESIST_MULT
@@ -46,26 +49,28 @@ TankExt.NewTankType("vactank*", {
 			filter_type = RECIPIENT_FILTER_GLOBAL
 		})
 
+		local sModel = startswith(sTankName, "vacblimp") ? VACBLIMP_MODEL : VACTANK_MODEL
+
 		iDamageFilter <- 0
 		local hShields = []
 
 		if(sTankName.find("_bullet"))
 		{
-			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = 2, disableshadows = 1, rendermode = 1 })
+			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = sModel, skin = 2, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
 			TankExt.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BULLET | DMG_BUCKSHOT
 		}
 		if(sTankName.find("_blast"))
 		{
-			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = 3, disableshadows = 1, rendermode = 1 })
+			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = sModel, skin = 3, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
 			TankExt.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BLAST
 		}
 		if(sTankName.find("_fire"))
 		{
-			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = 4, disableshadows = 1, rendermode = 1 })
+			local hShield = SpawnEntityFromTableSafe("prop_dynamic", { model = sModel, skin = 4, disableshadows = 1, rendermode = 1 })
 			hShields.append(hShield)
 			TankExt.SetParentArray([hShield], self)
 			iDamageFilter = iDamageFilter | DMG_BURN | DMG_IGNITE
@@ -97,7 +102,7 @@ TankExt.NewTankType("vactank*", {
 
 			foreach(hShield in hShields)
 			{
-				local hShieldFade = SpawnEntityFromTableSafe("prop_dynamic", { model = VACTANK_MODEL, skin = hShield.GetSkin(), disableshadows = 1, renderfx = kRenderFxFadeFast })
+				local hShieldFade = SpawnEntityFromTableSafe("prop_dynamic", { model = sModel, skin = hShield.GetSkin(), disableshadows = 1, renderfx = kRenderFxFadeFast })
 				SetPropInt(hShieldFade, "m_clrRender", GetPropInt(hShield, "m_clrRender"))
 				TankExt.SetParentArray([hShieldFade], self)
 				EntFireByHandle(hShieldFade, "Kill", null, 1, null, null)
@@ -121,5 +126,13 @@ TankExt.NewTankType("vactank*", {
 					TankExt.SetEntityColor(hShield, 255, 255, 255, iAlphas[k])
 			}
 		}
+	}
+})
+
+
+TankExt.NewTankType("vacblimp*", {
+	function OnSpawn()
+	{
+		TankExt.TankScriptsWild.vactank.OnSpawn.call(this)
 	}
 })

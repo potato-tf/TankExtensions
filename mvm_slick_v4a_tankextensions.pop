@@ -19,7 +19,7 @@ WaveSchedule
 			Target bignet
 			Action RunScriptCode
 			Param "
-IncludeScript(`tankextensions_main`, getroottable())
+IncludeScript(`tankextensions_main`)
 
 // SetValueOverrides is optional and will override any values defined within the tank scripts
 // The value names are located in the tank script files
@@ -30,13 +30,13 @@ TankExt.SetValueOverrides({
     COMBATTANK_ROCKETPOD_RELOAD_DELAY = 0    // default: 0.3
 })
 
-IncludeScript(`tankextensions/bannertank`, getroottable())
-IncludeScript(`tankextensions/paratank`, getroottable())
-IncludeScript(`tankextensions/ubertank`, getroottable())
-IncludeScript(`tankextensions/stickytank`, getroottable())
-IncludeScript(`tankextensions/combattank`, getroottable())
-IncludeScript(`tankextensions/combattank_weapons/minigun`, getroottable())
-IncludeScript(`tankextensions/combattank_weapons/rocketpod`, getroottable())
+IncludeScript(`tankextensions/bannertank`)
+IncludeScript(`tankextensions/paratank`)
+IncludeScript(`tankextensions/ubertank`)
+IncludeScript(`tankextensions/stickytank`)
+IncludeScript(`tankextensions/combattank`)
+IncludeScript(`tankextensions/combattank_weapons/minigun`)
+IncludeScript(`tankextensions/combattank_weapons/rocketpod`)
 
 // Adds a tank icon to the wavebar, (TankCount, IconName, TankName, PlacementIndex = null, IconFlags = MVM_CLASS_FLAG_NORMAL | MVM_CLASS_FLAG_MINIBOSS)
 // Valid icon flags:
@@ -92,8 +92,8 @@ TankExt.CreatePaths({
 			Squad
 			{
 				TFBot { ClassIcon tank_combat_minigun_rocket }
-				TFBot { ClassIcon tank_banner_trio }
 				TFBot { ClassIcon tank_sticky_hellmet }
+				TFBot { ClassIcon tank_banner_trio }
 				TFBot { ClassIcon tank_red }
 			}
 		}

@@ -126,6 +126,10 @@
 				font-size: small;
 				font-style: italic;
 			}
+			.example {
+				opacity: 0.65;
+				font-style: italic;
+			}
 			.info {
 				background: var(--accent-2);
 				border: 1px var(--accent-3) solid;
@@ -147,21 +151,42 @@
 		</div>
 		<div class="info">
 			<div class="header" id="Usage"><img class="center" alt="Usage" src="images/usage.png"></div>
-			<p style="color: var(--red); font-weight: bold;">IF YOU ARE PLANNING TO PACK THESE SCRIPTS INTO YOUR MAP THEN READ THE <a style="font-weight: bold; color: var(--blue);" href="#Usage_For_Mappers">Usage For Mappers</a> SECTION.</p>
+			<p style="color: var(--red); font-weight: bold; font-size: large;">IF YOU ARE PLANNING TO PACK THESE SCRIPTS INTO YOUR MAP THEN READ THE <a style="font-weight: bold; color: var(--blue);" href="#Usage_For_Mappers">Usage For Mappers</a> SECTION.</p>
+			<p>Do note that these scripts will unload themselves on mission/wave reload. So be sure to load the scripts again whenever that occurs for your mission. (Can be done through an InitWaveOutput on every wave or a single PointTemplate.)</p>
+			<p>Extra usages are found in the <a style="font-weight: bold;" href="https://github.com/potato-tf/TankExtensions/blob/main/mvm_slick_v4a_tankextensions.pop">Example Popfile</a>. Such as adding tank icons, creating paths, or overriding tank type values.</p>
 			<p>To add any of these custom tanks to your mission you first need to include the main script and any tank scripts of your choosing. This can be done through a <code>RunScriptCode</code> output on bignet or added to your own mission script file if you have one.</p>
-			<div class="codeblock"><pre><span class="vsc-green">// This example loads the main script, two optional tank scripts, and two other scripts for one of the tanks</span>
+			<div class="codeblock"><pre><span class="vsc-green">// This popfile example loads the main script, two optional tank scripts, and two other scripts for one of the tanks</span>
 <span class="vsc-green">// You can include as many tank scripts as needed</span>
 <span class="vsc-blue">InitWaveOutput</span>
 <span class="vsc-deep-blue">{</span>
     <span class="vsc-lime">Target</span> <span class="vsc-white">bignet</span>
     <span class="vsc-lime">Action</span> <span class="vsc-purple">RunScriptCode</span>
     <span class="vsc-lime">Param</span>
-    <span class="vsc-orange">"IncludeScript(`tankextensions_main`, getroottable())
-    IncludeScript(`tankextensions/combattank`, getroottable())
-    IncludeScript(`tankextensions/combattank_weapons/minigun`, getroottable())
-    IncludeScript(`tankextensions/combattank_weapons/rocketpod`, getroottable())
-    IncludeScript(`tankextensions/tankdozer`, getroottable())"</span>
+    <span class="vsc-orange">"IncludeScript(`tankextensions_main`)
+    IncludeScript(`tankextensions/combattank`)
+    IncludeScript(`tankextensions/combattank_weapons/minigun`)
+    IncludeScript(`tankextensions/combattank_weapons/rocketpod`)
+    IncludeScript(`tankextensions/tankdozer`)"</span>
 <span class="vsc-deep-blue">}</span></pre></div>
+			<p>Alternatively if you're on a server that uses <a href="https://github.com/rafradek/sigsegv-mvm">RafMod</a>, you can use a PointTemplate within WaveSchedule so you only have to load the scripts once.</p>
+			<div class="codeblock"><pre><span class="vsc-blue">PointTemplates</span>
+<span class="vsc-deep-purple">{</span>
+    <span class="vsc-white">Scripts</span>
+    <span class="vsc-deep-blue">{</span>
+        <span class="vsc-blue">OnSpawnOutput</span>
+        <span class="vsc-deep-yellow">{</span>
+            <span class="vsc-lime">Target</span> <span class="vsc-white">bignet</span>
+            <span class="vsc-lime">Action</span> <span class="vsc-purple">RunScriptCode</span>
+            <span class="vsc-lime">Param</span>
+            <span class="vsc-orange">"IncludeScript(`tankextensions_main`)
+            IncludeScript(`tankextensions/combattank`)
+            IncludeScript(`tankextensions/combattank_weapons/minigun`)
+            IncludeScript(`tankextensions/combattank_weapons/rocketpod`)
+            IncludeScript(`tankextensions/tankdozer`)"</span>
+        <span class="vsc-deep-yellow">}</span>
+    <span class="vsc-deep-blue">}</span>
+<span class="vsc-deep-purple">}</span>
+<span class="vsc-blue">SpawnTemplate</span> <span class="vsc-white">Scripts</span></pre></div>
 			<p>Once the scripts are included, set the <code>Name</code> keyvalue of any tank in your popfile to one that the scripts provide.</p>
 			<div class="codeblock"><pre><span class="vsc-blue">Tank</span>
 <span class="vsc-deep-yellow">{</span>
@@ -176,7 +201,7 @@
     <span class="vsc-deep-purple">}</span>
 <span class="vsc-deep-yellow">}</span></pre></div>
 			<p style="color: var(--red); font-weight: bold;">All custom tanks and information on what can be put into the <code>Name</code> keyvalue are in the <a style="font-weight: bold; color: var(--blue);" href="#Tank_Types">Tank Types</a> section.</p>
-			<p>Other functionalities such as creating tank paths or setting tank icons can be found in the <a href="https://github.com/potato-tf/TankExtensions/blob/main/mvm_slick_v4a_tankextensions.pop">example popfile</a>. Tank names and script functions are listed further down the documentation. If you want to make a new tank type yourself then refer to the <a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/exampletank.nut">example tank script</a>.</p>
+			<p>Tank names and script functions are listed further down the documentation. If you want to make a new tank type yourself then refer to the <a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/exampletank.nut">example tank script</a>.</p>
 		</div>
 		<div class="info">
 			<div class="header" id="Usage_For_Mappers"><img class="center" alt="Usage For Mappers" src="images/usageformappers.png"></div>
@@ -185,20 +210,20 @@
 			<div class="codeblock"><pre><span class="vsc-green">// Example script file path "scripts/vscripts/mymapname.nut"
 // logic_script's "Entity Scripts" should be set to that new script's name ("mymapname")
 
-// This example loads the packed main script, two optional tank scripts, and two other scripts for one of the tanks
+// This nutfile example loads the packed main script, two optional tank scripts, and two other scripts for one of the tanks
 // You can include as many tank scripts as needed</span>
-<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_main_packed"</span><span class="vsc-white">,</span> getroottable<span class="vsc-deep-purple">()</span><span class="vsc-deep-yellow">)</span></span>
-<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/combattank"</span><span class="vsc-white">,</span> getroottable<span class="vsc-deep-purple">()</span><span class="vsc-deep-yellow">)</span></span>
-<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/combattank_weapons/minigun"</span><span class="vsc-white">,</span> getroottable<span class="vsc-deep-purple">()</span><span class="vsc-deep-yellow">)</span></span>
-<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/combattank_weapons/rocketpod"</span><span class="vsc-white">,</span> getroottable<span class="vsc-deep-purple">()</span><span class="vsc-deep-yellow">)</span></span>
-<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/tankdozer"</span><span class="vsc-white">,</span> getroottable<span class="vsc-deep-purple">()</span><span class="vsc-deep-yellow">)</span></span></pre></div>
+<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_main_packed"</span><span class="vsc-white"><span class="vsc-deep-yellow">)</span></span>
+<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/combattank"</span><span class="vsc-white"><span class="vsc-deep-yellow">)</span></span>
+<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/combattank_weapons/minigun"</span><span class="vsc-white"><span class="vsc-deep-yellow">)</span></span>
+<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/combattank_weapons/rocketpod"</span><span class="vsc-white"><span class="vsc-deep-yellow">)</span></span>
+<span class="vsc-light-yellow">IncludeScript<span class="vsc-deep-yellow">(</span><span class="vsc-orange">"tankextensions_packed/tankdozer"</span><span class="vsc-white"><span class="vsc-deep-yellow">)</span></span></pre></div>
 			<p>The people who write the missions will <b>not</b> have to use the <code>InitWaveOutput</code> block to load the tank scripts that are already loaded by the map's script file and just have to name their tank according to the loaded tank scripts.</p>
 			<p>For scripters working on the map, TankExtensions's custom functions will use a <code>TankExtPacked</code> prefix instead of <code>TankExt</code></p>
 		</div>
 		<div class="info">
 			<div class="header" id="Path_Maker"><img class="center" alt="Path Maker" src="images/pathmaker.png"></div>
 			<p>Path Maker allows for quickly creating paths without the need for going around the map using getpos or opening the hammer editor.</p>
-			<p>If tankextensions_main is loaded, Path Maker can be started using this command: <code>ent_fire !activator runscriptcode "TankExt.PathMaker(self)"</code>. Replace <code>ent_fire</code> with <code>sm_ent_fire</code> if on a testing.potato.tf server.</p>
+			<p>If tankextensions_main is loaded, Path Maker can be ran using this command: <code>ent_fire !activator runscriptcode "TankExt.PathMaker(self)"</code>. Replace <code>ent_fire</code> with <code>sm_ent_fire</code> if on a testing.potato.tf server.</p>
 			<div><img class="center" alt="Path Maker Models" src="images/pathmakermodels.png"></div>
 			<b style="color: var(--red)">Axis nodes</b> are your placed path nodes, if a node is highlighted yellow then that is the most recently placed node and can be deleted with the secondary fire. <b style="color: var(--red)">Blue guides</b> are path nodes that already exist in the map, their targetname will be shown above them and will point towards their next path node. The <b style="color: var(--red)">purple guide</b> is the best position for your last path node so tanks can be properly aligned while deploying. When you're finished placing all the path nodes you can print them with <b>TankExt</b>, <b>PopExt+</b>, or <b>Rafmod</b> formatting to console. Note that TankExtensions's CreatePaths function will merge the last node to a node in the map if they share the same position.
 		</div>
@@ -206,10 +231,10 @@
 			<div class="header" id="Tank_Types"><img class="center" alt="Tank Types" src="images/tanktypes.png"></div>
 			<p>The table below provides details on what can go into a tank's Name keyvalue. You should first know the following formatting required to modify the listed tank types.</p>
 			<img class="center" alt="A big tank name" src="images/mightbecomplicated.webp">
-			<p><b style="color: var(--red)">Tank Combiner</b> lets a single tank use multiple tank scripts at once. Separate the individual tank names with <code>^</code>. A tank script with a defined keyvalue such as its model will override the same keyvalue from any other tank script to its right (<code>painttank|255 127 0^redtank</code> will only use the painttank model and not the redtank model).</p>
+			<p><b style="color: var(--red)">Tank Combiner</b> lets a single tank use multiple tank scripts at once. Separate the individual tank names with <code>^</code>. A tank script with a defined keyvalue such as its model will override the same keyvalue from any other tank script to its right (<code>sentrytank^redtank</code> will only use the sentrytank model and not the redtank model).</p>
 			<p><b style="color: var(--red)">Suffixes</b> are optionally appended to the tank's name for different effects. <code>tankName</code> + <code>_suffix1</code> + <code>_suffix2</code> = <code>tankName_suffix1_suffix2</code>.
-			<p><b style="color: var(--red)">Parameters</b> are separated by <code>|</code> and can modify certain aspects of the tank type. A tank with 2 parameters can be written as <code>tankboss|parameter1|parameter2</code><br></p>
-			<p><b style="color: var(--red)">Quick Keyvalues</b> allow for making slight modifications on how a tank spawns. The start of a keyvalue list is denoted with <code>$</code>, the values of the keys are separated with <code>|</code>, and each keyvalue is separated with <code>^</code>.</p>
+			<p><b style="color: var(--red)">Parameters</b> are separated by <code>|</code> and can modify aspects of a tank type. Depending on the tank type, each parameter will either use names, values, or be entirely optional. A tank with 2 parameters can be written as <code>tankboss|parameter1|parameter2</code><br></p>
+			<p><b style="color: var(--red)">Quick Keyvalues</b> allow for making slight modifications to a tank, unrelated to a tank type. The start of a keyvalue list is denoted with <code>$</code>, the values of the keys are separated with <code>|</code>, and each keyvalue pair is separated with <code>^</code>. <code>tankName$targetname|tankboss^teamnum|2^scale|0.5</code> Results in a tank on red team named tankboss with a halved scale.</p>
 			<details>
 				<summary><b>List of Keyvalues</b></summary>
 				<table>
@@ -290,6 +315,12 @@
 						</td>
 					</tr>
 					<tr>
+						<td><code>targetname</code></td>
+						<td>
+							Sets the tank's name, purely for I/O targetting reasons. Tank Types and AddTankIcon will still use the tanks initial name for their logic.
+						</td>
+					</tr>
+					<tr>
 						<td><code>teamnum</code></td>
 						<td>
 							Sets the tank's team value. 2 is for red, 3 is for blue.
@@ -304,7 +335,7 @@
     <span class="vsc-lime">WaitForAllDead</span> <span class="vsc-orange">"w4b"</span>
     <span class="vsc-blue">FirstSpawnOutput</span>
     <span class="vsc-deep-yellow">{</span>
-        <span class="vsc-lime">Target</span> <span class="vsc-orange">"ubertank|-1|-1"</span>
+        <span class="vsc-lime">Target</span> <span class="vsc-orange">"ubertank|0|-1"</span>
         <span class="vsc-lime">Action</span> <span class="vsc-purple">CallScriptFunction</span>
         <span class="vsc-lime">Param</span> <span class="vsc-orange">"ToggleUber"</span>
     <span class="vsc-deep-yellow">}</span>
@@ -342,6 +373,7 @@
 					RemoveBannerConch
 				</td>
 				<td>
+					<p class="example">Example: <code>bannertank_backup_buff_conch</code> (Uses the effects of Battalion's Backup, Buff Banner, and Concheror)</p>
 					<p>Applies the selected banner effects to all teammates within a 540hu radius. The tank by default will also gain these same effects, you can disable them using the <code>_noselfeffect</code> suffix.</p>
 				</td>
 			</tr>
@@ -359,7 +391,8 @@
 				</td>
 				<td></td>
 				<td>
-					<p>Same as a normal tank but it traverses the sky. First parameter sets the color of the blimp, can be left blank to use team colors. The <code>_customparticles</code> suffix will emit particles from the blimp if the map is packed with the <a href="https://github.com/potato-tf/TankExtensions/blob/main/assets/blimp/particles/mvm_blimp.pcf">provided particle file</a>.</p>
+					<p class="example">Example: <code>blimp</code> (Uses team colors), <code>blimp|255 127 0</code> (Applies an orange color)</p>
+					<p>Same as a normal tank but it traverses the sky. First parameter sets the color of the blimp in RGB format, can be left blank to use team colors. The <code>_customparticles</code> suffix will emit particles from the blimp if the map is packed with the <a href="https://github.com/potato-tf/TankExtensions/blob/main/assets/blimp/particles/mvm_blimp.pcf">provided particle file</a>.</p>
 					<p class="credits">Blimp model by <a href="https://steamcommunity.com/profiles/76561198058809573">Glitch</a> and <a href="https://steamcommunity.com/profiles/76561198031708070">ZoraKirby</a><br>Particles by <a href="https://steamcommunity.com/profiles/76561198066916585">Cheesypuff</a></p>
 				</td>
 			</tr>
@@ -394,6 +427,7 @@
 					ToggleUber
 				</td>
 				<td>
+					<p class="example">Example: <code>combattank_bomb|minigun|rocketpod</code> (Can deploy a bomb, is equipped with a minigun on its right and rocketpod on its left)</p>
 					<p>Weaponized tank. This comes with its own script files for each weapon within <a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/">scripts/vscripts/tankextensions/combattank_weapons/</a>. Load those scripts like you would with tanks; the weapon names go into either of the tank's parameters.</p>
 					<table>
 						<tr>
@@ -477,6 +511,7 @@
 				</td>
 				<td></td>
 				<td>
+					<p class="example">Example: <code>frontlinecart_crit|grenade|rocket</code> (All projectiles crit, shoots grenades at short range and rockets at long range)</p>
 					<p>Small mobile turret that shoot a chosen projectile at 5 angles. Allows 2 parameters of: <code>rocket</code>, <code>grenade</code>, <code>jarate</code>, <code>milk</code>, <code>gas</code>. First parameter is the normal projectile type and the second parameter is the close range projectile type. The second parameter can be left blank to not switch to close ranged projectiles. The <code>_crit</code> suffix makes all projectiles crit.</p>
 					<p class="credits">Cart model from the <a href="https://frontline.tf2maps.net">Frontline Supply Drop</a></p>
 				</td>
@@ -496,6 +531,7 @@
 				</td>
 				<td></td>
 				<td>
+					<p class="example">Example: <code>gatetank|path_10|path_17|path_24|path_30|path_35</code> (Will make stops at 5 path nodes and capture its closest gate)</p>
 					<p>Allows the tank to capture gates when it reaches the specified path names. There can be as many parameters as needed and the inputted path names will find a gate trigger that is closest to the path_track.</p>
 					<p class="credits">Tank model by <a href="https://steamcommunity.com/profiles/76561198072146551">Diva Dan</a></p>
 				</td>
@@ -529,6 +565,7 @@
 				</td>
 				<td></td>
 				<td>
+					<p class="example">Example: <code>helicopter</code> (Uses team colors), <code>helicopter_crit|255 255 255</code> (All projectiles crit and the model is applied with a white color)</p>
 					<p>Traverses the sky (like a blimp), aims and shoots rockets at enemies (like a combattank), shoots a burst of stickies at enemies (like a stickytank), and can deploy the bomb (like a tank). The <code>_crit</code> suffix makes all projectiles crit and the <code>_customparticles</code> suffix will use fancy particle effects if the map is packed with the <a href="https://github.com/potato-tf/TankExtensions/blob/main/assets/helicopter/particles/mvm_helicopter.pcf">provided particle file</a>.</p>
 					<p class="credits">Inspired by <a href="https://steamcommunity.com/profiles/76561198835403557">Royal</a>'s <a href="https://wiki.teamfortress.com/wiki/Operation_Galvanized_Gauntlet">Dover 2</a> mission<br>Helicopter model by <a href="https://steamcommunity.com/profiles/76561198058809573">Glitch</a>, <a href="https://steamcommunity.com/profiles/76561198031708070">ZoraKirby</a>, and canpake<br>Particles by <a href="https://steamcommunity.com/profiles/76561198066916585">Cheesypuff</a></p>
 				</td>
@@ -560,7 +597,8 @@
 				</td>
 				<td></td>
 				<td>
-					<p>A tank model that allows for more colors much like adding paints for hats. First parameter is the color. (i.e. <code>"painttank|255 127 0"</code> results in an orange tank)</p>
+					<p class="example">Example: <code>painttank|255 127 0</code> (Applies an orange color)</p>
+					<p>A tank model that allows for more colors much like adding paints for hats. First parameter is the color of the tank in RGB format.</p>
 					<p class="credits">Tank model by <a href="https://steamcommunity.com/profiles/76561198036209556">CTriggerHurt</a></p>
 				</td>
 			</tr>
@@ -604,6 +642,7 @@
 				</td>
 				<td></td>
 				<td>
+					<p class="example">Example: <code>scaletank|0.3</code> (Scales to 0.3x its normal size at low health)</p>
 					<p>Tank will resize itself as its health gets lower. First parameter is the resulting scale when at low health.</p>
 				</td>
 			</tr>
@@ -633,6 +672,7 @@
 				</td>
 				<td></td>
 				<td>
+					<p class="example">Example: <code>speedtank|200</code> (Moves at 200 hu/s at low health)</p>
 					<p>Tank will alter its speed as its health gets lower. First parameter is the resulting speed when at low health.</p>
 					<p class="credits">Tank model and particles by <a href="https://steamcommunity.com/profiles/76561198072146551">Diva Dan</a></p>
 				</td>
@@ -711,15 +751,17 @@
 					ToggleUber
 				</td>
 				<td>
+					<p class="example">Example: <code>ubertank|5|8</code> (Ubers 5s after spawning, uber lasts 8s), <code>ubertank|-1|-1</code> (Will not automatically uber, infinite duration)</p>
 					<p>Has the ability to become invulnerable for a defined amount of time. First parameter is the amount of time after spawning until the tank becomes ubered and the second parameter is the duration of the uber. Setting either parameter to -1 will disable that parameter's functionality. <code>ToggleUber</code> flips the uber state, if a duration is set then it will automatically toggle back off after the given time.</p>
 					<p class="credits">Tank model by <a href="https://steamcommunity.com/profiles/76561198300633951">lite</a></p>
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/vactank.webp"></img></td>
+				<td><img class="tankicon" src="images/tanktypes/vactank.webp"></img><img class="tankicon" src="images/tanktypes/vacblimp.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/vactank.nut">vactank.nut</a></td>
 				<td>
-					<code>vactank</code>
+					<code>vactank</code><br>
+					<code>vacblimp</code>
 				</td>
 				<td>
 					<code>_bullet</code><br>
@@ -729,8 +771,9 @@
 				<td></td>
 				<td></td>
 				<td>
-					<p>Adds any combination of the Vaccinator's uber effects to the tank. Adding a suffix will resist the chosen damage type.</p>
-					<p class="credits">Vaccinator bubble model by <a href="https://steamcommunity.com/profiles/76561198054722423">Tumby</a> and <a href="https://steamcommunity.com/profiles/76561198020560509">Izotope</a></p>
+					<p class="example">Example: <code>vactank_bullet_blast_fire</code></p>
+					<p>Adds any combination of the Vaccinator's uber effects to the tank. Appending <code>_bullet</code>, <code>_blast</code>, or <code>_fire</code> will resist the chosen damage types. <code>vacblimp</code> will use the blimp version of the model, intended to be combined with the blimp. (<code>blimp^vacblimp_bullet_blast_fire</code>)</p>
+					<p class="credits">Vaccinator Tank bubble model by <a href="https://steamcommunity.com/profiles/76561198054722423">Tumby</a><br>Vaccinator Blimp bubble model by <a href="https://steamcommunity.com/profiles/76561198300633951">lite</a></p>
 				</td>
 			</tr>
 		</table>
