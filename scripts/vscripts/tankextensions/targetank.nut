@@ -36,17 +36,18 @@ TankExt.PrecacheSound(TARGETANK_SND_CHARGE)
 TankExt.NewTankType("targetank", {
 	function OnSpawn()
 	{
+		local flModelScale = self.GetModelScale()
 		local hTargeModel = SpawnEntityFromTableSafe("prop_dynamic", {
 			model      = TARGETANK_MODEL_TARGE
-			origin     = "90 28 84"
-			angles     = "-29.3 194.9 76.8"
-			modelscale = 2.5
+			origin     = Vector(90, 28, 84) * flModelScale
+			angles     = QAngle(-29.3, 194.9, 76.8)
+			modelscale = 2.5 * pow(flModelScale, 0.5)
 			skin       = 1
 		})
 		local hTrail = SpawnEntityFromTableSafe("env_spritetrail", {
-			origin     = "-72 0 96"
+			origin     = Vector(-72, 0, 96) * flModelScale
 			spritename = self.GetTeam() == TF_TEAM_BLUE ? "effects/beam001_blu.vmt" : "effects/beam001_red.vmt"
-			startwidth = 128
+			startwidth = 128 * flModelScale
 			endwidth   = 1
 			lifetime   = 1
 		})
@@ -129,10 +130,11 @@ TankExt.NewTankType("targetank", {
 				foreach(hTrack in hTracks)
 					hTrack.SetPlaybackRate(flTankSpeed / 80.0)
 
-				local angRotation = self.GetAbsAngles()
-				local Players = []
+				local flModelScale = self.GetModelScale()
+				local vecImpact    = vecOrigin + RotatePosition(Vector(), angRotation, Vector(130, 0, 32) * flModelScale)
+				local Players      = []
 				if(flTankSpeed > TARGETANK_CHARGE_SPEED * 0.75)
-					for(local hPlayer; hPlayer = FindByClassnameWithin(hPlayer, "player", self.GetOrigin() + RotatePosition(Vector(), angRotation, Vector(130, 0, 32)), 80);)
+					for(local hPlayer; hPlayer = FindByClassnameWithin(hPlayer, "player", vecImpact, 80 * flModelScale);)
 					{
 						if(hPlayer.IsAlive() && hPlayer.GetTeam() != self.GetTeam())
 						{

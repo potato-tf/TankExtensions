@@ -125,6 +125,7 @@ TankExt.NewTankType("combattank*", {
 					hWeapon.SetSkin(bBlueTeam ? 1 : 0)
 					TankExt.SetParentArray([hWeapon], self, i == 1 ? "weapon_r" : "weapon_l")
 				}
+				hWeapon.SetModelScale(self.GetModelScale(), 0)
 
 				if("OnSpawn" in WeaponTable)
 				{

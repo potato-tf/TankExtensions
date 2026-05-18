@@ -38,7 +38,7 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 			splashradius  = COMBATTANK_ROCKETPOD_ROCKET_SPLASH
 			weapontype    = 0
 		})
-		TankExtPacked.SetParentArray([hWeapon], self, "barrel_1")
+		TankExtPacked.SetParentArray([hWeapon], self)
 		local flTimeNext = 0.0
 		local iSlots     = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 		local bReloading = false
@@ -66,11 +66,18 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 				local iBarrel = iSlots[iRNG]
 				iSlots.remove(iRNG)
 
+				local flModelScale = hTank.GetModelScale()
 				// SetPropInt(hWeapon, "m_iParentAttachment", iBarrel) // this is slower
 				hWeapon.SetAbsOrigin(self.GetAttachmentOrigin(iBarrel))
+				hWeapon.SetLocalOrigin(hWeapon.GetLocalOrigin() * (1.0 / flModelScale))
 				hWeapon.AcceptInput("FireOnce", null, null, null)
 
-				DispatchParticleEffect("rocketbackblast", self.GetAttachmentOrigin(iBarrel + 9), self.GetAttachmentAngles(iBarrel + 9).Forward())
+				local vecBackBlast = self.GetAttachmentOrigin(iBarrel + 9)
+				local vecOrigin = self.GetOrigin()
+				vecBackBlast -= vecOrigin
+				vecBackBlast *= flModelScale
+				vecBackBlast += vecOrigin
+				DispatchParticleEffect("rocketbackblast", vecBackBlast, self.GetAttachmentAngles(iBarrel + 9).Forward())
 				hTank_scope.AddToSoundQueue({
 					sound_name  = COMBATTANK_ROCKETPOD_SND_FIRE
 					sound_level = 90

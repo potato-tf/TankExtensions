@@ -1,5 +1,6 @@
 local COMBATTANK_VALUES_TABLE = {
 	COMBATTANK_RAILGUN_SND_CHARGE           = ")misc/doomsday_cap_close_quick.wav"
+	COMBATTANK_RAILGUN_SND_CHARGE2          = ")misc/doomsday_cap_down.wav"
 	COMBATTANK_RAILGUN_SND_FIRE1            = ")weapons/shooting_star_shoot_charged.wav"
 	COMBATTANK_RAILGUN_SND_FIRE2            = ")weapons/sniper_railgun_charged_shot_crit_01.wav"
 	COMBATTANK_RAILGUN_SND_COOL_START       = ")misc/doomsday_cap_close_start.wav"
@@ -19,6 +20,7 @@ foreach(k,v in COMBATTANK_VALUES_TABLE)
 PrecacheModel(COMBATTANK_RAILGUN_MODEL)
 PrecacheModel(COMBATTANK_RAILGUN_MODEL_CASING)
 TankExtPacked.PrecacheSound(COMBATTANK_RAILGUN_SND_CHARGE)
+TankExtPacked.PrecacheSound(COMBATTANK_RAILGUN_SND_CHARGE2)
 TankExtPacked.PrecacheSound(COMBATTANK_RAILGUN_SND_FIRE1)
 TankExtPacked.PrecacheSound(COMBATTANK_RAILGUN_SND_FIRE2)
 TankExtPacked.PrecacheSound(COMBATTANK_RAILGUN_SND_COOL_START)
@@ -42,9 +44,10 @@ TankExtPacked.CombatTankWeapons["railgun"] <- {
 		local iClip         = COMBATTANK_RAILGUN_CLIP_SIZE
 		local bCharging     = false
 
+		local iBarrel = self.LookupAttachment("barrel")
 		local hCasingShooter = SpawnEntityFromTableSafe("env_shooter", {
-			origin           = Vector(-188, 5, 0)
-			angles           = QAngle(0, 90, 0)
+			// origin           = Vector(-188, 5, 0)
+			angles           = QAngle(180, 90, 0)
 			shootmodel       = COMBATTANK_RAILGUN_MODEL_CASING
 			m_flGibLife      = 5
 			m_flVariance     = 0.15
@@ -55,7 +58,7 @@ TankExtPacked.CombatTankWeapons["railgun"] <- {
 			spawnflags       = 5
 			gibanglevelocity = 10
 		})
-		TankExtPacked.SetParentArray([hCasingShooter], self, "barrel")
+		TankExtPacked.SetParentArray([hCasingShooter], self)
 
 		local iLaserColor = hTank_scope.hBeam.IsValid() ? GetPropInt(hTank_scope.hBeam, "m_clrRender") : 0
 		function SetLaserColor(sColor)
@@ -104,7 +107,14 @@ TankExtPacked.CombatTankWeapons["railgun"] <- {
 			}
 
 			local vecTracer = hTank_scope.LaserTrace.endpos
-			local vecBarrel = self.GetAttachmentOrigin(self.LookupAttachment("barrel"))
+
+			local flModelScale = hTank.GetModelScale()
+			local vecOrigin    = self.GetOrigin()
+			local vecBarrel    = self.GetAttachmentOrigin(self.LookupAttachment("barrel"))
+			vecBarrel -= vecOrigin
+			vecBarrel *= flModelScale
+			vecBarrel += vecOrigin
+
 			local bBlueTeam = iTeamNum == TF_TEAM_BLUE
 
 			local hParticle = SpawnEntityFromTableSafe("info_particle_system", {
@@ -166,7 +176,12 @@ TankExtPacked.CombatTankWeapons["railgun"] <- {
 			hBeamShock.GetScriptScope().BeamFXThink <- BeamFXThink
 			AddThinkToEnt(hBeamShock, "BeamFXThink")
 			SetPropVector(hCasingShooter, "m_angGibRotation", TankExtPacked.VectorAngles(hCasingShooter.GetRightVector()) + Vector())
-			EntFireByHandle(hCasingShooter, "Shoot", null, 0.1, null, null)
+			TankExtPacked.DelayFunction(self, this, 0.1, function()
+			{
+				hCasingShooter.SetAbsOrigin(self.GetAttachmentOrigin(iBarrel))
+				hCasingShooter.SetLocalOrigin(hCasingShooter.GetLocalOrigin() * (1.0 / flModelScale) + Vector(-186, -5, 0))
+				hCasingShooter.AcceptInput("Shoot", null, null, null)
+			})
 		}
 		function CombatTankWeaponThink()
 		{
@@ -184,6 +199,12 @@ TankExtPacked.CombatTankWeapons["railgun"] <- {
 				bCharging = true
 				hTank_scope.AddToSoundQueue({
 					sound_name  = COMBATTANK_RAILGUN_SND_CHARGE
+					sound_level = 100
+					entity      = hTank
+					filter_type = RECIPIENT_FILTER_GLOBAL
+				})
+				hTank_scope.AddToSoundQueue({
+					sound_name  = COMBATTANK_RAILGUN_SND_CHARGE2
 					sound_level = 100
 					entity      = hTank
 					filter_type = RECIPIENT_FILTER_GLOBAL

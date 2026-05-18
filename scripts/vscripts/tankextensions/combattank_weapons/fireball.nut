@@ -122,7 +122,7 @@ TankExt.CombatTankWeapons["fireball"] <- {
 			local flTime       = Time()
 			local bEnemyInCone = hTank_scope.flAngleDot >= cos(COMBATTANK_FIREBALL_CONE_RADIUS * DEG2RAD)
 
-			local GetEffectBarProgress = function(bUpper)
+			local function GetEffectBarProgress(bUpper)
 			{
 				local flRechargeTime = bUpper ? flUpperRechargeTime : flLowerRechargeTime
 				if(flTime < flRechargeTime)
@@ -138,7 +138,7 @@ TankExt.CombatTankWeapons["fireball"] <- {
 			self.SetPoseParameter(iPoseChargeLower, flProgressLower)
 			self.SetPoseParameter(iPoseReloadLower, 1 - flProgressLower)
 
-			local ShootAtTarget = function(vecOrigin)
+			local function ShootAtTarget(vecOrigin)
 			{
 				local vecDirection = hTank_scope.vecTarget - vecOrigin
 				vecDirection.Norm()
@@ -185,7 +185,14 @@ TankExt.CombatTankWeapons["fireball"] <- {
 			{
 				local flDelta = flTime + COMBATTANK_FIREBALL_RECHARGE_TIME
 				bUseUpper ? flUpperRechargeTime = flDelta : flLowerRechargeTime = flDelta
-				ShootAtTarget(self.GetAttachmentOrigin(bUseUpper ? iAttachmentUpper : iAttachmentLower))
+
+				local vecOrigin = self.GetOrigin()
+				local vecBarrel = self.GetAttachmentOrigin(bUseUpper ? iAttachmentUpper : iAttachmentLower)
+				vecBarrel -= vecOrigin
+				vecBarrel *= hTank.GetModelScale()
+				vecBarrel += vecOrigin
+				ShootAtTarget(vecBarrel)
+
 				bUseUpper = bUseUpper ? false : true
 				hTank_scope.AddToSoundQueue({
 					sound_name  = COMBATTANK_FIREBALL_SND_FIRE
