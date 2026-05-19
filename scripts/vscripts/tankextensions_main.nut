@@ -395,6 +395,8 @@ local UNOFFICIAL_CONSTANTS = {
 	SF_TRIGGER_ONLY_CLIENTS_IN_VEHICLES = 32
 	SF_TRIGGER_ALLOW_ALL                = 64
 
+	TF_ROCKET_RADIUS = 146
+
 	// damagefilter redefinitions
 	DMG_USE_HITLOCATIONS                    = DMG_AIRBOAT
 	DMG_HALF_FALLOFF                        = DMG_RADIATION

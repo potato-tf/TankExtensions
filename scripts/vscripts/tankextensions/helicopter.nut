@@ -5,7 +5,6 @@ local HELICOPTER_VALUES_TABLE = {
 
 	HELICOPTER_ROCKET_SND_FIRE        = "MVM.GiantSoldierRocketShoot"
 	HELICOPTER_ROCKET_SND_FIRE_CRIT   = "MVM.GiantSoldierRocketShootCrit"
-	HELICOPTER_ROCKET_SPLASH          = 146
 	HELICOPTER_ROCKET_SPEED           = 600
 	HELICOPTER_ROCKET_DAMAGE          = 75
 	HELICOPTER_ROCKET_MODEL           = "models/weapons/w_models/w_rocket.mdl"
@@ -97,7 +96,6 @@ TankExt.NewTankType("helicopter*", {
 			modelscale    = 1
 			speedmin      = HELICOPTER_ROCKET_SPEED
 			speedmax      = HELICOPTER_ROCKET_SPEED
-			splashradius  = HELICOPTER_ROCKET_SPLASH
 			weapontype    = 0
 		})
 		local StickyKeyValues = {

@@ -1,6 +1,5 @@
 local COMBATTANK_VALUES_TABLE = {
 	COMBATTANK_ROCKETPOD_SND_FIRE              = "MVM.GiantSoldierRocketShoot"
-	COMBATTANK_ROCKETPOD_ROCKET_SPLASH         = 146
 	COMBATTANK_ROCKETPOD_ROCKET_SPEED          = 900
 	COMBATTANK_ROCKETPOD_ROCKET_DAMAGE         = 90
 	COMBATTANK_ROCKETPOD_ROCKET                = "models/bots/boss_bot/combat_tank_mk2/mk2_rocket_dumbfire.mdl"
@@ -29,13 +28,11 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 	function OnSpawn()
 	{
 		local hWeapon = SpawnEntityFromTableSafe("tf_point_weapon_mimic", {
-			angles        = QAngle(0, -2, 0)
 			damage        = COMBATTANK_ROCKETPOD_ROCKET_DAMAGE
 			modeloverride = COMBATTANK_ROCKETPOD_ROCKET
 			modelscale    = 1
 			speedmax      = COMBATTANK_ROCKETPOD_ROCKET_SPEED
 			speedmin      = COMBATTANK_ROCKETPOD_ROCKET_SPEED
-			splashradius  = COMBATTANK_ROCKETPOD_ROCKET_SPLASH
 			weapontype    = 0
 		})
 		TankExtPacked.SetParentArray([hWeapon], self)
@@ -44,6 +41,21 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 		local bReloading = false
 		local bClosed    = true
 		bHoming <- false
+
+		local function FixMisalignedAttachmentOrigin(vecAttachment, vecOrigin, flModelScale = null)
+		{
+			if(!flModelScale)
+				flModelScale = hTank.GetModelScale()
+
+			if(flModelScale == 1.0)
+				return vecAttachment
+
+			vecAttachment -= vecOrigin
+			vecAttachment *= flModelScale
+			vecAttachment += vecOrigin
+
+			return vecAttachment
+		}
 
 		function CombatTankWeaponThink()
 		{
@@ -62,21 +74,18 @@ TankExtPacked.CombatTankWeapons["rocketpod"] <- {
 				}
 
 				flTimeNext = flTime + COMBATTANK_ROCKETPOD_FIRE_DELAY
-				local iRNG = RandomInt(0, iSlots.len() - 1)
+				local iRNG    = RandomInt(0, iSlots.len() - 1)
 				local iBarrel = iSlots[iRNG]
 				iSlots.remove(iRNG)
 
+				local vecOrigin    = self.GetOrigin()
 				local flModelScale = hTank.GetModelScale()
 				// SetPropInt(hWeapon, "m_iParentAttachment", iBarrel) // this is slower
-				hWeapon.SetAbsOrigin(self.GetAttachmentOrigin(iBarrel))
-				hWeapon.SetLocalOrigin(hWeapon.GetLocalOrigin() * (1.0 / flModelScale))
+				hWeapon.SetAbsOrigin(FixMisalignedAttachmentOrigin(self.GetAttachmentOrigin(iBarrel), vecOrigin, flModelScale))
+				hWeapon.SetAbsAngles(TankExtPacked.VectorAngles(hTank_scope.LaserTrace.endpos - FixMisalignedAttachmentOrigin(self.GetAttachmentOrigin(5), vecOrigin, flModelScale)))
 				hWeapon.AcceptInput("FireOnce", null, null, null)
 
-				local vecBackBlast = self.GetAttachmentOrigin(iBarrel + 9)
-				local vecOrigin = self.GetOrigin()
-				vecBackBlast -= vecOrigin
-				vecBackBlast *= flModelScale
-				vecBackBlast += vecOrigin
+				local vecBackBlast = FixMisalignedAttachmentOrigin(self.GetAttachmentOrigin(iBarrel + 9), vecOrigin, flModelScale)
 				DispatchParticleEffect("rocketbackblast", vecBackBlast, self.GetAttachmentAngles(iBarrel + 9).Forward())
 				hTank_scope.AddToSoundQueue({
 					sound_name  = COMBATTANK_ROCKETPOD_SND_FIRE

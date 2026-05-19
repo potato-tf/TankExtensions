@@ -59,18 +59,21 @@ TankExtPacked.NewTankType("combattank*", {
 			SoundQueue[Table.sound_name] <- Table
 		}
 
-		local angCurrent    = QAngle()
-		local angGoalIdle   = QAngle()
-		local angGoal       = QAngle()
+		local angGoalIdle = QAngle()
+		angCurrent <- QAngle()
+		angGoal    <- QAngle()
+
 		local hTargetLast   = null
 		local flRotateSpeed = COMBATTANK_ROTATE_SPEED_DEFAULT
 		local iLaser        = self.LookupAttachment("laser_origin")
-		vecMount   <- null
-		vecTarget  <- null
-		hTarget    <- null
-		flDist     <- COMBATTANK_MAX_RANGE
-		flAngleDot <- -1
+		vecMountOffset <- Vector(0, 0, 55)
+		vecMount       <- null
+		vecTarget      <- null
+		hTarget        <- null
+		flDist         <- COMBATTANK_MAX_RANGE
+		flAngleDot     <- -1
 
+		bAimAtFeet  <- false
 		LaserTrace <- {}
 
 		EmitSoundEx({
@@ -89,14 +92,15 @@ TankExtPacked.NewTankType("combattank*", {
 		if(sParams[0].find("_red")) self.SetTeam(TF_TEAM_RED) // legacy, can append $teamnum|2 to the tank name instead
 		self.SetBodygroup(self.FindBodygroupByName("bomb"), sParams[0].find("_bomb") ? 0 : 1)
 
-		hBeam    <- null
-		hBeamEnd <- null
 		local bBlueTeam  = self.GetTeam() == TF_TEAM_BLUE
 		local bFinalSkin = self.GetSkin() == 1
+
+		hBeam    <- null
+		hBeamEnd <- null
 		if(sParams[0].find("_nolaser") == null)
 		{
-			hBeam = SpawnEntityFromTableSafe("env_beam", { lightningstart = "bignet", lightningend = "bignet", boltwidth = 0.75, texture = "sprites/laserbeam.vmt", rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
-			hBeamEnd = SpawnEntityFromTableSafe("env_sprite", { model = "sprites/glow1.vmt", rendermode = 5, rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
+			hBeam    = SpawnEntityFromTableSafe("env_beam", { lightningstart = "bignet", lightningend = "bignet", boltwidth = 0.75, texture = "sprites/laserbeam.vmt", rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
+			hBeamEnd = SpawnEntityFromTableSafe("env_glow", { model = "sprites/glow1.vmt", rendermode = 5, rendercolor = bBlueTeam ? "20 70 120" : "135 10 10" })
 			SetPropEntityArray(hBeam, "m_hAttachEntity", hBeam, 0)
 			SetPropEntityArray(hBeam, "m_hAttachEntity", hBeamEnd, 1)
 		}
@@ -106,23 +110,26 @@ TankExtPacked.NewTankType("combattank*", {
 			RightTrack = COMBATTANK_TRACK_R_RED
 		})
 		self.SetSkin(bBlueTeam ? bFinalSkin ? 3 : 2 : bFinalSkin ? 1 : 0)
+		local bHasTurretReplacement = false
 		for(local i = 1; i <= 2; i++)
 			if(sParams[i] in TankExtPacked.CombatTankWeapons)
 			{
 				local WeaponTable = TankExtPacked.CombatTankWeapons[sParams[i]]
 				local hWeapon
 
+				local bTurretReplacement = "TurretReplacement" in WeaponTable && WeaponTable.TurretReplacement
+
 				if("Model" in WeaponTable)
 				{
 					hWeapon = SpawnEntityFromTableSafe("prop_dynamic", { model = WeaponTable.Model, angles = "0 90 0", defaultanim = ("DefaultAnim" in WeaponTable) ? WeaponTable.DefaultAnim : "" })
 					hWeapon.SetSkin(bBlueTeam ? 1 : 0)
-					TankExtPacked.SetParentArray([hWeapon], self, i == 1 ? "weapon_r" : "weapon_l")
+					TankExtPacked.SetParentArray([hWeapon], self, bTurretReplacement ? "turret" : i == 1 ? "weapon_r" : "weapon_l")
 				}
 				else if("SpawnModel" in WeaponTable)
 				{
 					hWeapon = WeaponTable.SpawnModel()
 					hWeapon.SetSkin(bBlueTeam ? 1 : 0)
-					TankExtPacked.SetParentArray([hWeapon], self, i == 1 ? "weapon_r" : "weapon_l")
+					TankExtPacked.SetParentArray([hWeapon], self, bTurretReplacement ? "turret" : i == 1 ? "weapon_r" : "weapon_l")
 				}
 				hWeapon.SetModelScale(self.GetModelScale(), 0)
 
@@ -137,8 +144,25 @@ TankExtPacked.NewTankType("combattank*", {
 
 				if("OnDeath" in WeaponTable)
 					TankExtPacked.SetDestroyCallback(hWeapon, WeaponTable.OnDeath)
+
+				if(bTurretReplacement)
+				{
+					if(i > 1)
+						ClientPrint(null, HUD_PRINTTALK, format("\x07FFFF00CombatTank weapon \"%s\" does not support additional weapons", sParams[i]))
+
+					self.SetBodygroup(self.FindBodygroupByName("turret"), 1)
+					self.SetBodygroup(self.FindBodygroupByName("turret_radio"), 1)
+					bHasTurretReplacement = true
+					break
+				}
 			}
-			else ClientPrint(null, HUD_PRINTTALK, format("\x07FFFF00CombatTank weapon \"%s\" does not exist, weapon is not loaded or does not exist", sParams[i]))
+			else ClientPrint(null, HUD_PRINTTALK, format("\x07FFFF00CombatTank weapon \"%s\" is invalid, weapon is not loaded or does not exist", sParams[i]))
+
+		if(bHasTurretReplacement && hBeam)
+		{
+			hBeam    = hBeam.Kill()
+			hBeamEnd = hBeamEnd.Kill()
+		}
 
 		local hTrackL, hTrackR
 		for(local hChild = self.FirstMoveChild(); hChild; hChild = hChild.NextMovePeer())
@@ -210,7 +234,7 @@ TankExtPacked.NewTankType("combattank*", {
 		local CombatScope = this
 		self.GetScriptScope().ToggleUber <- @() CombatScope.ToggleUber()
 
-		// bLock <- false
+		local iAttachTurret = self.LookupAttachment("turret")
 		function Think()
 		{
 			foreach(sSound, Table in SoundQueue)
@@ -224,64 +248,71 @@ TankExtPacked.NewTankType("combattank*", {
 				foreach(hEnt, iSkin in LastSkins) if(hEnt.IsValid()) hEnt.AcceptInput("Color", sColor, null, null)
 			}
 
-			vecMount = self.GetAttachmentOrigin(self.LookupAttachment("weapon_l"))
-			// if(!bLock)
-			// {
-				hTarget   = null
-				vecTarget = null
-				flDist    = COMBATTANK_MAX_RANGE
+			local vecMountOffsetScaled = vecMountOffset * self.GetModelScale()
+			local angTurretAngles      = self.GetAttachmentAngles(iAttachTurret)
+			vecMount  = self.GetAttachmentOrigin(iAttachTurret) + angTurretAngles.Forward() * vecMountOffsetScaled.x + angTurretAngles.Up() * vecMountOffsetScaled.z
+			hTarget   = null
+			vecTarget = null
+			flDist    = COMBATTANK_MAX_RANGE
 
-				local hForceTarget = FindByNameNearest("combattank_target", vecMount, flDist)
-				if(hForceTarget)
+			local hForceTarget = FindByNameNearest("combattank_target", vecMount, flDist)
+			if(hForceTarget)
+			{
+				local vecEntCenter = hForceTarget.GetCenter()
+				hTarget   = hForceTarget
+				vecTarget = vecEntCenter
+				flDist    = (vecEntCenter - vecMount).Length()
+			}
+			else foreach(sClassname in [ "player", "obj_sentrygun", "obj_dispenser", "obj_teleporter", "tank_boss", "merasmus", "headless_hatman", "eyeball_boss", "tf_zombie" ])
+			{
+				for(local hEnt; hEnt = FindByClassnameWithin(hEnt, sClassname, vecMount, flDist);)
 				{
-					local vecEntCenter = hForceTarget.GetCenter()
-					hTarget   = hForceTarget
-					vecTarget = vecEntCenter
-					flDist    = (vecEntCenter - vecMount).Length()
-				}
-				else foreach(sClassname in [ "player", "obj_sentrygun", "obj_dispenser", "obj_teleporter", "tank_boss", "merasmus", "headless_hatman", "eyeball_boss", "tf_zombie" ])
-				{
-					for(local hEnt; hEnt = FindByClassnameWithin(hEnt, sClassname, vecMount, flDist);)
-					{
-						local vecEntCenter = hEnt.GetCenter()
-						local bHasEyes     = "EyePosition" in hEnt
-						local vecEntEye    = bHasEyes ? hEnt.EyePosition() : vecEntCenter
+					local vecEnt       = bAimAtFeet ? hEnt.GetOrigin() : null
+					local vecEntCenter = hEnt.GetCenter()
+					local bHasEyes     = "EyePosition" in hEnt
+					local vecEntEye    = bHasEyes ? hEnt.EyePosition() : vecEntCenter
 
-						local Trace = {
-							start  = vecMount
-							end    = vecEntCenter
-							mask   = MASK_SHOT_HULL | CONTENTS_GRATE
-							ignore = self
-							enthit = null
-						}
-						TraceLineEx(Trace)
-						local bCenterTrace = Trace.enthit == hEnt
-						local bEyeTrace    = bCenterTrace
-						if(bHasEyes)
-						{
-							Trace.end = vecEntEye
-							TraceLineEx(Trace)
-							bEyeTrace = Trace.enthit == hEnt
-						}
-
-						if
-						(
-							bEyeTrace &&
-							hEnt.IsAlive() &&
-							hEnt.GetTeam() != iTeamNum &&
-							!(hEnt.GetFlags() & FL_NOTARGET) &&
-							!TankExtPacked.IsPlayerStealthedOrDisguised(hEnt)
-						)
-						{
-							hTarget   = hEnt
-							vecTarget = bCenterTrace ? vecEntCenter : vecEntEye
-							flDist    = (vecEntCenter - vecMount).Length()
-						}
+					local Trace = {
+						start  = vecMount
+						end    = bAimAtFeet ? vecEnt : vecEntCenter
+						mask   = MASK_SHOT_HULL | CONTENTS_GRATE
+						ignore = self
+						enthit = null
 					}
-					if(hTarget) break
+					TraceLineEx(Trace)
+					local bFeetTrace = false
+					if(bAimAtFeet)
+					{
+						bFeetTrace = hEnt.GetFlags() & FL_ONGROUND && Trace.enthit == hEnt
+
+						Trace.end = vecEntCenter
+						TraceLineEx(Trace)
+					}
+					local bCenterTrace = Trace.enthit == hEnt
+					local bEyeTrace    = bCenterTrace
+					if(bHasEyes)
+					{
+						Trace.end = vecEntEye
+						TraceLineEx(Trace)
+						bEyeTrace = Trace.enthit == hEnt
+					}
+
+					if
+					(
+						bEyeTrace &&
+						hEnt.IsAlive() &&
+						hEnt.GetTeam() != iTeamNum &&
+						!(hEnt.GetFlags() & FL_NOTARGET) &&
+						!TankExtPacked.IsPlayerStealthedOrDisguised(hEnt)
+					)
+					{
+						hTarget   = hEnt
+						vecTarget = bAimAtFeet && bFeetTrace ? vecEnt : bCenterTrace ? vecEntCenter : vecEntEye
+						flDist    = (vecEntCenter - vecMount).Length()
+					}
 				}
-			// }
-			// if(hTarget && !hTarget.IsValid()) hTarget = null
+				if(hTarget) break
+			}
 
 			if(hTarget != hTargetLast)
 			{
@@ -304,22 +335,23 @@ TankExtPacked.NewTankType("combattank*", {
 				}
 			}
 
-			local vecLaser = self.GetAttachmentOrigin(iLaser)
 			LaserTrace = {
-				start  = vecLaser
-				end    = vecLaser + RotatePosition(Vector(), angRotation, (angCurrent * -1).Forward()) * 8192
+				start  = vecMount
+				end    = vecMount + RotatePosition(Vector(), angRotation, (angCurrent * -1).Forward()) * 8192
 				ignore = self
 				mask   = MASK_SHOT_HULL
 			}
 			TraceLineEx(LaserTrace)
 
-			local bBeam    = hBeam && hBeam.IsValid()
-			local bBeamEnd = hBeamEnd && hBeamEnd.IsValid()
 			if(hTarget)
 			{
-				flRotateSpeed = COMBATTANK_ROTATE_SPEED_DEFAULT
-				local angToTarget = TankExtPacked.VectorAngles(RotatePosition(Vector(), angRotation * -1, vecTarget - vecMount))
+				// oddly cannot use one RotatePosition as the vector breaks when the tank is angled in two axis of rotation, have to use two RotatePosition
+				local vecTowardsTarget = vecTarget - vecMount
+				vecTowardsTarget = RotatePosition(Vector(), QAngle(0, angRotation.y * -1, 0), vecTowardsTarget)
+				vecTowardsTarget = RotatePosition(Vector(), QAngle(angRotation.x * -1, 0, 0), vecTowardsTarget)
+				local angToTarget = TankExtPacked.VectorAngles(vecTowardsTarget)
 
+				flRotateSpeed = COMBATTANK_ROTATE_SPEED_DEFAULT
 				angToTarget.y = 360.0 - angToTarget.y
 				angToTarget.x = -TankExtPacked.Clamp(angToTarget.x - (angToTarget.x > 180 ? 360 : 0), -55, 35)
 				angGoal = angToTarget
@@ -328,12 +360,12 @@ TankExtPacked.NewTankType("combattank*", {
 					LaserTrace.end = vecTarget
 					TraceLineEx(LaserTrace)
 				}
-				if(bBeam)
+				if(hBeam)
 				{
-					hBeam.SetAbsOrigin(vecLaser)
+					hBeam.SetAbsOrigin(self.GetAttachmentOrigin(iLaser))
 					hBeam.AcceptInput("TurnOn", null, null, null)
 				}
-				if(bBeamEnd)
+				if(hBeamEnd)
 				{
 					hBeamEnd.SetAbsOrigin(LaserTrace.endpos)
 					hBeamEnd.AcceptInput("ShowSprite", null, null, null)
@@ -341,8 +373,8 @@ TankExtPacked.NewTankType("combattank*", {
 			}
 			else
 			{
-				if(bBeam) hBeam.AcceptInput("TurnOff", null, null, null)
-				if(bBeamEnd) hBeamEnd.AcceptInput("HideSprite", null, null, null)
+				if(hBeam) hBeam.AcceptInput("TurnOff", null, null, null)
+				if(hBeamEnd) hBeamEnd.AcceptInput("HideSprite", null, null, null)
 				if(angCurrent.x == angGoal.x && angCurrent.y == angGoal.y)
 				{
 					flRotateSpeed = COMBATTANK_ROTATE_SPEED_DEFAULT * 0.5
@@ -350,7 +382,6 @@ TankExtPacked.NewTankType("combattank*", {
 					angGoal.y = angGoal.y < 180 ? 315 : 45
 				}
 			}
-
 
 			////////// RotateMount //////////
 

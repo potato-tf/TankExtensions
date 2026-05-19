@@ -60,12 +60,12 @@ TankExt.CombatTankWeapons["railgun"] <- {
 		})
 		TankExt.SetParentArray([hCasingShooter], self)
 
-		local iLaserColor = hTank_scope.hBeam.IsValid() ? GetPropInt(hTank_scope.hBeam, "m_clrRender") : 0
+		local iLaserColor = hTank_scope.hBeam ? GetPropInt(hTank_scope.hBeam, "m_clrRender") : 0
 		function SetLaserColor(sColor)
 		{
-			if(hTank_scope.hBeam.IsValid())
+			if(hTank_scope.hBeam)
 				sColor ? hTank_scope.hBeam.AcceptInput("Color", sColor, null, null) : SetPropInt(hTank_scope.hBeam, "m_clrRender", iLaserColor)
-			if(hTank_scope.hBeamEnd.IsValid())
+			if(hTank_scope.hBeamEnd)
 				sColor ? hTank_scope.hBeamEnd.AcceptInput("Color", sColor, null, null) : SetPropInt(hTank_scope.hBeamEnd, "m_clrRender", iLaserColor)
 		}
 		function Shoot()

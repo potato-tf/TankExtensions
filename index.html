@@ -11,8 +11,9 @@
 				--accent-4: #9aa5ce;
 				--accent-5: #c0caf5;
 
-				--blue: #7aa2f7;
-				--red: #dc5760;
+				--blue:        #7aa2f7;
+				--blue-border: #45567c;
+				--red:         #dc5760;
 
 				--radius-normal: 8px
 			}
@@ -60,8 +61,19 @@
 				margin-top: 5px;
 				margin-bottom: 5px;
 			}
-			summary, summary b {
-				color: var(--blue);
+			summary {
+				background: var(--blue);
+				color: var(--accent-2);
+				font-weight: bold;
+				width: fit-content;
+				border: 2px solid var(--blue-border);
+				border-radius: var(--radius-normal);
+				padding: 2px;
+				cursor: pointer;
+			}
+			details[open] summary {
+				border-bottom-left-radius: 0px;
+				border-bottom-right-radius: 0px;
 			}
 			a:link {
 				color: var(--blue);
@@ -236,7 +248,7 @@
 			<p><b style="color: var(--red)">Parameters</b> are separated by <code>|</code> and can modify aspects of a tank type. Depending on the tank type, each parameter will either use names, values, or be entirely optional. A tank with 2 parameters can be written as <code>tankboss|parameter1|parameter2</code><br></p>
 			<p><b style="color: var(--red)">Quick Keyvalues</b> allow for making slight modifications to a tank, unrelated to a tank type. The start of a keyvalue list is denoted with <code>$</code>, the values of the keys are separated with <code>|</code>, and each keyvalue pair is separated with <code>^</code>. <code>tankName$targetname|tankboss^teamnum|2^scale|0.5</code> Results in a tank on red team named tankboss with a halved scale.</p>
 			<details>
-				<summary><b>List of Keyvalues</b></summary>
+				<summary>List of Keyvalues</summary>
 				<table>
 					<tr>
 						<th>Keyvalue</th>
@@ -427,30 +439,43 @@
 					ToggleUber
 				</td>
 				<td>
-					<p class="example">Example: <code>combattank_bomb|minigun|rocketpod</code> (Can deploy a bomb, is equipped with a minigun on its right and rocketpod on its left)</p>
+					<p class="example">Example: <code>combattank_bomb|minigun|rocketpod</code> (Can deploy a bomb, is equipped with a minigun on its right and rocketpod on its left))</p>
 					<p>Weaponized tank. This comes with its own script files for each weapon within <a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/">scripts/vscripts/tankextensions/combattank_weapons/</a>. Load those scripts like you would with tanks; the weapon names go into either of the tank's parameters.</p>
-					<table>
-						<tr>
-							<th>Script File</th>
-							<th>Weapon Names</th>
-						</tr>
-						<tr>
-							<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/fireball.nut">fireball.nut</a></td>
-							<td>fireball</td>
-						</tr>
-						<tr>
-							<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/minigun.nut">minigun.nut</a></td>
-							<td>minigun</td>
-						</tr>
-						<tr>
-							<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/railgun.nut">railgun.nut</a></td>
-							<td>railgun</td>
-						</tr>
-						<tr>
-							<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/rocketpod.nut">rocketpod.nut</a></td>
-							<td>rocketpod<br>rocketpod_homing</td>
-						</tr>
-					</table>
+					<details>
+						<summary>List of CombatTank Weapons</summary>
+						<table>
+							<tr>
+								<th>Script File</th>
+								<th>Weapon Names</th>
+								<th style="width: 50%;">Description</th>
+							</tr>
+							<tr>
+								<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/fireball.nut">fireball.nut</a></td>
+								<td><code>fireball</code></td>
+								<td>Shoots Dragon's Fury fireballs at double the fire rate.</td>
+							</tr>
+							<tr>
+								<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/minigun.nut">minigun.nut</a></td>
+								<td><code>minigun</code></td>
+								<td>Behaves similarly to a Giant Heavy with a minigun.</td>
+							</tr>
+							<tr>
+								<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/railgun.nut">railgun.nut</a></td>
+								<td><code>railgun</code></td>
+								<td>Charges up a slow burst of 3 high damage headshots before going on a 8s cooldown.</td>
+							</tr>
+							<tr>
+								<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/rocketpod.nut">rocketpod.nut</a></td>
+								<td><code>rocketpod</code><br><code>rocketpod_homing</code></td>
+								<td>Behaves similarly to a Giant Burst Fire Soldier. <code>rocketpod_homing</code> uses homing rockets.</td>
+							</tr>
+							<tr>
+								<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/cannon.nut">cannon.nut</a></td>
+								<td><code>cannon</code></td>
+								<td><b>Note: Cannot use additional weapons.</b><br>Shoots a very high damage rocket that travels at very high speeds every 3s.</td>
+							</tr>
+						</table>
+					</details>
 					<p>This tank has an optional bomb attachment, by default the tank will not spawn with a bomb mechanism for use with looping paths. The <code>_bomb</code> suffix will add a bomb mechanism if desired. The <code>_nolaser</code> suffix hides the laser beam permanently. <code>ToggleUber</code> makes the tank invulnerable until the function is called again.</p>
 					<p class="credits">Tank and weapon models by <a href="https://steamcommunity.com/profiles/76561198070293827">Charlie</a></p>
 				</td>
