@@ -440,6 +440,10 @@ if("TankExtPacked" in ROOT)
 	if(TankExtPacked.hThinkEnt.IsValid()) TankExtPacked.hThinkEnt.Kill()
 }
 
+local hWorld = First()
+hWorld.ValidateScriptScope()
+local hWorld_scope = hWorld.GetScriptScope()
+
 local hGameRules = FindByClassname(null, "tf_gamerules")
 local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 ::TankExtPacked <- {
@@ -1401,15 +1405,15 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	function DelayFunction(hTarget, Scope, flDelay, func)
 	{
 		local sFuncName = UniqueString()
-		hThinkEnt.GetScriptScope()[sFuncName] <- function()
+		hWorld_scope[sFuncName] <- function()
 		{
-			delete this[sFuncName]
+			delete hWorld_scope[sFuncName]
 			if(!hTarget)
 				func.call(Scope || ROOT)
 			else if(hTarget.IsValid())
 				func.call(Scope || { self = hTarget })
 		}
-		EntFireByHandle(hThinkEnt, "CallScriptFunction", sFuncName, flDelay, null, null)
+		EntFireByHandle(hWorld, "CallScriptFunction", sFuncName, flDelay, null, null)
 		ClearStringFromPool(sFuncName)
 	}
 	function GetMultiScopeTable(Scope, sName)
