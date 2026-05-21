@@ -1,6 +1,7 @@
 local JUMPTANK_VALUES_TABLE = {
-	JUMPTANK_JUMP_COOLDOWN      = 8
-	JUMPTANK_USE_SPECIAL_DEPLOY = false
+	JUMPTANK_JUMP_COOLDOWN        = 8
+	JUMPTANK_USE_SPECIAL_DEPLOY   = false
+	JUMPTANK_SPECIAL_DEPLOY_RELAY = "boss_deploy_relay"
 }
 foreach(k,v in JUMPTANK_VALUES_TABLE)
 	if(!(k in TankExt.ValueOverrides))
@@ -12,31 +13,49 @@ TankExt.PrecacheSound(")player/fall_damage_indicator.wav")
 TankExt.PrecacheSound(")weapons/rocket_pack_boosters_fire.wav")
 TankExt.PrecacheSound(")weapons/rocket_pack_boosters_charge.wav")
 
+::JumpTankEvents <- {
+	function OnGameEvent_recalculate_holidays(_) { if(GetRoundState() == 3) delete ::JumpTankEvents }
+	function OnScriptHook_OnTakeDamage(params)
+	{
+		local hVictim   = params.const_entity
+		local hAttacker = params.attacker
+		if(hVictim && GetPropInt(hVictim, "m_takedamage") == DAMAGE_YES && hAttacker && hAttacker.GetClassname() == "tank_boss")
+		{
+			local JumpScope = TankExt.GetMultiScopeTable(hAttacker.GetScriptScope(), "jumptank")
+			if(JumpScope && JumpScope.bFalling)
+			{
+				params.damage_stats = TF_DMG_CUSTOM_BOOTS_STOMP
+
+				hAttacker.EmitSound("Weapon_Mantreads.Impact")
+				hAttacker.EmitSound("Player.FallDamageDealt")
+			}
+		}
+	}
+}
+__CollectGameEventCallbacks(JumpTankEvents)
+
 TankExt.NewTankType("jumptank", {
+	UseCustomLocomotion = 1
+	UseBetterTracks     = 1
 	function OnSpawn()
 	{
-		local hTracks = []
-		for(local hChild = self.FirstMoveChild(); hChild != null; hChild = hChild.NextMovePeer())
-			if(hChild.GetModelName().find("track_"))
-				hTracks.append(hChild)
-
 		local hParticle = SpawnEntityFromTableSafe("info_particle_system", {
-			origin      = "0 0 64"
-			angles      = "-90 0 0"
+			origin      = Vector(0, 0, 64)
+			angles      = QAngle(-90, 0, 0)
 			effect_name = "rockettrail_burst_doomsday"
 		})
 		TankExt.SetParentArray([hParticle], self)
 
-		local ValidPlayers    = []
-		local vecFakeVelocity = Vector()
-		local vecFakeOrigin   = Vector()
-		local flTimeNext      = Time() + JUMPTANK_JUMP_COOLDOWN
-		local flGravity       = Convars.GetInt("sv_gravity")
-		local bPreparing      = false
-		local bJumping        = false
-		local bFalling        = false
+		local angFakeRotation  = QAngle()
+		local flStepHeightLast = 0
+		local flTimeNext       = Time() + JUMPTANK_JUMP_COOLDOWN
+		local bPreparing       = false
+		local bJumping         = false
 
-		local JumpScope = this
+		bFalling <- false
+
+		local JumpScope   = this
+		local hTank_scope = self.GetScriptScope()
 		local function Jump()
 		{
 			if(bPreparing) return
@@ -60,16 +79,12 @@ TankExt.NewTankType("jumptank", {
 				})
 				TankExt.DelayFunction(self, JumpScope, 0.75, function()
 				{
-					local vecOrigin = self.GetOrigin()
-					bJumping        = true
-					vecFakeOrigin   = vecOrigin
-					vecFakeVelocity = (!bDeploying ? self.GetForwardVector() * GetPropFloat(self, "m_speed") : Vector()) + Vector(0, 0, 1024) * pow(Trace.fraction, 0.65)
-					ValidPlayers.clear()
-					for(local i = 1; i <= MAX_CLIENTS; i++)
-					{
-						local hPlayer = PlayerInstanceFromIndex(i)
-						if(hPlayer && hPlayer.IsAlive()) ValidPlayers.append(hPlayer)
-					}
+					bJumping                  = true
+					hTank_scope.vecVelocity.z = 1024 * pow(Trace.fraction, 0.65)
+					flStepHeightLast          = self.GetLocomotionInterface().GetStepHeight()
+					angFakeRotation           = self.GetAbsAngles()
+					self.AcceptInput("SetStepHeight", "0", null, null)
+
 					EmitSoundEx({
 						sound_name  = ")weapons/rocket_pack_boosters_fire.wav"
 						pitch       = 85
@@ -82,7 +97,7 @@ TankExt.NewTankType("jumptank", {
 				})
 			}
 		}
-		self.GetScriptScope().Jump <- Jump
+		hTank_scope.Jump <- Jump
 
 		function Think()
 		{
@@ -93,26 +108,27 @@ TankExt.NewTankType("jumptank", {
 				{
 					if(!("flSpin" in this)) flSpin <- 0
 					local flUpCenter = 88.1 * self.GetModelScale()
-					local vecCenter  = vecOrigin + self.GetUpVector() * flUpCenter
-					self.SetAbsAngles(self.GetAbsAngles() + QAngle((flSpin += 0.015) * 16))
-					vecFakeOrigin += vecCenter - (vecOrigin + self.GetUpVector() * flUpCenter)
+					local vecCenter  = vecOrigin + angFakeRotation.Up() * flUpCenter
+					self.SetAbsAngles(angFakeRotation += QAngle((flSpin += 0.015) * 16))
+					self.SetAbsOrigin(vecOrigin + vecCenter - (vecOrigin + angFakeRotation.Up() * flUpCenter))
+					vecOrigin = vecCenter
 				}
 
-				local flFrameTime   = FrameTime()
-				local vecNextOrigin = vecFakeOrigin + vecFakeVelocity * flFrameTime
+				local flFrameTime = FrameTime()
 				local Trace = {
-					start      = vecFakeOrigin
-					end        = vecNextOrigin
+					start      = vecOrigin
+					end        = vecOrigin + hTank_scope.vecVelocity * flFrameTime * 2
 					mask       = CONTENTS_SOLID // tf_tank_boss_body GetSolidMask
 					startsolid = false
 				}
 				TraceLineEx(Trace)
-				local vecNormal = Trace.plane_normal
 				if(!Trace.startsolid && Trace.hit)
+				{
+					local vecNormal = Trace.plane_normal
 					if(TankExt.NormalizeAngle(TankExt.VectorAngles(vecNormal).x) > -45)
 					{
-						vecFakeVelocity -= (vecNormal * vecFakeVelocity.Dot(vecNormal) * 2)
-						vecNextOrigin = Trace.endpos + vecFakeVelocity * flFrameTime
+						hTank_scope.vecVelocity -= (vecNormal * hTank_scope.vecVelocity.Dot(vecNormal) * 2)
+						self.SetAbsOrigin(Trace.endpos)
 						local sSound = format(")physics/metal/metal_canister_impact_hard%i.wav", RandomInt(1, 3))
 						TankExt.PrecacheSound(sSound)
 						EmitSoundEx({
@@ -128,18 +144,18 @@ TankExt.NewTankType("jumptank", {
 						bPreparing = false
 						bJumping   = false
 						bFalling   = false
-						self.SetAbsOrigin(Trace.endpos)
+						self.AcceptInput("SetStepHeight", format("%f", flStepHeightLast), null, null)
 
 						if(bDeploying && JUMPTANK_USE_SPECIAL_DEPLOY)
 						{
 							SpawnEntityFromTableSafe("info_particle_system", {
 								origin       = vecOrigin
-								angles       = "-90 0 0"
+								angles       = QAngle(-90, 0, 0)
 								effect_name  = "fireSmoke_collumnP"
 								start_active = 1
 							})
 							self.AcceptInput("RemoveHealth", format("%i", iMaxHealth), null, null)
-							EntFire("boss_deploy_relay", "Trigger")
+							EntFire(JUMPTANK_SPECIAL_DEPLOY_RELAY, "Trigger")
 							return
 						}
 
@@ -180,12 +196,11 @@ TankExt.NewTankType("jumptank", {
 							filter_type = RECIPIENT_FILTER_GLOBAL
 						})
 					}
+				}
 
 				if(bJumping)
 				{
-					self.GetLocomotionInterface().Reset()
-					self.SetAbsOrigin(vecFakeOrigin = vecNextOrigin)
-					if(!bFalling && vecFakeVelocity.z <= -200)
+					if(!bFalling && hTank_scope.vecVelocity.z <= -200)
 					{
 						bFalling = true
 						EmitSoundEx({
@@ -195,26 +210,6 @@ TankExt.NewTankType("jumptank", {
 							filter_type = RECIPIENT_FILTER_GLOBAL
 						})
 					}
-					vecFakeVelocity.z -= flGravity * flFrameTime
-
-					local vecMins  = self.GetBoundingMins()
-					local vecMaxs  = self.GetBoundingMaxs()
-					local vecCheck = vecOrigin
-					vecCheck.z = vecNextOrigin.z - (bFalling ? 24 : 0)
-					local vecDisplace = Vector(0, 0, vecFakeVelocity.z * FrameTime() + 1)
-					foreach(hPlayer in ValidPlayers)
-						if(hPlayer.IsValid() && hPlayer.IsAlive())
-						{
-							local vecPlayer = hPlayer.GetOrigin()
-							if(TankExt.IntersectionBoxBox(vecCheck, vecMins, vecMaxs, vecPlayer, hPlayer.GetPlayerMins(), hPlayer.GetPlayerMaxs()))
-								if(bFalling && hPlayer.GetTeam() != iTeamNum)
-								{
-									hPlayer.TakeDamageCustom(self, self, null, Vector(), Vector(), hPlayer.GetHealth(), DMG_CRUSH, TF_DMG_CUSTOM_BOOTS_STOMP)
-									self.EmitSound("Weapon_Mantreads.Impact")
-									self.EmitSound("Player.FallDamageDealt")
-								}
-								else hPlayer.SetAbsOrigin(vecPlayer + vecDisplace)
-						}
 				}
 			}
 		}
@@ -224,8 +219,9 @@ TankExt.NewTankType("jumptank", {
 			if(JUMPTANK_USE_SPECIAL_DEPLOY) TankExt.DelayFunction(self, this, 3.5, Jump)
 			else if(bJumping)
 			{
-				vecFakeVelocity.x = 0
-				vecFakeVelocity.y = 0
+				local vecVelocity = self.GetScriptScope().vecVelocity
+				vecVelocity.x = 0
+				vecVelocity.y = 0
 			}
 		}
 	}

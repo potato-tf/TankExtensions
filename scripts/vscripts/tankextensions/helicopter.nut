@@ -49,14 +49,14 @@ PrecacheSound("doors/door_squeek1.wav")
 PrecacheSound("items/ammocrate_close.wav")
 
 TankExt.NewTankType("helicopter*", {
-	DisableChildModels = 1
-	DisableSmokestack  = 1
-	NoScreenShake      = 1
-	EngineLoopSound    = "misc/null.wav"
-	PingSound          = "misc/null.wav"
-	NoDestructionModel = 1
-	NoGravity          = 1
-	Model              = {
+	DisableChildModels  = 1
+	DisableSmokestack   = 1
+	NoScreenShake       = 1
+	EngineLoopSound     = "misc/null.wav"
+	PingSound           = "misc/null.wav"
+	NoDestructionModel  = 1
+	UseCustomLocomotion = 1
+	Model = {
 		Visual = "models/empty.mdl"
 	}
 	function OnSpawn()
@@ -140,9 +140,6 @@ TankExt.NewTankType("helicopter*", {
 		local flSpeed = GetPropFloat(self, "m_speed")
 		SetPropFloat(self, "m_speed", 0.0)
 
-		local hTank_scope = self.GetScriptScope()
-		hTank_scope.bNoGravity = false
-
 		local vecOrigin = self.GetOrigin()
 		local Trace = {
 			start  = vecOrigin
@@ -192,6 +189,8 @@ TankExt.NewTankType("helicopter*", {
 		local iRotorTailPose = hModel.LookupPoseParameter("rotor_spin_tail")
 		local iRotorMainDeg  = 0
 		local iRotorTailDeg  = 0
+
+		local hTank_scope = self.GetScriptScope()
 		function Think()
 		{
 			hModel.StudioFrameAdvance()
@@ -240,7 +239,7 @@ TankExt.NewTankType("helicopter*", {
 					bLaunched = true
 					hHurt.AcceptInput("Enable", null, null, null)
 					SetPropFloat(self, "m_speed", flSpeed)
-					hTank_scope.bNoGravity = true
+					hTank_scope.flGravity = 0
 
 					local angRotation = self.GetAbsAngles()
 					angCurrent   = angRotation

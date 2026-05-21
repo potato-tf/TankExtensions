@@ -1,4 +1,4 @@
-// Last Updated : 6:16PM PST May 19 2026
+// Last Updated : 12:03AM PST May 21 2026
 
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
@@ -737,22 +737,27 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 				local ParamName = Params[0].tolower()
 				local ValidKeyValues = {
-					"Color"                  : null
-					"DisableBomb"            : "tointeger"
-					"DisableChildModels"     : "tointeger"
-					"DisableOutline"         : "tointeger"
-					"DisableSmokestack"      : "tointeger"
-					"DisableTracks"          : "tointeger"
-					"EngineLoopSound"        : null
-					"Model"                  : null
-					"NoDestructionModel"     : "tointeger"
-					"NoGravity"              : "tointeger"
-					"NoScreenShake"          : "tointeger"
-					"PingSound"              : null
-					"ReplaceModelCollisions" : "tointeger"
-					"Scale"                  : "tofloat"
-					"TargetName"             : null
-					"TeamNum"                : "tointeger"
+					Color                  = null
+					DisableBomb            = "tointeger"
+					DisableChildModels     = "tointeger"
+					DisableOutline         = "tointeger"
+					DisableSmokestack      = "tointeger"
+					DisableTracks          = "tointeger"
+					EngineLoopSound        = null
+					Gravity                = "tofloat"
+					MaxStepHeight          = "tofloat"
+					MaxTurnRate            = "tofloat"
+					Model                  = null
+					NoDestructionModel     = "tointeger"
+					NoGravity              = "tointeger"
+					NoScreenShake          = "tointeger"
+					PingSound              = null
+					ReplaceModelCollisions = "tointeger"
+					Scale                  = "tofloat"
+					TargetName             = null
+					TeamNum                = "tointeger"
+					UseBetterTracks        = "tointeger"
+					UseCustomLocomotion    = "tointeger"
 				}
 				foreach(sName, sType in ValidKeyValues)
 					if(sName.tolower() == ParamName)
@@ -1017,72 +1022,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			})
 		}
 
-		if(Check("NoGravity") && TankTable.NoGravity)
-		{
-			Add("NoGravity")
-			hTank.SetAbsAngles(QAngle(0, hTank.GetAbsAngles().y, 0))
-			local vecFakeOrigin = hTank.GetOrigin()
-			local hGoal         = TankExt.GetNextPath(hPath)
-			local Players       = []
-
-			for(local i = 1; i <= MAX_CLIENTS; i++)
-			{
-				local hPlayer = PlayerInstanceFromIndex(i)
-				if(hPlayer) Players.append(hPlayer)
-			}
-
-			hTank.AcceptInput("SetStepHeight", "18", null, null)
-			hTank_scope.bNoGravity <- true
-			hTank_scope.NoGravityThink <- function()
-			{
-				if(bNoGravity)
-				{
-					if(hGoal && hGoal.IsValid())
-					{
-						local vecGoal      = hGoal.GetOrigin()
-						local flDistSqr    = (vecFakeOrigin - vecGoal).LengthSqr()
-						local flSpeedDelta = GetPropFloat(self, "m_speed") * FrameTime()
-						if(flSpeedDelta < 0) flSpeedDelta = 0
-						local vecDifference = vecFakeOrigin
-						if(flDistSqr < flSpeedDelta * flSpeedDelta)
-						{
-							vecFakeOrigin = vecGoal
-							hGoal         = TankExt.GetNextPath(hGoal)
-						}
-						else
-						{
-							local vecDirection = vecGoal - vecFakeOrigin
-							vecDirection.Norm()
-							vecDirection *= flSpeedDelta
-							vecFakeOrigin += vecDirection
-						}
-
-						vecDifference -= vecFakeOrigin
-						vecDifference *= -1
-						local vecMins = self.GetBoundingMins()
-						local vecMaxs = self.GetBoundingMaxs()
-						foreach(hPlayer in Players)
-							if(hPlayer.IsValid() && hPlayer.IsAlive())
-							{
-								local vecPlayer = hPlayer.GetOrigin()
-								if(TankExt.IntersectionBoxBox(vecFakeOrigin, vecMins, vecMaxs, vecPlayer, hPlayer.GetPlayerMins(), hPlayer.GetPlayerMaxs()))
-									hPlayer.SetAbsOrigin(vecPlayer + (hPlayer.GetFlags() & FL_ONGROUND ? Vector(0, 0, vecDifference.z + 0.01) : vecDifference))
-							}
-					}
-					self.SetAbsOrigin(vecFakeOrigin)
-					self.GetLocomotionInterface().Reset()
-				}
-				else if(hGoal)
-				{
-					vecFakeOrigin = self.GetOrigin()
-					if((vecFakeOrigin - hGoal.GetOrigin()).Length2D() < 20.0)
-						hGoal = TankExt.GetNextPath(hGoal)
-				}
-				self.AcceptInput("SetStepHeight", bNoGravity || !(self.GetFlags() & FL_ONGROUND) ? "18" : "100", null, null)
-			}
-			TankExt.AddThinkToEnt(hTank, "NoGravityThink")
-		}
-
 		if(Check("ReplaceModelCollisions") && TankTable.ReplaceModelCollisions)
 		{
 			Add("ReplaceModelCollisions")
@@ -1091,6 +1030,390 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 		if(Check("TargetName"))
 			SetPropString(hTank, "m_iName", TankTable.TargetName), Add("TargetName")
+
+		if(Check("NoGravity") && TankTable.NoGravity) // legacy
+		{
+			Add("NoGravity")
+
+			if(!("Gravity" in hTank_scope.UsedKeyValues) && !("Gravity" in TankTable))
+				TankTable.Gravity <- 0
+
+			local bNoGravityLast = true
+			hTank_scope.bNoGravity <- bNoGravityLast
+			hTank_scope.NoGravityLegacyThink <- function()
+			{
+				if(bNoGravity != bNoGravityLast)
+				{
+					bNoGravityLast = bNoGravity
+					flGravity      = bNoGravity ? 0 : 1000.0
+				}
+			}
+			TankExt.AddThinkToEnt(hTank, "NoGravityLegacyThink")
+		}
+
+		if(Check("Gravity"))
+		{
+			Add("Gravity")
+			hTank_scope.flGravity <- TankTable.Gravity
+
+			if(!("UseCustomLocomotion" in hTank_scope.UsedKeyValues) && !("UseCustomLocomotion" in TankTable))
+				TankTable.UseCustomLocomotion <- 1
+		}
+
+		if(Check("MaxTurnRate"))
+		{
+			Add("MaxTurnRate")
+			hTank_scope.flTurnRate <- TankTable.MaxTurnRate
+
+			if(!("UseCustomLocomotion" in hTank_scope.UsedKeyValues) && !("UseCustomLocomotion" in TankTable))
+				TankTable.UseCustomLocomotion <- 1
+		}
+
+		if(Check("MaxStepHeight"))
+			hTank.AcceptInput("SetStepHeight", format("%f", TankTable.MaxStepHeight), null, null), Add("MaxStepHeight")
+
+		if(Check("UseCustomLocomotion") && TankTable.UseCustomLocomotion)
+		{
+			Add("UseCustomLocomotion")
+
+			if(!("flGravity" in hTank_scope))
+				hTank_scope.flGravity <- 1000.0
+			local flGravityLast = hTank_scope.flGravity
+
+			if(!("flTurnRate" in hTank_scope))
+				hTank_scope.flTurnRate <- -1
+
+			hTank_scope.vecVelocity <- Vector()
+			hTank_scope.bOnGround   <- false
+
+			local iSolidMask        = TankTable.UseCustomLocomotion == 2 ? MASK_SOLID_BRUSHONLY : CONTENTS_SOLID
+			local flSpeedDefault    = Convars.GetFloat("tf_base_boss_speed")
+			local flTurnRateDefault = Convars.GetFloat("tf_base_boss_max_turn_rate")
+
+			local hGoal           = TankExt.GetNextPath(hPath)
+			local Locomotion      = hTank.GetLocomotionInterface()
+			local vecRotation     = hTank.GetLocalAngles()
+			local vecApproachLast = Vector()
+			local vecGroundNorm   = Vector(0, 0, 1.0)
+			hTank.AcceptInput("Disable", null, null, null) // this input is actually awesome
+
+			local function AngleDiff(flGoalAngle, flCurrentAngle)
+			{
+				local flDelta = flGoalAngle - flCurrentAngle % 360.0
+				if ( flGoalAngle > flCurrentAngle )
+				{
+					if ( flDelta >= 180 )
+						flDelta -= 360;
+				}
+				else
+				{
+					if ( flDelta <= -180 )
+						flDelta += 360;
+				}
+				return flDelta
+			}
+
+			hTank_scope.CustomLocomotionThink <- function()
+			{
+				self.StudioFrameAdvance()
+
+				local bNoGravity = flGravity == 0
+
+				local vecOrigin = self.GetOrigin()
+				local flDelta   = Locomotion.GetUpdateInterval()
+				local flSpeed   = GetPropFloat(self, "m_speed")
+
+				local vecApproach = Vector()
+				if(hGoal)
+				{
+					local vecGoal = hGoal.GetOrigin()
+					vecApproach = vecGoal - vecOrigin
+					local flRange = bNoGravity ? vecApproach.Length() : vecApproach.Length2D()
+					if(flRange <= flSpeed * flDelta)
+					{
+						flSpeed     = 0
+						vecOrigin.x = vecGoal.x
+						vecOrigin.y = vecGoal.y
+						if(bNoGravity) vecOrigin.z = vecGoal.z
+						hGoal = TankExt.GetNextPath(hGoal)
+					}
+
+					if(hGoal)
+					{
+						// FaceTowards //
+						local flTurnRateDelta = (flTurnRate >= 0 ? flTurnRate : flSpeed / flSpeedDefault * flTurnRateDefault) * flDelta
+
+						local flYawGoal = TankExt.VectorAngles(vecApproach).y
+						local flYawDiff = AngleDiff(flYawGoal, vecRotation.y)
+
+						if(flYawDiff < -flTurnRateDelta)
+							vecRotation.y -= flTurnRateDelta
+						else if(flYawDiff > flTurnRateDelta)
+							vecRotation.y += flTurnRateDelta
+						else
+							vecRotation.y += flYawDiff
+
+						local vecRight    = vecRotation.Left()
+						local vecForward  = vecRight.Cross(vecGroundNorm)
+						local flPitchGoal = TankExt.VectorAngles(vecForward).x
+						local flPitchDiff = AngleDiff(flPitchGoal, vecRotation.x)
+
+						if(flPitchDiff < -flTurnRateDelta)
+							vecRotation.x -= flTurnRateDelta
+						else if(flPitchDiff > flTurnRateDelta)
+							vecRotation.x += flTurnRateDelta
+						else
+							vecRotation.x += flPitchDiff
+
+						self.SetLocalAngles(vecRotation)
+						/////////////////
+
+						// UpdateCollisionBounds //
+						// letting the original tank code handle that, may be 1 tick off
+						///////////////////////////
+					}
+				}
+
+				// Approach //
+				vecVelocity -= vecApproachLast
+				if(flGravity != flGravityLast)
+				{
+					if(flGravity == 0)
+					{
+						bOnGround     = false
+						vecVelocity   = Vector()
+						vecGroundNorm = Vector(0, 0, 1.0)
+					}
+					else if(flGravityLast == 0)
+					{
+						vecVelocity   += vecApproachLast
+						vecVelocity.z -= flGravity * flDelta
+					}
+
+					flGravityLast = flGravity
+				}
+
+				if(vecApproach.LengthSqr() != 0)
+				{
+					vecApproach.Norm()
+					if(!bNoGravity)
+					{
+						local vecLeft = Vector(-vecApproach.y, vecApproach.x, 0.0)
+						vecApproach = vecLeft.Cross(vecGroundNorm)
+						vecApproach.Norm()
+					}
+					vecApproach *= flSpeed
+					DebugDrawLine(vecOrigin, vecOrigin + vecApproach, 255, 0, 0, true, 0.03)
+				}
+
+				if(bOnGround || bNoGravity)
+				{
+					vecOrigin += vecApproach * flDelta
+					vecApproachLast = vecApproach
+				}
+				else
+					vecApproachLast = Vector()
+
+				if(!bNoGravity)
+				{
+					if(bOnGround && vecVelocity.z > 0.0)
+					{
+						bOnGround = false
+						vecVelocity += vecApproach
+					}
+
+					if(!bOnGround)
+						vecVelocity.z -= flGravity * flDelta
+
+					if(vecVelocity.z <= 0.0)
+					{
+						local flStepHeight = Locomotion.GetStepHeight()
+						local flArbitrary  = 13.0
+						local GroundTrace = {
+							start      = vecOrigin + Vector(0, 0, flStepHeight + 0.001)
+							end        = vecOrigin + Vector(0, 0, -flStepHeight - 0.01)
+							hullmin    = Vector(-flArbitrary, -flArbitrary, 0)
+							hullmax    = Vector(flArbitrary, flArbitrary, flStepHeight)
+							mask       = iSolidMask
+							startsolid = false
+						}
+						TraceHull(GroundTrace)
+						DebugDrawLine(GroundTrace.start, GroundTrace.endpos, 255, 255, 0, true, 0.03)
+
+						if(!GroundTrace.startsolid)
+							if(GroundTrace.fraction < 1.0)
+							{
+								vecGroundNorm = GroundTrace.plane_normal
+								local flVelocityNorm = vecGroundNorm.Dot(vecVelocity)
+								vecVelocity -= vecGroundNorm * flVelocityNorm
+								vecOrigin = GroundTrace.endpos
+
+								SetPropEntity(self, "m_hGroundEntity", GroundTrace.enthit)
+
+								if(!bOnGround)
+								{
+									bOnGround   = true
+									vecVelocity = Vector()
+								}
+							}
+							else if(bOnGround)
+							{
+								bOnGround     = false
+								vecGroundNorm = Vector(0, 0, 1.0)
+								vecVelocity   += vecApproach
+								vecVelocity.z -= flGravity * flDelta
+							}
+					}
+				}
+
+				self.SetAbsOrigin(vecOrigin += vecVelocity * flDelta)
+				vecVelocity += vecApproachLast
+				//////////////
+
+				// ResolvePlayerCollisions //
+				local vecMins       = self.GetBoundingMins()
+				local vecMaxs       = self.GetBoundingMaxs()
+				local vecMinsGlobal = vecOrigin + vecMins
+				local vecMaxsGlobal = vecOrigin + vecMaxs
+				local flOffset      = 1.0
+				foreach(hPlayer in TankExt.PlayerArray)
+					if(hPlayer.IsAlive())
+					{
+						local vecPlayerOrigin = hPlayer.GetOrigin()
+						local vecPlayerMins   = hPlayer.GetBoundingMins()
+						local vecPlayerMaxs   = hPlayer.GetBoundingMaxs()
+
+						if(!TankExt.IntersectionBoxBox(vecOrigin, vecMins, vecMaxs, vecPlayerOrigin, vecPlayerMins, vecPlayerMaxs))
+							continue
+
+						local vecPlayerMinsGlobal = vecPlayerOrigin + vecPlayerMins
+						local vecPlayerMaxsGlobal = vecPlayerOrigin + vecPlayerMaxs
+
+						local vecTowardsPlayer = hPlayer.GetCenter() - self.GetCenter()
+
+						local vecOverlap = Vector()
+						local flSignX = 0.0, flSignY = 0.0, flSignZ = 0.0
+
+						if(vecTowardsPlayer.x >= 0)
+						{
+							vecOverlap.x = vecMaxsGlobal.x - vecPlayerMinsGlobal.x
+							flSignX      = 1.0
+						}
+						else
+						{
+							vecOverlap.x = vecPlayerMaxsGlobal.x - vecMinsGlobal.x
+							flSignX      = -1.0
+						}
+
+						if(vecTowardsPlayer.y >= 0)
+						{
+							vecOverlap.y = vecMaxsGlobal.y - vecPlayerMinsGlobal.y
+							flSignY      = 1.0
+						}
+						else
+						{
+							vecOverlap.y = vecPlayerMaxsGlobal.y - vecMinsGlobal.y
+							flSignY      = -1.0
+						}
+
+						if(vecTowardsPlayer.z >= 0)
+						{
+							vecOverlap.z = vecMaxsGlobal.z - vecPlayerMinsGlobal.z
+							flSignZ      = 1.0
+						}
+						else
+						{
+							// vecOverlap.z = 99999.9
+							vecOverlap.z = vecPlayerMaxsGlobal.z - vecMinsGlobal.z
+							flSignZ      = -1.0
+						}
+
+						if(vecOverlap.x < vecOverlap.y)
+						{
+							if(vecOverlap.x < vecOverlap.z)
+								vecPlayerOrigin.x += flSignX * (vecOverlap.x + flOffset)
+							else
+								vecPlayerOrigin.z += flSignZ * (vecOverlap.z + flOffset)
+						}
+						else if(vecOverlap.z < vecOverlap.y)
+							vecPlayerOrigin.z += flSignZ * (vecOverlap.z + flOffset)
+						else
+							vecPlayerOrigin.y += flSignY * (vecOverlap.y + flOffset)
+
+						local PlayerTrace = {
+							start   = vecPlayerOrigin
+							end     = vecPlayerOrigin
+							hullmin = vecPlayerMins
+							hullmax = vecPlayerMaxs
+							mask    = MASK_PLAYERSOLID
+							ignore  = hPlayer
+						}
+						TraceHull(PlayerTrace)
+						if(PlayerTrace.hit)
+						{
+							PlayerTrace.start = vecPlayerOrigin + Vector(0, 0, 32)
+							PlayerTrace.startsolid <- false
+							TraceHull(PlayerTrace)
+							if(PlayerTrace.startsolid)
+								hPlayer.TakeDamage(99999.9, DMG_CRUSH, self)
+							else
+								vecPlayerOrigin = PlayerTrace.endpos
+						}
+
+						hPlayer.SetAbsOrigin(vecPlayerOrigin)
+					}
+				/////////////////////////////
+			}
+			TankExt.AddThinkToEnt(hTank, "CustomLocomotionThink")
+		}
+
+		if(Check("UseBetterTracks") && TankTable.UseBetterTracks)
+		{
+			local flModelScale = hTank.GetModelScale()
+			local vecOrigin    = hTank.GetOrigin()
+			local vecRight     = hTank.GetAbsAngles().Left()
+			local TrackData = {}
+			for(local hChild = hTank.FirstMoveChild(); hChild != null; hChild = hChild.NextMovePeer())
+				if(hChild.GetModelName().find("track_"))
+				{
+					local flOffset = hChild.LookupBone("tank_track_R") != -1 ? 56.2211 : -56.2211
+					TrackData[hChild] <- {
+						vecTrackOriginLast = vecOrigin + vecRight * flOffset * flModelScale
+						flOffset           = flOffset
+					}
+				}
+
+			local bAllowNoGravity = TankTable.UseBetterTracks == 2
+
+			local flMaxSpeed = 80.0
+			hTank_scope.BetterTreadsThink <- function()
+			{
+				local flFrameTime    = FrameTime()
+				local flModelScale   = self.GetModelScale()
+				local vecOrigin      = self.GetOrigin()
+				local angRotation    = self.GetAbsAngles()
+				local vecForward     = angRotation.Forward()
+				local vecRight       = angRotation.Left()
+				local bShouldAnimate = GetPropEntity(self, "m_hGroundEntity") != null || (bAllowNoGravity && "flGravity" in hTank_scope && hTank_scope.flGravity == 0)
+				foreach(hTrack, Data in TrackData)
+					if(hTrack.IsValid())
+					{
+						if(bShouldAnimate)
+						{
+							local vecTrackOrigin = vecOrigin + vecRight * Data.flOffset * flModelScale
+							local vecDirection   = vecTrackOrigin - Data.vecTrackOriginLast
+							Data.vecTrackOriginLast = vecTrackOrigin
+
+							local flSpeed = vecDirection.Norm() / flFrameTime
+							local flPlaybackRate = flSpeed / flMaxSpeed * vecDirection.Dot(vecForward) / flModelScale
+							hTrack.SetPlaybackRate(flPlaybackRate > 12 ? 12 : flPlaybackRate) // PlaybackRate is capped at 12
+						}
+						else
+							hTrack.SetPlaybackRate(0)
+					}
+			}
+			TankExt.AddThinkToEnt(hTank, "BetterTreadsThink")
+		}
 	}
 	function ApplyTankTableByName(hTank, hPath, sTankName)
 	{
@@ -1135,8 +1458,6 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					}
 
 					local flTime      = Time()
-					local vecOrigin   = self.GetOrigin()
-					local angRotation = self.GetAbsAngles()
 					local iTeamNum    = self.GetTeam()
 					local iHealth     = self.GetHealth()
 					local iMaxHealth  = self.GetMaxHealth()
@@ -1144,8 +1465,8 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 						if("Think" in Table)
 						{
 							Table.flTime      <- flTime
-							Table.vecOrigin   <- vecOrigin
-							Table.angRotation <- angRotation
+							Table.vecOrigin   <- self.GetOrigin()
+							Table.angRotation <- self.GetAbsAngles()
 							Table.iTeamNum    <- iTeamNum
 							Table.iHealth     <- iHealth
 							Table.iMaxHealth  <- iMaxHealth
@@ -1889,8 +2210,11 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				hTank_scope.ThinkTable <- {}
 				local function TankExtTankThink()
 				{
+					if("CustomLocomotionThink" in ThinkTable)
+						CustomLocomotionThink()
 					foreach(sName, func in ThinkTable)
-						func()
+						if(sName != "CustomLocomotionThink")
+							func()
 					return -1
 				}
 				hTank_scope.TankExtTankThink <- TankExtTankThink

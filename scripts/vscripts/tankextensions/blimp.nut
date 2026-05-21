@@ -28,7 +28,7 @@ TankExt.NewTankType("blimp*", {
 	NoScreenShake      = 1
 	EngineLoopSound    = BLIMP_SOUND_ENGINE
 	NoDestructionModel = 1
-	NoGravity          = 1
+	Gravity            = 0
 	DisableSmokestack  = 1
 	function OnSpawn()
 	{

@@ -34,6 +34,8 @@ TankExtPacked.PrecacheSound(TARGETANK_SND_IMPACT)
 TankExtPacked.PrecacheSound(TARGETANK_SND_CHARGE)
 
 TankExtPacked.NewTankType("targetank", {
+	UseCustomLocomotion = 1
+	UseBetterTracks     = 1
 	function OnSpawn()
 	{
 		local flModelScale = self.GetModelScale()
@@ -53,11 +55,6 @@ TankExtPacked.NewTankType("targetank", {
 		})
 		hTrail.AcceptInput("HideSprite", null, null, null)
 		TankExtPacked.SetParentArray([hTargeModel, hTrail], self)
-
-		local hTracks = []
-		for(local hChild = self.FirstMoveChild(); hChild != null; hChild = hChild.NextMovePeer())
-			if(hChild.GetModelName().find("track_"))
-				hTracks.append(hChild)
 
 		bPaintable <- false
 		local PlayersLast = []
@@ -125,10 +122,7 @@ TankExtPacked.NewTankType("targetank", {
 			{
 				if(bPaintable) Color(false)
 
-				local flTankSpeed = self.GetAbsVelocity().Length()
-
-				foreach(hTrack in hTracks)
-					hTrack.SetPlaybackRate(flTankSpeed / 80.0)
+				local flTankSpeed = GetPropFloat(self, "m_speed")
 
 				local flModelScale = self.GetModelScale()
 				local vecImpact    = vecOrigin + RotatePosition(Vector(), angRotation, Vector(130, 0, 32) * flModelScale)
@@ -160,6 +154,8 @@ TankExtPacked.NewTankType("targetank", {
 })
 
 TankExtPacked.NewTankType("targetank_color", {
+	UseCustomLocomotion = 1
+	UseBetterTracks     = 1
 	Model = {
 		Default    = TARGETANK_MODEL_COLOR
 		Damage1    = TARGETANK_MODEL_COLOR_DAMAGE1

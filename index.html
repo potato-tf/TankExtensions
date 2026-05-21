@@ -261,7 +261,7 @@
 					<tr>
 						<td><code>color</code></td>
 						<td>
-							Colors the tank, treads, and bomb mechanism. <code>"255 127 0"</code> would result in an orange tank.
+							Colors the tank, tracks, and bomb mechanism. <code>"255 127 0"</code> would result in an orange tank.
 						</td>
 					</tr>
 					<tr>
@@ -298,6 +298,24 @@
 						<td><code>engineloopsound</code></td>
 						<td>
 							Accepts a sound path string to replace the tank's looping sound. Normally this sound is for the rumbling of the engine and the movement of the tank tracks.
+						</td>
+					</tr>
+					<tr>
+						<td><code>gravity</code></td>
+						<td>
+							Sets the gravity of the tank to the inputted value, enables UseCustomLocomotion.
+						</td>
+					</tr>
+					<tr>
+						<td><code>maxstepheight</code></td>
+						<td>
+							Allows the tank to climb over steps that are within the value's height.
+						</td>
+					</tr>
+					<tr>
+						<td><code>maxturnrate</code></td>
+						<td>
+							Changes how fast the tank turns, enables UseCustomLocomotion.
 						</td>
 					</tr>
 					<tr>
@@ -340,6 +358,18 @@
 						<td><code>teamnum</code></td>
 						<td>
 							Sets the tank's team value. 2 is for red, 3 is for blue.
+						</td>
+					</tr>
+					<tr>
+						<td><code>usebettertracks</code></td>
+						<td>
+							More dynamically animated tracks: much higher speed cap, scales with tank scale, can move backwards, stops animating when airborne. A value of 2 will allow the tracks to animate with Gravity 0
+						</td>
+					</tr>
+					<tr>
+						<td><code>usecustomlocomotion</code></td>
+						<td>
+							Uses tankext's version of the tank locomotion with no path overshoot, speed proportionate turning, and modifiable gravity. A value of 2 uses alternative floor detection that allows the tank to go over grating, glass, or clip brushes.
 						</td>
 					</tr>
 				</table>
@@ -476,7 +506,7 @@
 							<tr>
 								<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank_weapons/cannon.nut">cannon.nut</a></td>
 								<td><code>cannon</code></td>
-								<td><b>Note: Cannot use additional weapons.</b><br>Shoots a very high damage rocket that travels at very high speeds every 3s.</td>
+								<td><b>Note: Cannot use additional weapons.</b><br>Shoots a very high damage rocket that travels at a very high speed every 3s.</td>
 							</tr>
 						</table>
 					</details>
@@ -936,7 +966,7 @@
 				<td>
 					Adds the inputted table with the specified name to the TankScripts or TankScriptsWild table which get ran when a tank with a matching name spawns.
 					<details>
-						<summary><b>List of Keyvalues</b></summary>
+						<summary>List of Keyvalues</summary>
 						<table>
 							<tr>
 								<th>Keyvalue</th>
@@ -945,7 +975,7 @@
 							<tr>
 								<td><code>Color</code></td>
 								<td>
-									Colors the tank, treads, and bomb mechanism. <code>"255 127 0"</code> would result in an orange tank.
+									Colors the tank, tracks, and bomb mechanism. <code>"255 127 0"</code> would result in an orange tank.
 								</td>
 							</tr>
 							<tr>
@@ -957,7 +987,7 @@
 							<tr>
 								<td><code>DisableChildModels</code></td>
 								<td>
-									Set to 1 to hide the tank tracks and bomb mechanism.
+									Set to 1 to hide the tank's tracks and bomb mechanism.
 								</td>
 							</tr>
 							<tr>
@@ -975,13 +1005,31 @@
 							<tr>
 								<td><code>DisableTracks</code></td>
 								<td>
-									Set to 1 to only hide the tank tracks.
+									Set to 1 to only hide the tank's tracks.
 								</td>
 							</tr>
 							<tr>
 								<td><code>EngineLoopSound</code></td>
 								<td>
 									Accepts a sound path string to replace the tank's looping sound. Normally this sound is for the rumbling of the engine and the movement of the tank tracks.
+								</td>
+							</tr>
+							<tr>
+								<td><code>Gravity</code></td>
+								<td>
+									Sets the gravity of the tank to the inputted value, enables UseCustomLocomotion.
+								</td>
+							</tr>
+							<tr>
+								<td><code>MaxStepHeight</code></td>
+								<td>
+									Allows the tank to climb over steps that are within the value's height.
+								</td>
+							</tr>
+							<tr>
+								<td><code>MaxTurnRate</code></td>
+								<td>
+									Changes how fast the tank turns, enables UseCustomLocomotion.
 								</td>
 							</tr>
 							<tr>
@@ -999,19 +1047,19 @@
 							<tr>
 								<td><code>NoScreenShake</code></td>
 								<td>
-									Set to 1 to disables the screenshake effect that occurs when standing near the tank.
-								</td>
-							</tr>
-							<tr>
-								<td><code>OnSpawn</code></td>
-								<td>
-									This function is called within its own tank type scope, comes with variables: <code>self</code>, <code>sTankName</code>, <code>hTankPath</code>. You can add a think function to the tank by defining a function named <code>Think()</code>. Think functions also come with variables: <code>flTime</code>, <code>vecOrigin</code>, <code>angRotation</code>, <code>iTeamNum</code>, <code>iHealth</code>, <code>iMaxHealth</code>.
+									Set to 1 to disable the screenshake effect that occurs when standing near the tank.
 								</td>
 							</tr>
 							<tr>
 								<td><code>OnDeath</code></td>
 								<td>
 									This function is called when the tank dies, exactly like SetDestroyCallback.
+								</td>
+							</tr>
+							<tr>
+								<td><code>OnSpawn</code></td>
+								<td>
+									This function is called within its own tank type scope, comes with variables: <code>self</code>, <code>sTankName</code>, <code>hTankPath</code>. You can add a think function to the tank by defining a function named <code>Think()</code>. Think functions also come with variables: <code>flTime</code>, <code>vecOrigin</code>, <code>angRotation</code>, <code>iTeamNum</code>, <code>iHealth</code>, <code>iMaxHealth</code>.
 								</td>
 							</tr>
 							<tr>
@@ -1027,9 +1075,27 @@
 								</td>
 							</tr>
 							<tr>
+								<td><code>TargetName</code></td>
+								<td>
+									Sets the tank's name, purely for I/O targetting reasons. Tank Types and AddTankIcon will still use the tanks initial name for their logic.
+								</td>
+							</tr>
+							<tr>
 								<td><code>TeamNum</code></td>
 								<td>
 									Sets the tank's team value. 2 is for red, 3 is for blue.
+								</td>
+							</tr>
+							<tr>
+								<td><code>UseBetterTracks</code></td>
+								<td>
+									More dynamically animated tracks: much higher speed cap, scales with tank scale, can move backwards, stops animating when airborne. A value of 2 will allow the tracks to animate with Gravity 0
+								</td>
+							</tr>
+							<tr>
+								<td><code>UseCustomLocomotion</code></td>
+								<td>
+									Uses tankext's version of the tank locomotion with no path overshoot, speed proportionate turning, and modifiable gravity. A value of 2 uses alternative floor detection that allows the tank to go over grating, glass, or clip brushes.
 								</td>
 							</tr>
 						</table>
@@ -1099,7 +1165,7 @@
 				<td><code>SetTankColor</code></td>
 				<td><code>void SetTankColor(handle <i>tank</i>, string <i>rgb</i>)</code></td>
 				<td>
-					Colors the tank, treads, and bomb mechanism. <code>"255 127 0"</code> would result in an orange tank.
+					Colors the tank, tracks, and bomb mechanism. <code>"255 127 0"</code> would result in an orange tank.
 				</td>
 			</tr>
 			<tr>

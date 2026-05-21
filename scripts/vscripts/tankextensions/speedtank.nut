@@ -14,7 +14,8 @@ PrecacheModel(SPEEDTANK_MODEL_DAMAGE2)
 PrecacheModel(SPEEDTANK_MODEL_DAMAGE3)
 
 TankExt.NewTankType("speedtank*", {
-	// DisableSmokestack = 1
+	UseCustomLocomotion = 1
+	UseBetterTracks     = 1
 	Model = {
 		Default = SPEEDTANK_MODEL
 		Damage1 = SPEEDTANK_MODEL_DAMAGE1
@@ -23,11 +24,6 @@ TankExt.NewTankType("speedtank*", {
 	}
 	function OnSpawn()
 	{
-		local hTracks = []
-		for(local hChild = self.FirstMoveChild(); hChild != null; hChild = hChild.NextMovePeer())
-			if(hChild.GetModelName().find("track_"))
-				hTracks.append(hChild)
-
 		local bUsingCustomModel = self.GetModelName() == SPEEDTANK_MODEL
 		local hParticle1, hParticle2, hParticle3
 		if(bUsingCustomModel)
@@ -49,7 +45,6 @@ TankExt.NewTankType("speedtank*", {
 		{
 			if(bDeploying) return
 
-			// DisableSmokestack = 1
 			if(bUsingCustomModel) self.AcceptInput("DispatchEffect", "ParticleEffectStop", null, null)
 
 			if(iHealth != iHealthLast)
@@ -100,9 +95,6 @@ TankExt.NewTankType("speedtank*", {
 					}
 				}
 			}
-
-			foreach(hTrack in hTracks)
-				hTrack.SetPlaybackRate(GetPropFloat(self, "m_speed") / 80.0)
 		}
 		function OnStartDeploy()
 		{

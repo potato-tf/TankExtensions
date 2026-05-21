@@ -10,13 +10,13 @@ function LoopingPathThink()
 		bInitalized = true
 		local vecTank    = hTank.GetOrigin()
 		local vecPathDir = vecPathCurrent - vecTank
-		local flDist     = vecPathDir.Length2DSqr()
+		local flDistSqr  = vecPathDir.Length2DSqr()
 		vecPathDir.z = 0
 		vecPathDir.Norm()
-		vecPathDir *= 32
+		vecPathDir *= 128
 		local vecPath = vecPathCurrent + vecPathDir
 		self.SetAbsOrigin(vecPath)
-		if(flDist <= 576) // sqr(24)
+		if(flDistSqr <= 576) // sqr(24)
 		{
 			iLoopCurrent++
 			if(iLoopCurrent == iArrayLength)

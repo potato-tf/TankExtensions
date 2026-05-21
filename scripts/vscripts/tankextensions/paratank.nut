@@ -13,28 +13,20 @@ TankExt.PrecacheSound(PARATANK_SND_PARACHUTE_OPEN)
 TankExt.PrecacheSound(PARATANK_SND_PARACHUTE_CLOSE)
 
 TankExt.NewTankType("paratank", {
-	NoGravity = 1
+	UseCustomLocomotion = 1
+	UseBetterTracks     = 1
+	MaxStepHeight       = 18
 	function OnSpawn()
 	{
 		local hParachute = SpawnEntityFromTableSafe("prop_dynamic", { model = PARATANK_PARACHUTE_MODEL })
 		hParachute.DisableDraw()
 		TankExt.SetParentArray([hParachute], self)
 
-		local hTracks = []
-		for(local hChild = self.FirstMoveChild(); hChild != null; hChild = hChild.NextMovePeer())
-			if(hChild.GetModelName().find("track_"))
-				hTracks.append(hChild)
-
 		local bParachuteActive = false
 		local hTank_scope      = self.GetScriptScope()
 		local iSeqRetract      = hParachute.LookupSequence("retract")
-		hTank_scope.bNoGravity = false
 		function Think()
 		{
-			if(bParachuteActive)
-				foreach(hTrack in hTracks)
-					hTrack.SetPlaybackRate(0)
-
 			local Trace = {
 				start  = vecOrigin
 				end    = vecOrigin + Vector(0, 0, PARATANK_GROUND_DISTANCE)
@@ -44,7 +36,7 @@ TankExt.NewTankType("paratank", {
 			TraceLineEx(Trace)
 			if(!Trace.hit && !bParachuteActive)
 			{
-				hTank_scope.bNoGravity = true
+				hTank_scope.flGravity  = 0
 				bParachuteActive       = true
 				hParachute.EnableDraw()
 				hParachute.AcceptInput("SetAnimation", "deploy", null, null)
@@ -64,7 +56,7 @@ TankExt.NewTankType("paratank", {
 			}
 			else if(Trace.hit && bParachuteActive)
 			{
-				hTank_scope.bNoGravity = false
+				hTank_scope.flGravity  = 1000.0
 				bParachuteActive       = false
 				hParachute.AcceptInput("SetAnimation", "retract", null, null)
 				EmitSoundEx({

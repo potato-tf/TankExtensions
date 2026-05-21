@@ -24,14 +24,17 @@ PrecacheModel(EXAMPLETANK_MODEL_COLOR_TRACK_R)
 PrecacheModel(EXAMPLETANK_MODEL_COLOR_BOMB)
 
 TankExt.NewTankType("exampletank", {
-	Color              = "110 110 110"
-	DisableBomb        = 0
-	DisableChildModels = 0
-	DisableOutline     = 0
-	DisableSmokestack  = 0
-	DisableTracks      = 0
-	EngineLoopSound    = EXAMPLETANK_SND_ENGINE
-	// Model           = EXAMPLETANK_MODEL_COLOR
+	Color                  = "110 110 110" // Default: "255 255 255"
+	DisableBomb            = 0  // Default: 0
+	DisableChildModels     = 0  // Default: 0
+	DisableOutline         = 0  // Default: 0
+	DisableSmokestack      = 0  // Default: 0
+	DisableTracks          = 0  // Default: 0
+	EngineLoopSound        = EXAMPLETANK_SND_ENGINE
+	Gravity                = 100  // Default: 1000
+	MaxStepHeight          = 18  // Default: 100
+	MaxTurnRate            = 75  // Default: 25 | -1 uses a turn rate proportional to the tank's speed
+	// Model                  = EXAMPLETANK_MODEL_COLOR
 	Model = {
 		Default    = EXAMPLETANK_MODEL_COLOR
 		Damage1    = EXAMPLETANK_MODEL_COLOR_DAMAGE1
@@ -41,16 +44,20 @@ TankExt.NewTankType("exampletank", {
 		RightTrack = EXAMPLETANK_MODEL_COLOR_TRACK_R
 		Bomb       = EXAMPLETANK_MODEL_COLOR_BOMB
 	}
-	NoDestructionModel = 1
-	NoScreenShake      = 0
-	PingSound          = EXAMPLETANK_SND_PING
-	Scale              = 0.75
-	TeamNum            = 1
+	NoDestructionModel     = 1  // Default: 0
+	NoScreenShake          = 0  // Default: 0
+	PingSound              = EXAMPLETANK_SND_PING
+	ReplaceModelCollisions = 0  // Default: 0
+	Scale                  = 0.75  // Default: 1
+	TargetName             = "perfection"
+	TeamNum                = 1  // Default: 3
+	UseBetterTracks        = 1  // Default: 0
+	UseCustomLocomotion    = 2  // Default: 0 | 1 uses the default solid mask, 2 uses a custom one that allows going across more surfaces
 	function OnSpawn()
 	{
 		// Available definitons: self, sTankName, hTankPath
 		local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
-		local hProp = SpawnEntityFromTableSafe("prop_dynamic", {
+		hProp <- SpawnEntityFromTableSafe("prop_dynamic", {
 			origin      = "-35 0 88"
 			model       = "models/player/heavy.mdl"
 			defaultanim = "taunt_russian"
@@ -84,5 +91,10 @@ TankExt.NewTankType("exampletank", {
 			if(hPlayer && hPlayer.IsAlive() && hPlayer.GetTeam() != self.GetTeam())
 				hPlayer.SetAbsOrigin(vecOrigin)
 		}
+	}
+	function OnStartDeploy()
+	{
+		// Available definitons: self
+		hProp.AcceptInput("SetAnimation", "taunt_laugh", null, null)
 	}
 })
