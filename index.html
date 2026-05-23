@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<title>TankExtensions Documentation</title>
-		<link rel="icon" type="image/x-icon" href="images/tankexticon.ico">
+		<link rel="icon" type="image/x-icon" href="docs/tankexticon.ico">
 		<style>
 			:root {
 				--accent-1: #1a1b26;
@@ -156,17 +156,23 @@
 				margin-left: auto;
 				margin-right: auto;
 			}
+			.video {
+				max-width: 40%;
+				display: block;
+				margin-left: auto;
+				margin-right: auto;
+			}
 		</style>
 	</head>
 	<body style="background-color: var(--accent-1);">
 		<div style="background: var(--accent-2);">
-			<img class="center" alt="TankExtensions" src="images/logo.png">
+			<img class="center" alt="TankExtensions" src="docs/logo.png">
 			<div class="nav">
 					<a href="#Usage">Usage</a><a href="#Usage_For_Mappers">Usage For Mappers</a><a href="#Path_Maker">Path Maker</a><a href="#Tank_Types">Tank Types</a><a href="#Functions">Functions</a>
 			</div>
 		</div>
 		<div class="info">
-			<div class="header" id="Usage"><img class="center" alt="Usage" src="images/usage.png"></div>
+			<div class="header" id="Usage"><img class="center" alt="Usage" src="docs/usage.png"></div>
 			<p style="color: var(--red); font-weight: bold; font-size: large;">IF YOU ARE PLANNING TO PACK THESE SCRIPTS INTO YOUR MAP THEN READ THE <a style="font-weight: bold; color: var(--blue);" href="#Usage_For_Mappers">Usage For Mappers</a> SECTION.</p>
 			<p>Do note that these scripts will unload themselves on mission/wave reload. So be sure to load the scripts again whenever that occurs for your mission. (Can be done through an InitWaveOutput on every wave or a single PointTemplate.)</p>
 			<p>Extra usages are found in the <a style="font-weight: bold;" href="https://github.com/potato-tf/TankExtensions/blob/main/mvm_slick_v4a_tankextensions.pop">Example Popfile</a>. Such as adding tank icons, creating paths, or overriding tank type values.</p>
@@ -220,7 +226,7 @@
 			<p>Tank names and script functions are listed further down the documentation. If you want to make a new tank type yourself then refer to the <a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/exampletank.nut">example tank script</a>.</p>
 		</div>
 		<div class="info">
-			<div class="header" id="Usage_For_Mappers"><img class="center" alt="Usage For Mappers" src="images/usageformappers.png"></div>
+			<div class="header" id="Usage_For_Mappers"><img class="center" alt="Usage For Mappers" src="docs/usageformappers.png"></div>
 			<p>If you plan to pack these scripts into your map so its missions can use custom tanks then pack the <b><a href="https://github.com/potato-tf/TankExtensions/blob/main/FOR_PACKING_INTO_MAPS/">MAP SPECIFIC SCRIPTS</a></b> instead of packing the main scripts. This is done so if the map were to be used on other servers that use a more updated version of TankExtensions then there would be no conflicts between the server's file and the map's file (packed map scripts always override server scripts).</p>
 			<p>With the map scripts packed in you will want to make <b>your own script file</b> that loads the main script and tank scripts. Use a logic_script entity to load up your created script file. <b>Do not</b> use this entity to load the tank scripts directly or else the tank scripts will not function. The example below shows what the contents of your created script file could look like.</p>
 			<div class="codeblock"><pre><span class="vsc-green">// Example script file path "scripts/vscripts/mymapname.nut"
@@ -237,16 +243,19 @@
 			<p>For scripters working on the map, TankExtensions's custom functions will use a <code>TankExtPacked</code> prefix instead of <code>TankExt</code></p>
 		</div>
 		<div class="info">
-			<div class="header" id="Path_Maker"><img class="center" alt="Path Maker" src="images/pathmaker.png"></div>
-			<p>Path Maker allows for quickly creating paths without the need for going around the map using getpos or opening the hammer editor.</p>
+			<div class="header" id="Path_Maker"><img class="center" alt="Path Maker" src="docs/pathmaker.png"></div>
+			<video autoplay="" class="video" loop="" muted="" playsinline=""><source src="docs/pathmakershowcase.webm" type="video/webm"></video>
+			<p><b style="color: var(--red)">Path Maker</b> allows for quickly creating paths without the need for going around the map using getpos or opening the hammer editor.</p>
 			<p>If tankextensions_main is loaded, Path Maker can be ran using this command: <code>ent_fire !activator runscriptcode "TankExt.PathMaker(self)"</code>. Replace <code>ent_fire</code> with <code>sm_ent_fire</code> if on a testing.potato.tf server.</p>
-			<div><img class="center" alt="Path Maker Models" src="images/pathmakermodels.png"></div>
-			<b style="color: var(--red)">Axis nodes</b> are your placed path nodes, if a node is highlighted yellow then that is the most recently placed node and can be deleted with the secondary fire. <b style="color: var(--red)">Blue guides</b> are path nodes that already exist in the map, their targetname will be shown above them and will point towards their next path node. The <b style="color: var(--red)">purple guide</b> is the best position for your last path node so tanks can be properly aligned while deploying. When you're finished placing all the path nodes you can print them with <b>TankExt</b>, <b>PopExt+</b>, or <b>Rafmod</b> formatting to console. Note that TankExtensions's CreatePaths function will merge the last node to a node in the map if they share the same position.
+			<div><img class="center" alt="Path Maker Models" src="docs/pathmakermodels_v2.png"></div>
+			<p><b style="color: var(--red)">Axis nodes</b> are your placed path nodes; your selected node will have a yellow outline if your selection is locked, otherwise it will have a cyan outline. Unlocking the selection will select the closest node available. Locking the selection will disallow selecting other nodes, adding or deleting paths while locked will change the selection to the next or previous node respectively.<br><b style="color: var(--red)">Cyan guides</b> are path nodes that already exist in the map, their targetname will be shown above them and will point towards their next path node.<br>The <b style="color: var(--red)">magenta guide</b> is the best position for the last path node so that tanks will be properly aligned while deploying the bomb. An axis node can be placed here by using the given  key combo on screen.</p>
+			<p><b style="color: var(--red)">Visualizers</b> are available to preview how tanks will go across the path or how a tank will be oriented under your cursor. The model type can be cycled between tanks and blimps.</p>
+			<p>If you have finished placing path nodes you can print them to console with <b>TankExt</b>, <b>PopExt+</b>, or <b>Rafmod</b> formatting.<br>Also, note that TankExtensions's CreatePaths function will merge the last node to a node in the map if they share the same position.</p>
 		</div>
 		<div class="info" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; border-bottom: 0;">
-			<div class="header" id="Tank_Types"><img class="center" alt="Tank Types" src="images/tanktypes.png"></div>
+			<div class="header" id="Tank_Types"><img class="center" alt="Tank Types" src="docs/tanktypes.png"></div>
 			<p>The table below provides details on what can go into a tank's Name keyvalue. You should first know the following formatting required to modify the listed tank types.</p>
-			<img class="center" alt="A big tank name" src="images/mightbecomplicated.webp">
+			<img class="center" alt="A big tank name" src="docs/mightbecomplicated.webp">
 			<p><b style="color: var(--red)">Tank Combiner</b> lets a single tank use multiple tank scripts at once. Separate the individual tank names with <code>^</code>. A tank script with a defined keyvalue such as its model will override the same keyvalue from any other tank script to its right (<code>sentrytank^redtank</code> will only use the sentrytank model and not the redtank model).</p>
 			<p><b style="color: var(--red)">Suffixes</b> are optionally appended to the tank's name for different effects. <code>tankName</code> + <code>_suffix1</code> + <code>_suffix2</code> = <code>tankName_suffix1_suffix2</code>.
 			<p><b style="color: var(--red)">Parameters</b> are separated by <code>|</code> and can modify aspects of a tank type. Depending on the tank type, each parameter will either use names, values, or be entirely optional. A tank with 2 parameters can be written as <code>tankboss|parameter1|parameter2</code><br></p>
@@ -398,7 +407,7 @@
 				<th style="width: 50%;">Description</th>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/bannertank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/bannertank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/bannertank.nut">bannertank.nut</a></td>
 				<td>
 					<code>bannertank</code>
@@ -424,7 +433,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/blimp.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/blimp.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/blimp.nut">blimp.nut</a></td>
 				<td>
 					<code>blimp</code>
@@ -443,7 +452,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/chewchewtank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/chewchewtank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/chewchewtank.nut">chewchewtank.nut</a></td>
 				<td>
 					<code>chewchewtank</code>
@@ -456,7 +465,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/combattank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/combattank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/combattank.nut">combattank.nut</a></td>
 				<td>
 					<code>combattank</code>
@@ -515,7 +524,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/drilltank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/drilltank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/drilltank.nut">drilltank.nut</a></td>
 				<td>
 					<code>drilltank</code>
@@ -529,7 +538,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/exampletank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/exampletank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/exampletank.nut">exampletank.nut</a></td>
 				<td>
 					<code>exampletank</code>
@@ -542,7 +551,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/fireringtank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/fireringtank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/fireringtank.nut">fireringtank.nut</a></td>
 				<td>
 					<code>fireringtank</code>
@@ -556,7 +565,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/frontlinecart.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/frontlinecart.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/frontlinecart.nut">frontlinecart.nut</a></td>
 				<td>
 					<code>frontlinecart</code>
@@ -576,7 +585,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/gatetank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/gatetank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/gatetank.nut">gatetank.nut</a></td>
 				<td>
 					<code>gatetank</code>
@@ -596,7 +605,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/hammertank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/hammertank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/hammertank.nut">hammertank.nut</a></td>
 				<td>
 					<code>hammertank</code>
@@ -610,7 +619,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/helicopter.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/helicopter.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/helicopter.nut">helicopter.nut</a></td>
 				<td>
 					<code>helicopter</code>
@@ -630,7 +639,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/jumptank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/jumptank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/jumptank.nut">jumptank.nut</a></td>
 				<td>
 					<code>jumptank</code>
@@ -645,7 +654,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/painttank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/painttank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/painttank.nut">painttank.nut</a></td>
 				<td>
 					<code>painttank</code>
@@ -662,7 +671,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/paratank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/paratank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/paratank.nut">paratank.nut</a></td>
 				<td>
 					<code>paratank</code>
@@ -676,7 +685,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/redtank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/redtank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/redtank.nut">redtank.nut</a></td>
 				<td>
 					<code>redtank</code>
@@ -690,7 +699,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/scaletank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/scaletank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/scaletank.nut">scaletank.nut</a></td>
 				<td>
 					<code>scaletank</code>
@@ -706,7 +715,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/sentrytank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/sentrytank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/sentrytank.nut">sentrytank.nut</a></td>
 				<td>
 					<code>sentrytank</code>
@@ -720,7 +729,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/speedtank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/speedtank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/speedtank.nut">speedtank.nut</a></td>
 				<td>
 					<code>speedtank</code>
@@ -737,7 +746,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/stickytank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/stickytank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/stickytank.nut">stickytank.nut</a></td>
 				<td>
 					<code>stickytank</code>
@@ -751,7 +760,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/tankdozer.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/tankdozer.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/tankdozer.nut">tankdozer.nut</a></td>
 				<td>
 					<code>tankdozer</code>
@@ -767,7 +776,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/targetank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/targetank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/targetank.nut">targetank.nut</a></td>
 				<td>
 					<code>targetank</code><br>
@@ -782,7 +791,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/teletank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/teletank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/teletank.nut">teletank.nut</a></td>
 				<td>
 					<code>teletank</code>
@@ -796,7 +805,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/ubertank.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/ubertank.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/ubertank.nut">ubertank.nut</a></td>
 				<td>
 					<code>ubertank</code>
@@ -816,7 +825,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td><img class="tankicon" src="images/tanktypes/vactank.webp"></img><img class="tankicon" src="images/tanktypes/vacblimp.webp"></img></td>
+				<td><img class="tankicon" src="docs/tanktypes/vactank.webp"></img><img class="tankicon" src="docs/tanktypes/vacblimp.webp"></img></td>
 				<td><a href="https://github.com/potato-tf/TankExtensions/blob/main/scripts/vscripts/tankextensions/vactank.nut">vactank.nut</a></td>
 				<td>
 					<code>vactank</code><br>
@@ -837,7 +846,7 @@
 			</tr>
 		</table>
 		<div class="info" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; border-bottom: 0;">
-			<div class="header" id="Functions"><img class="center" alt="Functions" src="images/functions.png"></div>
+			<div class="header" id="Functions"><img class="center" alt="Functions" src="docs/functions.png"></div>
 			<p>This section only serves a purpose for people who are very familiar with working on vscript files.</p>
 			<p>Always prepend <code>TankExt.</code> to any of these functions when using them. (i.e <code>NewTankType()</code> becomes <code>TankExt.NewTankType()</code>)</p>
 		</div>
