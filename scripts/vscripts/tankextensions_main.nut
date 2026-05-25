@@ -1,4 +1,4 @@
-// Last Updated : 12:25PM PST May 23 2026
+// Last Updated : 1:48PM PST May 25 2026
 
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
@@ -1143,7 +1143,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 						// FaceTowards //
 						local flTurnRateDelta = (flTurnRate >= 0 ? flTurnRate : flSpeed / flSpeedDefault * flTurnRateDefault) * flDelta
 
-						local flYawGoal = TankExt.VectorAngles(vecApproach).y
+						local flYawGoal = TankExt.NormalizeAngle(TankExt.VectorAngles(vecApproach).y)
 						local flYawDiff = AngleDiff(flYawGoal, vecRotation.y)
 
 						if(flYawDiff < -flTurnRateDelta)
@@ -1764,14 +1764,14 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		else
 			return GetPropEntity(hPath, "m_pnext")
 	}
-	function NormalizeAngle(target)
+	function NormalizeAngle(flAngle)
 	{
-		target %= 360.0
-		if (target > 180.0)
-			target -= 360.0
-		else if (target < -180.0)
-			target += 360.0
-		return target
+		flAngle %= 360.0
+		if (flAngle > 180.0)
+			flAngle -= 360.0
+		else if (flAngle < -180.0)
+			flAngle += 360.0
+		return flAngle
 	}
 	function ApproachAngle(target, value, speed)
 	{
