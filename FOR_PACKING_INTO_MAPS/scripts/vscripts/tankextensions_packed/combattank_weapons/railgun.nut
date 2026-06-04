@@ -94,7 +94,7 @@ TankExtPacked.CombatTankWeapons["railgun"] <- {
 			if("enthit" in LaserTrace)
 			{
 				local hHit = LaserTrace.enthit
-				if("GetTeam" in hHit && hHit.GetTeam() != iTeamNum)
+				if(hHit.IsValid() && hHit.GetTeam() != iTeamNum)
 				{
 					local sClassname = hHit.GetClassname()
 					if(sClassname == "player")
