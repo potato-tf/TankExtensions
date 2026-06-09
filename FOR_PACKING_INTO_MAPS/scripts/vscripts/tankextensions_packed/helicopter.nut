@@ -149,6 +149,7 @@ TankExtPacked.NewTankType("helicopter*", {
 		}
 		TraceLineEx(Trace)
 		self.SetAbsOrigin(Trace.endpos)
+		self.SetForwardVector(Trace.plane_normal.Cross(self.GetAbsAngles().Left()))
 
 		local flTimeToLaunch = Time() + 4.23
 		local flTimeToActive = Time() + 5.83

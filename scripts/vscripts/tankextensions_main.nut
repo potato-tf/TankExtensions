@@ -1,4 +1,4 @@
-// Last Updated : 1:48PM PST May 25 2026
+// Last Updated : 3:00PM PST June 9 2026
 
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
@@ -1092,14 +1092,18 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 			local hGoal           = TankExt.GetNextPath(hPath)
 			local Locomotion      = hTank.GetLocomotionInterface()
-			local vecRotation     = hTank.GetLocalAngles()
 			local vecApproachLast = Vector()
 			local vecGroundNorm   = Vector(0, 0, 1.0)
 			hTank.AcceptInput("Disable", null, null, null) // this input is actually awesome
 
+			local angRotation = hTank.GetLocalAngles()
+			angRotation.x = TankExt.NormalizeAngle(angRotation.x)
+			angRotation.y = TankExt.NormalizeAngle(angRotation.y)
+			hTank.SetLocalAngles(angRotation)
+
 			local function AngleDiff(flGoalAngle, flCurrentAngle)
 			{
-				local flDelta = flGoalAngle - flCurrentAngle % 360.0
+				local flDelta = flGoalAngle - flCurrentAngle
 				if ( flGoalAngle > flCurrentAngle )
 				{
 					if ( flDelta >= 180 )
@@ -1140,32 +1144,38 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 
 					if(hGoal)
 					{
+						local angRotationCurrent = self.GetLocalAngles()
+						if(fabs(angRotation.x - angRotationCurrent.x) > flTurnRateDefault * flDelta)
+							angRotation.x = angRotationCurrent.x
+						if(fabs(angRotation.y - angRotationCurrent.y) > flTurnRateDefault * flDelta)
+							angRotation.y = angRotationCurrent.y
+
 						// FaceTowards //
 						local flTurnRateDelta = (flTurnRate >= 0 ? flTurnRate : flSpeed / flSpeedDefault * flTurnRateDefault) * flDelta
 
 						local flYawGoal = TankExt.NormalizeAngle(TankExt.VectorAngles(vecApproach).y)
-						local flYawDiff = AngleDiff(flYawGoal, vecRotation.y)
+						local flYawDiff = AngleDiff(flYawGoal, angRotation.y)
 
 						if(flYawDiff < -flTurnRateDelta)
-							vecRotation.y -= flTurnRateDelta
+							angRotation.y -= flTurnRateDelta
 						else if(flYawDiff > flTurnRateDelta)
-							vecRotation.y += flTurnRateDelta
+							angRotation.y += flTurnRateDelta
 						else
-							vecRotation.y += flYawDiff
+							angRotation.y += flYawDiff
 
-						local vecRight    = vecRotation.Left()
+						local vecRight    = angRotation.Left()
 						local vecForward  = vecGroundNorm.Cross(vecRight)
-						local flPitchGoal = TankExt.VectorAngles(vecForward).x
-						local flPitchDiff = AngleDiff(flPitchGoal, vecRotation.x)
+						local flPitchGoal = TankExt.NormalizeAngle(TankExt.VectorAngles(vecForward).x)
+						local flPitchDiff = AngleDiff(flPitchGoal, angRotation.x)
 
 						if(flPitchDiff < -flTurnRateDelta)
-							vecRotation.x -= flTurnRateDelta
+							angRotation.x -= flTurnRateDelta
 						else if(flPitchDiff > flTurnRateDelta)
-							vecRotation.x += flTurnRateDelta
+							angRotation.x += flTurnRateDelta
 						else
-							vecRotation.x += flPitchDiff
+							angRotation.x += flPitchDiff
 
-						self.SetLocalAngles(vecRotation)
+						self.SetLocalAngles(angRotation)
 						/////////////////
 
 						// UpdateCollisionBounds //
