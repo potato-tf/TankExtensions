@@ -1022,6 +1022,13 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			Add("Gravity")
 			hTank_scope.flGravity <- TankTable.Gravity
 
+			if(TankTable.Gravity == 0)
+			{
+				local angRotation = hTank.GetAbsAngles()
+				angRotation.x = 0
+				hTank.SetAbsAngles(angRotation)
+			}
+
 			if(!("UseCustomLocomotion" in hTank_scope.UsedKeyValues) && !("UseCustomLocomotion" in TankTable))
 				TankTable.UseCustomLocomotion <- 1
 		}
