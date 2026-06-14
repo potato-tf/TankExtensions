@@ -108,7 +108,6 @@ TankExtPacked.NewTankType("teletank", {
 	}
 	function OnSpawn()
 	{
-		local bModelHasAttachment = self.LookupAttachment("building_attachment") != 0
 		local bBlueTeam = self.GetTeam() == TF_TEAM_BLUE
 		if(self.GetModelName() == TELETANK_MODEL) self.SetSkin(bBlueTeam ? 0 : 1)
 		hTeleporter <- SpawnEntityFromTableSafe("prop_dynamic", {
@@ -116,15 +115,23 @@ TankExtPacked.NewTankType("teletank", {
 			defaultanim    = "running"
 			body           = 1
 			skin           = bBlueTeam ? 1 : 0
-			origin         = bModelHasAttachment ? "0 0 0" : "-42 0 169"
-			angles         = bModelHasAttachment ? "-90 0 -90" : "0 0 0"
+			origin         = "-42 0 169"
+			angles         = "0 0 0"
 			disableshadows = 1
 		})
 		EmitSoundOn("Building_Teleporter.SpinLevel3", hTeleporter)
 		TankExtPacked.SetDestroyCallback(hTeleporter, @() StopSoundOn("Building_Teleporter.SpinLevel3", self))
 		TankExtPacked.DispatchParticleEffectOn(hTeleporter, bBlueTeam ? "teleporter_arms_circle_blue" : "teleporter_arms_circle_red", "arm_attach_L")
 		TankExtPacked.DispatchParticleEffectOn(hTeleporter, bBlueTeam ? "teleporter_arms_circle_blue" : "teleporter_arms_circle_red", "arm_attach_R")
-		TankExtPacked.SetParentArray([hTeleporter], self, bModelHasAttachment ? "building_attachment" : null)
+		TankExtPacked.SetParentArray([hTeleporter], self)
+
+		local iAttachment = self.LookupAttachment("building_attachment")
+		if(iAttachment != 0)
+		{
+			hTeleporter.SetAbsOrigin(self.GetAttachmentOrigin(iAttachment))
+			hTeleporter.SetAbsAngles(self.GetAttachmentAngles(iAttachment))
+			hTeleporter.SetLocalAngles(hTeleporter.GetLocalAngles() + QAngle(0, -90, -90))
+		}
 
 		if(TELETANK_DISPENSER_HEALING)
 		{
