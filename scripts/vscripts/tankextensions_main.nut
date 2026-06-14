@@ -1,4 +1,4 @@
-// Last Updated : 3:00PM PST June 9 2026
+// Last Updated : 6:24PM PST June 13 2026
 
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
@@ -1360,7 +1360,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 							end     = vecPlayerOrigin
 							hullmin = vecPlayerMins
 							hullmax = vecPlayerMaxs
-							mask    = MASK_PLAYERSOLID
+							mask    = MASK_PLAYERSOLID_BRUSHONLY
 							ignore  = hPlayer
 						}
 						TraceHull(PlayerTrace)
