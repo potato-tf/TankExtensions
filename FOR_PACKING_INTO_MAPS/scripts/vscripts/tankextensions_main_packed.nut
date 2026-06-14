@@ -1,4 +1,4 @@
-// Last Updated : 7:05PM PST June 13 2026
+// Last Updated : 1:58PM PST June 14 2026
 
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
@@ -600,22 +600,22 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					}
 				}
 
-			if(params.sound == "Announcer.MVM_Tank_Alert_Multiple")
-				TankExtPacked.DelayFunction(null, this, -1, function()
-				{
-					local iTanks = TanksThisTick.len()
-					if(iTanks == 0)
-						return
+			TankExtPacked.DelayFunction(null, this, -1, function()
+			{
+				local iTanks = TanksThisTick.len()
+				TanksThisTick.clear()
 
-					if(iTanks == 1)
-						if(bTankSpawnedThisWave)
-							hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Another", null, null)
-						else
-							hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Spawn", null, null)
+				if(iTanks == 0 || params.sound != "Announcer.MVM_Tank_Alert_Multiple")
+					return
 
-					bTankSpawnedThisWave = true
-					TanksThisTick.clear()
-				})
+				if(iTanks == 1)
+					if(bTankSpawnedThisWave)
+						hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Another", null, null)
+					else
+						hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Spawn", null, null)
+
+				bTankSpawnedThisWave = true
+			})
 		}
 	}
 
