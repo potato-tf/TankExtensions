@@ -1,4 +1,4 @@
-// Last Updated : 1:58PM PST June 14 2026
+// Last Updated : 4:36PM PST June 14 2026
 
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
@@ -449,7 +449,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 ::TankExt <- {
 	hThinkEnt   = null
 	RevertPaths = []
-	function OnGameEvent_recalculate_holidays(_) { if(GetRoundState() == 3) { delete ::TankExt } }
+	function OnGameEvent_recalculate_holidays(_) { if(GetRoundState() == GR_STATE_PREROUND) { delete ::TankExt } }
 	function OnGameEvent_mvm_begin_wave(_)
 	{
 		// iterate through all path_tracks and offset them by a tiny amount if they overlap
@@ -601,7 +601,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					}
 				}
 
-			TankExt.DelayFunction(null, this, -1, function()
+			DelayFunction(hThinkEnt, this, -1, function()
 			{
 				local iTanks = TanksThisTick.len()
 				TanksThisTick.clear()

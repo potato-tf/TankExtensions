@@ -1,4 +1,4 @@
-// Last Updated : 1:58PM PST June 14 2026
+// Last Updated : 4:36PM PST June 14 2026
 
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
@@ -600,7 +600,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					}
 				}
 
-			TankExtPacked.DelayFunction(null, this, -1, function()
+			DelayFunction(hThinkEnt, this, -1, function()
 			{
 				local iTanks = TanksThisTick.len()
 				TanksThisTick.clear()
