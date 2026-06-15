@@ -1,4 +1,4 @@
-// Last Updated : 4:36PM PST June 14 2026
+// Last Updated : 3:00PM PST June 15 2026
 
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
@@ -553,10 +553,12 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		}
 		else
 		{
+			local bCountTanks = params.sound == "Announcer.MVM_Tank_Alert_Multiple"
+
 			for(local hTank; hTank = FindByClassname(hTank, "tank_boss");)
 				if(hTank != hThinkEnt)
 				{
-					if(!(hTank in TanksThisTick))
+					if(bCountTanks && !(hTank in TanksThisTick))
 						TanksThisTick[hTank] <- null
 
 					if(!(hTank.GetEFlags() & EFL_NO_MEGAPHYSCANNON_RAGDOLL))
@@ -601,22 +603,20 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					}
 				}
 
-			DelayFunction(hThinkEnt, this, -1, function()
-			{
-				local iTanks = TanksThisTick.len()
-				TanksThisTick.clear()
+			if(bCountTanks)
+				DelayFunction(null, this, -1, function()
+				{
+					local iTanks = TanksThisTick.len()
+					TanksThisTick.clear()
 
-				if(iTanks == 0 || params.sound != "Announcer.MVM_Tank_Alert_Multiple")
-					return
+					if(iTanks == 1)
+						if(bTankSpawnedThisWave)
+							hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Another", null, null)
+						else
+							hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Spawn", null, null)
 
-				if(iTanks == 1)
-					if(bTankSpawnedThisWave)
-						hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Another", null, null)
-					else
-						hGameRules.AcceptInput("PlayVO", "Announcer.MVM_Tank_Alert_Spawn", null, null)
-
-				bTankSpawnedThisWave = true
-			})
+					bTankSpawnedThisWave = true
+				})
 		}
 	}
 
