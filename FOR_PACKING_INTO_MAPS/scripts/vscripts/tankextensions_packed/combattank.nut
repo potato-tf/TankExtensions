@@ -73,7 +73,7 @@ TankExtPacked.NewTankType("combattank*", {
 		flDist         <- COMBATTANK_MAX_RANGE
 		flAngleDot     <- -1
 
-		bAimAtFeet  <- false
+		bAimAtFeet <- false
 		LaserTrace <- {}
 
 		EmitSoundEx({
@@ -235,6 +235,12 @@ TankExtPacked.NewTankType("combattank*", {
 		self.GetScriptScope().ToggleUber <- @() CombatScope.ToggleUber()
 
 		local iAttachTurret = self.LookupAttachment("turret")
+		local function SetNewTarget(hNewTarget, vecNewTarget)
+		{
+			hTarget   = hNewTarget
+			vecTarget = vecNewTarget
+			flDist    = (vecNewTarget - vecMount).Length()
+		}
 		function Think()
 		{
 			foreach(sSound, Table in SoundQueue)
@@ -257,58 +263,54 @@ TankExtPacked.NewTankType("combattank*", {
 
 			local hForceTarget = FindByNameNearest("combattank_target", vecMount, flDist)
 			if(hForceTarget)
+				SetNewTarget(hForceTarget, hForceTarget.GetCenter())
+			else foreach(i, sClassname in [ "player", "obj_sentrygun", "obj_dispenser", "obj_teleporter", "tank_boss", "merasmus", "headless_hatman", "eyeball_boss", "tf_zombie" ])
 			{
-				local vecEntCenter = hForceTarget.GetCenter()
-				hTarget   = hForceTarget
-				vecTarget = vecEntCenter
-				flDist    = (vecEntCenter - vecMount).Length()
-			}
-			else foreach(sClassname in [ "player", "obj_sentrygun", "obj_dispenser", "obj_teleporter", "tank_boss", "merasmus", "headless_hatman", "eyeball_boss", "tf_zombie" ])
-			{
+				local bPlayer = i == 0 // lol
 				for(local hEnt; hEnt = FindByClassnameWithin(hEnt, sClassname, vecMount, flDist);)
 				{
-					local vecEnt       = bAimAtFeet ? hEnt.GetOrigin() : null
-					local vecEntCenter = hEnt.GetCenter()
-					local bHasEyes     = "EyePosition" in hEnt
-					local vecEntEye    = bHasEyes ? hEnt.EyePosition() : vecEntCenter
+					local iEntityFlags = 0
+					if(!hEnt.IsAlive() || hEnt.GetTeam() == iTeamNum || (iEntityFlags = hEnt.GetFlags()) & FL_NOTARGET || (TankExtPacked.IsPlayerStealthedOrDisguised(hEnt) && hEnt.GetDisguiseTeam() == iTeamNum))
+						continue
 
+					local bDoFeetTrace = bAimAtFeet && iEntityFlags & FL_ONGROUND
 					local Trace = {
 						start  = vecMount
-						end    = bAimAtFeet ? vecEnt : vecEntCenter
+						end    = bDoFeetTrace ? hEnt.GetOrigin() : hEnt.GetCenter()
 						mask   = MASK_SHOT_HULL | CONTENTS_GRATE
 						ignore = self
 						enthit = null
 					}
 					TraceLineEx(Trace)
-					local bFeetTrace = false
-					if(bAimAtFeet)
-					{
-						bFeetTrace = hEnt.GetFlags() & FL_ONGROUND && Trace.enthit == hEnt
 
-						Trace.end = vecEntCenter
-						TraceLineEx(Trace)
-					}
-					local bCenterTrace = Trace.enthit == hEnt
-					local bEyeTrace    = bCenterTrace
-					if(bHasEyes)
+					if(bDoFeetTrace)
 					{
-						Trace.end = vecEntEye
-						TraceLineEx(Trace)
-						bEyeTrace = Trace.enthit == hEnt
+						if(Trace.enthit == hEnt)
+						{
+							SetNewTarget(hEnt, Trace.end)
+							continue
+						}
+						else // didnt hit the feet, check if it hits the center
+						{
+							Trace.end = hEnt.GetCenter()
+							TraceLineEx(Trace)
+						}
 					}
 
-					if
-					(
-						bEyeTrace &&
-						hEnt.IsAlive() &&
-						hEnt.GetTeam() != iTeamNum &&
-						!(hEnt.GetFlags() & FL_NOTARGET) &&
-						!TankExtPacked.IsPlayerStealthedOrDisguised(hEnt)
-					)
+					if(Trace.enthit == hEnt)
 					{
-						hTarget   = hEnt
-						vecTarget = bAimAtFeet && bFeetTrace ? vecEnt : bCenterTrace ? vecEntCenter : vecEntEye
-						flDist    = (vecEntCenter - vecMount).Length()
+						SetNewTarget(hEnt, Trace.end)
+						continue
+					}
+					else if(bPlayer) // didnt hit the center, check if it hits the eye (if any)
+					{
+						Trace.end = hEnt.EyePosition()
+						TraceLineEx(Trace)
+						if(Trace.enthit == hEnt)
+						{
+							SetNewTarget(hEnt, Trace.end)
+							continue
+						}
 					}
 				}
 				if(hTarget) break
