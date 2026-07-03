@@ -1,4 +1,4 @@
-// Last Updated : 7:42PM PST June 19 2026
+// Last Updated : 6:04PM PST July 2 2026
 
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
@@ -515,9 +515,21 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	function OnGameEvent_player_disconnect(params)
 	{
 		local hPlayer = GetPlayerFromUserID(params.userid)
-		local iIndex  = PlayerArray.find(hPlayer)
-		if(iIndex != null)
-			PlayerArray.remove(iIndex)
+		if(!hPlayer)
+		{
+			foreach(iIndex, hPlayer in PlayerArray)
+				if(!hPlayer.IsValid())
+				{
+					PlayerArray.remove(iIndex)
+					break
+				}
+		}
+		else
+		{
+			local iIndex = PlayerArray.find(hPlayer)
+			if(iIndex != null)
+				PlayerArray.remove(iIndex)
+		}
 	}
 	function CollectPlayers(TeamArray, bAlive)
 	{
