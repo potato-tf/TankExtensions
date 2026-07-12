@@ -324,33 +324,41 @@ TankExtPacked.NewTankType("helicopter*", {
 				local vecTarget
 				foreach(sClassname in [ "player", "obj_sentrygun", "obj_dispenser", "obj_teleporter", "tank_boss", "merasmus", "headless_hatman", "eyeball_boss", "tf_zombie" ])
 				{
+					local bPlayer = i == 0 // lol
 					for(local hEnt, flDist = HELICOPTER_MAX_RANGE; hEnt = FindByClassnameWithin(hEnt, sClassname, vecOrigin, flDist);)
 					{
-						local vecEntCenter = hEnt.GetCenter()
-						local vecEntTrace  = "EyePosition" in hEnt ? hEnt.EyePosition() : vecEntCenter
+						MarkForPurge(hEnt)
+
+						if(!hEnt.IsAlive() || hEnt.GetTeam() == iTeamNum || hEnt.GetFlags() & FL_NOTARGET || (TankExtPacked.IsPlayerStealthedOrDisguised(hEnt) && hEnt.GetDisguiseTeam() == iTeamNum))
+							continue
 
 						local Trace = {
 							start  = vecOrigin
-							end    = vecEntTrace
+							end    = hEnt.GetCenter()
 							mask   = MASK_SHOT_HULL | CONTENTS_GRATE
 							ignore = self
 							enthit = null
 						}
 						TraceLineEx(Trace)
-						local bTrace = Trace.enthit == hEnt
 
-						if
-						(
-							bTrace &&
-							hEnt.IsAlive() &&
-							hEnt.GetTeam() != iTeamNum &&
-							!(hEnt.GetFlags() & FL_NOTARGET) &&
-							!TankExtPacked.IsPlayerStealthedOrDisguised(hEnt)
-						)
+						if(Trace.enthit == hEnt)
 						{
 							hTarget   = hEnt
-							vecTarget = vecEntCenter
-							flDist    = (vecEntCenter - vecOrigin).Length()
+							vecTarget = Trace.end
+							flDist    = (Trace.end - vecOrigin).Length()
+							continue
+						}
+						else if(bPlayer) // didnt hit the center, check if it hits the eye (if any)
+						{
+							Trace.end = hEnt.EyePosition()
+							TraceLineEx(Trace)
+							if(Trace.enthit == hEnt)
+							{
+								hTarget   = hEnt
+								vecTarget = Trace.end
+								flDist    = (Trace.end - vecOrigin).Length()
+								continue
+							}
 						}
 					}
 					if(hTarget) break

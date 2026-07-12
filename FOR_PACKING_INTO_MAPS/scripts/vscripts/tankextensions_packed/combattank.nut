@@ -269,6 +269,8 @@ TankExtPacked.NewTankType("combattank*", {
 				local bPlayer = i == 0 // lol
 				for(local hEnt; hEnt = FindByClassnameWithin(hEnt, sClassname, vecMount, flDist);)
 				{
+					MarkForPurge(hEnt)
+
 					local iEntityFlags = 0
 					if(!hEnt.IsAlive() || hEnt.GetTeam() == iTeamNum || (iEntityFlags = hEnt.GetFlags()) & FL_NOTARGET || (TankExtPacked.IsPlayerStealthedOrDisguised(hEnt) && hEnt.GetDisguiseTeam() == iTeamNum))
 						continue
