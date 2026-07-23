@@ -29,10 +29,7 @@ local PATHMAKER_CONSTANTS = {
 }
 foreach(k,v in PATHMAKER_CONSTANTS)
 	if(!(k in ROOT))
-	{
-		CONST[k] <- v
 		ROOT[k] <- v
-	}
 
 foreach(sSound in [PM_SOUND_PLACE, PM_SOUND_REMOVE, PM_SOUND_CHANGE, PM_SOUND_DECIDE, PM_SOUND_COMPLETE])
 	PrecacheSound(sSound)
@@ -143,7 +140,7 @@ function TankExt::PathMaker(hPlayer, sPathName = null)
 			{
 				local hPreviousPath = GetPropEntity(hPath, "m_pprevious")
 
-				if(!hPreviousPath)
+				if(!hPreviousPath || TankExt.GetNextPath(hPreviousPath) != hPath)
 				{
 					hStartPath = hPath
 					break
@@ -158,7 +155,7 @@ function TankExt::PathMaker(hPlayer, sPathName = null)
 				local hPath = hStartPath
 				for(local i = 1; i < 256; i++)
 				{
-					local hNextPath = GetPropEntity(hPath, "m_pnext")
+					local hNextPath = TankExt.GetNextPath(hPath)
 					if(hNextPath)
 					{
 						AddToPathMakerArray(hNextPath.GetOrigin())
@@ -361,7 +358,7 @@ function TankExt::PathMaker(hPlayer, sPathName = null)
 		if(hNearestPathTrack)
 		{
 			local vecPathTrack   = hNearestPathTrack.GetOrigin()
-			local hPathTrackNext = GetPropEntity(hNearestPathTrack, "m_pnext")
+			local hPathTrackNext = TankExt.GetNextPath(hNearestPathTrack)
 			local vecDirection   = hPathTrackNext ? hPathTrackNext.GetOrigin() - vecPathTrack : Vector(0, 0, -1)
 			vecDirection.Norm()
 			hPathTrackVisual.SetAbsOrigin(vecPathTrack)
