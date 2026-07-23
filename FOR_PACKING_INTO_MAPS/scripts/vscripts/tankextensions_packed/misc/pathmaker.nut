@@ -418,7 +418,7 @@ function TankExtPacked::PathMaker(hPlayer, sPathName = null)
 			if(vecForward.Norm() > 1e-5)
 			{
 				local vecLeft    = Vector(-vecForward.y, vecForward.x, 0.0)
-				local vecForward = vecLeft.Cross(TargetTrace.plane_normal)
+				local vecForward = vecLeft.Cross(iVisualizerType == PM_VISUALIZER_TYPE_BLIMP ? Vector(0, 0, 1) : TargetTrace.plane_normal)
 				vecForward.Norm()
 
 				hPlacementVisual.SetForwardVector(vecForward)
