@@ -497,9 +497,13 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 	}
 
 	PlayerArray = []
-	function OnGameEvent_player_activate(params)
+	function PlayerInit(hPlayer)
 	{
-		local hPlayer = GetPlayerFromUserID(params.userid)
+		MarkForPurge(hPlayer)
+
+		if(PlayerInstanceFromIndex(hPlayer.entindex()) == null)
+			return
+
 		PlayerArray.append(hPlayer)
 		PlayerArray.sort(function(hCurrent, hNext)
 		{
@@ -511,6 +515,16 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 				return -1
 			return 0
 		})
+	}
+	function OnGameEvent_player_spawn(params)
+	{
+		local hPlayer = GetPlayerFromUserID(params.userid)
+
+		if(!hPlayer)
+			return
+
+		if(params.team == TEAM_UNASSIGNED)
+			EntFireByHandle(hThinkEnt, "RunScriptCode", "TankExt.PlayerInit(activator)", -1, hPlayer, null)
 	}
 	function OnGameEvent_player_disconnect(params)
 	{
