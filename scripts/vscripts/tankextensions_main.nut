@@ -2061,6 +2061,7 @@ TankExt.hThinkEnt = hThinkEnt
 hThinkEnt.SetAbsOrigin(Vector(99999))
 SetPropString(hThinkEnt, "m_iClassname", "tank_boss") // this makes teamplay_broadcast_audio always get called when a tank spawns
 SetPropString(hThinkEnt, "m_iName", "tankext_thinkent")
+hThinkEnt.AddEFlags(EFL_NO_MEGAPHYSCANNON_RAGDOLL) // to prevent 1 error when updating from a map packed legacy version
 
 local TankExtLegacy = {
 	TankScriptsLegacy = {}
