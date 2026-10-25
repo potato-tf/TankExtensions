@@ -523,7 +523,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 			return
 
 		if(params.team == TEAM_UNASSIGNED)
-			EntFireByHandle(hThinkEnt, "RunScriptCode", "TankExt.PlayerInit(activator)", -1, hPlayer, null)
+			EntFireByHandle(hThinkEnt, "RunScriptCode", "TankExtPacked.PlayerInit(activator)", -1, hPlayer, null)
 	}
 	function OnGameEvent_player_disconnect(params)
 	{
