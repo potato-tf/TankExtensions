@@ -1,4 +1,4 @@
-// Last Updated : 3:05PM PST July 12 2026
+// Last Updated : 1:36PM PST October 25 2026
 
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
@@ -491,7 +491,8 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 		bTankSpawnedThisWave = false
 
 		foreach(array in RevertPaths)
-			array[0].SetAbsOrigin(array[1])
+			if(array[0].IsValid())
+				array[0].SetAbsOrigin(array[1])
 		RevertPaths.clear()
 	}
 
