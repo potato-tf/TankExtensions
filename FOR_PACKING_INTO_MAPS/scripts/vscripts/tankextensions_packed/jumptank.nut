@@ -1,5 +1,7 @@
 local JUMPTANK_VALUES_TABLE = {
 	JUMPTANK_JUMP_COOLDOWN        = 8
+	JUMPTANK_JUMP_HEIGHT_BASE     = 1024
+	JUMPTANK_JUMP_HEIGHT_OVERRIDE = 0
 	JUMPTANK_USE_SPECIAL_DEPLOY   = false
 	JUMPTANK_SPECIAL_DEPLOY_RELAY = "boss_deploy_relay"
 }
@@ -79,7 +81,7 @@ TankExtPacked.NewTankType("jumptank", {
 				TankExtPacked.DelayFunction(self, JumpScope, 0.75, function()
 				{
 					bJumping                  = true
-					hTank_scope.vecVelocity.z = 1024 * pow(Trace.fraction, 0.65)
+					hTank_scope.vecVelocity.z = JUMPTANK_JUMP_HEIGHT_OVERRIDE || JUMPTANK_JUMP_HEIGHT_BASE * pow(Trace.fraction, 0.65)
 					flStepHeightLast          = self.GetLocomotionInterface().GetStepHeight()
 					angFakeRotation           = self.GetAbsAngles()
 					self.AcceptInput("SetStepHeight", "0", null, null)
