@@ -1,4 +1,4 @@
-// Last Updated : 1:36PM PST October 25 2026
+// Last Updated : 1:41PM PST November 8 2026
 
 ::ROOT        <- getroottable()
 ::CONST       <- getconsttable()
@@ -1582,7 +1582,7 @@ local hObjectiveResource = FindByClassname(null, "tf_objective_resource")
 					GetPropIntArray(hObjectiveResource, sCounts, iIndex),
 					GetPropIntArray(hObjectiveResource, sFlags, iIndex)
 				]
-				Set(PreviousIcon[0], PreviousIcon[1], PreviousIcon[2])
+				Set(sIconName = PreviousIcon[0], PreviousIcon[1], PreviousIcon[2])
 				PreviousIcon = PreviousIconTemp
 			}
 
